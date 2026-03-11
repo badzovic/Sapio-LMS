@@ -1,0 +1,31 @@
+﻿@model List<SIA.Sapio.LMS.Data.Identity.ApplicationUser>
+
+@{
+    ViewData["Title"] = "Users";
+}
+
+<h1>Korisnici</h1>
+<a asp-action="Create" class="btn btn-primary mb-3">Novi korisnik</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Aktivan</th>
+            <th>Eksterni saradnik</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@user.FirstName</td>
+                <td>@user.LastName</td>
+                <td>@user.IsActive</td>
+                <td>@user.IsExternalCollaborator</td>
+            </tr>
+        }
+    </tbody>
+</table>
