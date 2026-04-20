@@ -9,7 +9,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    public class UsersController : Controller
+    public class UsersController : BaseAdminController
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -30,7 +30,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             ViewBag.Roles = new List<SelectListItem>
     {
         new SelectListItem { Value = "Admin", Text = "Admin" },
-        new SelectListItem { Value = "Instructor", Text = "Instructor" },
+        new SelectListItem { Value = "Instruktor", Text = "Instruktor" },
         new SelectListItem { Value = "Student", Text = "Student" }
     };
 
@@ -44,7 +44,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             ViewBag.Roles = new List<SelectListItem>
     {
         new SelectListItem { Value = "Admin", Text = "Admin" },
-        new SelectListItem { Value = "Instructor", Text = "Instructor" },
+        new SelectListItem { Value = "Instruktor", Text = "Instruktor" },
         new SelectListItem { Value = "Student", Text = "Student" }
     };
 

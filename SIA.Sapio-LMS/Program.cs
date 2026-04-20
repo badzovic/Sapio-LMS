@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SIA.Sapio.LMS.Data.Context;
 using SIA.Sapio.LMS.Data.Identity;
 using SIA.Sapio.LMS.Data.Seed;
+using SIA.Sapio_LMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,10 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+
+//api service builder
+builder.Services.AddHttpClient<InternalUsersApiService>();
+builder.Services.AddHttpClient<ExternalUsersApiService>();
 
 var app = builder.Build();
 
@@ -41,6 +46,13 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ?? REDIRECT NA LOGIN
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/Identity/Account/Login");
+    return Task.CompletedTask;
+});
+
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
@@ -48,8 +60,8 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
+app.MapRazorPages();
 
 using (var scope = app.Services.CreateScope())
 {

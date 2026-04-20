@@ -5,7 +5,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    public class DashboardController : Controller
+    public class DashboardController : BaseAdminController
     {
         public IActionResult Index()
         {

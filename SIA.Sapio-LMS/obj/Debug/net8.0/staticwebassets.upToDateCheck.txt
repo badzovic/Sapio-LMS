@@ -61,6 +61,7 @@ wwwroot\lib\jquery\dist\jquery.min.map
 wwwroot\lms\css\argon-dashboard.css
 wwwroot\lms\css\argon-dashboard.css.map
 wwwroot\lms\css\argon-dashboard.min.css
+wwwroot\lms\css\custom.css
 wwwroot\lms\css\nucleo-icons.css
 wwwroot\lms\css\nucleo-svg.css
 wwwroot\lms\fonts\nucleo-icons.eot
@@ -76,6 +77,7 @@ wwwroot\lms\img\apple-icon.png
 wwwroot\lms\img\automotive.jpg
 wwwroot\lms\img\bruce-mars.jpg
 wwwroot\lms\img\crm.jpg
+wwwroot\lms\img\dashboard-bg.jpg
 wwwroot\lms\img\default.jpg
 wwwroot\lms\img\down-arrow-dark.svg
 wwwroot\lms\img\down-arrow-white.svg

@@ -12,3 +12,18 @@ C:\Users\adzovic berin\source\repos\SIA.Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\n
 C:\Users\adzovic berin\source\repos\SIA.Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.pdb
 C:\Users\adzovic berin\source\repos\SIA.Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.genruntimeconfig.cache
 C:\Users\adzovic berin\source\repos\SIA.Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\ref\SIA.Sapio.LMS.Data.dll
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Debug\net8.0\SIA.Sapio.LMS.Data.deps.json
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Debug\net8.0\SIA.Sapio.LMS.Data.runtimeconfig.json
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Debug\net8.0\SIA.Sapio.LMS.Data.dll
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Debug\net8.0\SIA.Sapio.LMS.Data.pdb
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.csproj.AssemblyReference.cache
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.AssemblyInfoInputs.cache
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.AssemblyInfo.cs
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.csproj.CoreCompileInputs.cache
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.sourcelink.json
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.dll
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\refint\SIA.Sapio.LMS.Data.dll
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.pdb
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\SIA.Sapio.LMS.Data.genruntimeconfig.cache
+D:\GitHub\VMS-1.2\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Debug\net8.0\ref\SIA.Sapio.LMS.Data.dll

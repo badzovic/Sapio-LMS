@@ -1,0 +1,408 @@
+﻿/* =========================
+   SAPIO GLOBAL STYLES
+   ========================= */
+
+/* Reset / base */
+body {
+}
+
+/* =========================
+   SAPIO BUTTON SYSTEM
+   ========================= */
+
+/* =========================
+   SAPIO BUTTON SYSTEM
+   ========================= */
+
+.btn-sapio,
+a.btn-sapio,
+button.btn-sapio {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    box-sizing: border-box !important;
+    height: 34px !important;
+    padding: 0 0.75rem !important;
+    border-radius: 0.45rem !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    line-height: 1 !important;
+    border: 1px solid transparent !important;
+    text-decoration: none !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+}
+
+    .btn-sapio:hover,
+    a.btn-sapio:hover,
+    button.btn-sapio:hover {
+        text-decoration: none !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-sapio:focus,
+    .btn-sapio:active,
+    a.btn-sapio:focus,
+    a.btn-sapio:active,
+    button.btn-sapio:focus,
+    button.btn-sapio:active {
+        outline: none !important;
+        box-shadow: none !important;
+        text-decoration: none !important;
+    }
+
+.btn-sapio-sm {
+    height: 34px !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 0.45rem !important;
+}
+
+.btn-sapio-primary {
+    background: #5e72e4 !important;
+    color: #fff !important;
+    border-color: #5e72e4 !important;
+}
+
+    .btn-sapio-primary:hover,
+    .btn-sapio-primary:focus,
+    .btn-sapio-primary:active {
+        background: #324cdd !important;
+        color: #fff !important;
+        border-color: #324cdd !important;
+    }
+
+.btn-sapio-success {
+    background: #2dce89 !important;
+    color: #fff !important;
+    border-color: #2dce89 !important;
+}
+
+    .btn-sapio-success:hover,
+    .btn-sapio-success:focus,
+    .btn-sapio-success:active {
+        background: #26af74 !important;
+        color: #fff !important;
+        border-color: #26af74 !important;
+    }
+
+.btn-sapio-danger {
+    background: #f5365c !important;
+    color: #fff !important;
+    border-color: #f5365c !important;
+}
+
+    .btn-sapio-danger:hover,
+    .btn-sapio-danger:focus,
+    .btn-sapio-danger:active {
+        background: #ec0c38 !important;
+        color: #fff !important;
+        border-color: #ec0c38 !important;
+    }
+
+.btn-sapio-warning {
+    background: #fb6340 !important;
+    color: #fff !important;
+    border-color: #fb6340 !important;
+}
+
+    .btn-sapio-warning:hover,
+    .btn-sapio-warning:focus,
+    .btn-sapio-warning:active {
+        background: #fa3a0e !important;
+        color: #fff !important;
+        border-color: #fa3a0e !important;
+    }
+
+.btn-sapio-secondary {
+    background: #8392ab !important;
+    color: #fff !important;
+    border-color: #8392ab !important;
+}
+
+    .btn-sapio-secondary:hover,
+    .btn-sapio-secondary:focus,
+    .btn-sapio-secondary:active {
+        background: #67748e !important;
+        color: #fff !important;
+        border-color: #67748e !important;
+    }
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+    .action-buttons form {
+        margin: 0 !important;
+    }
+
+    .action-buttons .btn-sapio {
+        margin: 0 !important;
+    }
+
+/* =========================
+   COMMON LAYOUT HELPERS
+   ========================= */
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.navbar .fw-bold {
+    font-weight: 600 !important;
+}
+
+.gap-3 {
+    gap: 1rem !important;
+}
+
+/* =========================
+   DASHBOARD HERO BACKGROUND
+   ========================= */
+
+.sapio-hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 320px;
+    z-index: 0;
+    background: linear-gradient(135deg, rgba(15,23,42,0.72), rgba(30,41,59,0.68)), url('/lms/img/dashboard-bg.jpg') center center / cover no-repeat;
+}
+
+    .sapio-hero-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+.main-content {
+    position: relative;
+    z-index: 2;
+}
+
+.navbar-main {
+    background: rgba(15, 23, 42, 0.35) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 16px;
+}
+
+.sidenav {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* =========================
+   SAPIO DETAIL / CARD UI
+   ========================= */
+
+.card-custom {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+}
+
+.role-buttons,
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+    .role-buttons form,
+    .action-buttons form {
+        margin: 0 !important;
+    }
+
+.info-row {
+    margin-bottom: 10px;
+}
+
+.info-label {
+    font-weight: 600;
+    display: inline-block;
+    min-width: 160px;
+}
+
+.company-form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.company-select-wrap {
+    min-width: 320px;
+}
+
+/* =========================
+   SAPIO SELECT2
+   ========================= */
+
+/* container */
+.select2-container {
+    width: 100% !important;
+    font-size: 0.8rem;
+}
+
+    /* main select box */
+    .select2-container .select2-selection--single {
+        height: 34px !important;
+        border: 1px solid #d2d6da !important;
+        border-radius: 0.45rem !important;
+        padding: 0 0.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        background-color: #fff !important;
+        transition: all 0.2s ease-in-out;
+    }
+
+        /* hover */
+        .select2-container .select2-selection--single:hover {
+            border-color: #5e72e4 !important;
+        }
+
+/* focus */
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #5e72e4 !important;
+    box-shadow: 0 0 0 1px rgba(94, 114, 228, 0.25);
+}
+
+/* text */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: normal !important;
+    padding-left: 2px !important;
+    color: #344767 !important;
+}
+
+/* placeholder */
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #8392ab !important;
+}
+
+/* arrow */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100% !important;
+    right: 6px !important;
+}
+
+/* dropdown */
+.select2-dropdown {
+    border: 1px solid #d2d6da !important;
+    border-radius: 0.45rem !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* search input */
+.select2-search--dropdown .select2-search__field {
+    border-radius: 0.45rem !important;
+    border: 1px solid #d2d6da !important;
+    padding: 6px !important;
+}
+
+/* results */
+.select2-results__option {
+    padding: 6px 10px !important;
+    font-size: 0.8rem;
+}
+
+/* highlight */
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #5e72e4 !important;
+    color: #fff !important;
+}
+
+/* selected */
+.select2-container--default .select2-results__option--selected {
+    background-color: #f6f9fc !important;
+    color: #344767 !important;
+}
+/* =========================
+   SAPIO PAGE TITLE
+   ========================= */
+
+.page-title-wrap h2 {
+    color: #ffffff !important;
+}
+
+.page-title-wrap .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* =========================
+   SAPIO TABLE / GRID UI
+   ========================= */
+
+.page-title-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-custom {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* =========================
+   SAPIO USER STATUS BUTTON
+   ========================= */
+
+.user-status-btn {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.user-active {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+}
+
+    .user-active:hover {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+.user-inactive {
+    background-color: #6c757d;
+    color: #fff;
+    border: none;
+}
+
+    .user-inactive:hover {
+        background-color: #28a745;
+        color: #fff;
+    }

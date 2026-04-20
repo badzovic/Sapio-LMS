@@ -7,7 +7,7 @@ namespace SIA.Sapio.LMS.Data.Seed
     {
         public static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
         {
-            string[] roles = { "Admin", "Instructor", "Student" };
+            string[] roles = { "Admin", /*"Instructor"*/ "Student" };
 
             foreach (var role in roles)
             {

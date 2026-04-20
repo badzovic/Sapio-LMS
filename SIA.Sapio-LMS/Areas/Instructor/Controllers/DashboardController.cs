@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
 {
     [Area("Instructor")]
-    [Authorize(Roles = "Instructor")]
+    [Authorize(Roles = "Instruktor")]
     public class DashboardController : Controller
     {
         public IActionResult Index()

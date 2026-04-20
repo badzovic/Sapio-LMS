@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\adzovic berin\\source\\repos\\SIA.Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj": {}
+    "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj": {}
   },
   "projects": {
-    "C:\\Users\\adzovic berin\\source\\repos\\SIA.Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj": {
+    "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\adzovic berin\\source\\repos\\SIA.Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
+        "projectUniqueName": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
         "projectName": "SIA.Sapio.LMS.Data",
-        "projectPath": "C:\\Users\\adzovic berin\\source\\repos\\SIA.Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
-        "packagesPath": "C:\\Users\\adzovic berin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\adzovic berin\\source\\repos\\SIA.Sapio-LMS\\SIA.Sapio.LMS.Data\\obj\\",
+        "projectPath": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
+        "packagesPath": "C:\\Users\\mandzo dino\\.nuget\\packages\\",
+        "outputPath": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\adzovic berin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\mandzo dino\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -25,8 +25,6 @@
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {

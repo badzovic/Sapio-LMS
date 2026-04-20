@@ -1,0 +1,164 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@model List<CompaniesVM>
+
+@{
+    ViewData["Title"] = "Companies";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var status = (ViewBag.Status as string ?? "all").ToLower();
+}
+
+@*
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+    <style>
+        .page-title-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-custom {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .table th, .table td {
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
+}
+*@
+
+<div class="container-fluid">
+    <div class="page-title-wrap">
+        <div>
+            <h2 class="mb-1">Companies</h2>
+            <p class="text-muted mb-0">Pregled i upravljanje kompanijama</p>
+        </div>
+
+        <a asp-area="Admin"
+           asp-controller="Companies"
+           asp-action="Create"
+           class="btn-sapio btn-sapio-primary">
+            <i class="fas fa-plus"></i> Nova kompanija
+        </a>
+    </div>
+
+    <div class="mb-3 d-flex flex-wrap gap-2">
+        <a asp-area="Admin"
+           asp-controller="Companies"
+           asp-action="Index"
+           asp-route-status="active"
+           class="btn-sapio @(status == "active" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+            <i class="fas fa-check-circle"></i> Aktivne
+        </a>
+
+        <a asp-area="Admin"
+           asp-controller="Companies"
+           asp-action="Index"
+           asp-route-status="inactive"
+           class="btn-sapio @(status == "inactive" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+            <i class="fas fa-ban"></i> Neaktivne
+        </a>
+
+        <a asp-area="Admin"
+           asp-controller="Companies"
+           asp-action="Index"
+           asp-route-status="all"
+           class="btn-sapio @(status == "all" ? "btn-sapio-success" : "btn-sapio-secondary")">
+            <i class="fas fa-building"></i> Sve
+        </a>
+    </div>
+
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="companiesTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Naziv</th>
+                        <th>Napomena</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var company in Model)
+                    {
+                        var isActive = company.Aktivna == "Y";
+
+                        <tr>
+                            <td>@company.Naziv</td>
+                            <td>@company.Napomena</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a asp-area="Admin"
+                                       asp-controller="Companies"
+                                       asp-action="Edit"
+                                       asp-route-id="@company.ID"
+                                       class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                        <i class="fas fa-pen"></i> Edit
+                                    </a>
+
+                                    <form asp-area="Admin"
+                                          asp-controller="Companies"
+                                          asp-action="ToggleActive"
+                                          method="post"
+                                          class="js-confirm-form d-inline"
+                                          data-confirm-title="Promjena statusa?"
+                                          data-confirm-text="Da li želite @(isActive ? "deaktivirati" : "aktivirati") kompaniju '@company.Naziv'?"
+                                          data-confirm-icon="warning"
+                                          data-confirm-button="Potvrdi">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@company.ID" />
+
+                                        <button type="submit"
+                                                class="btn-sapio btn-sapio-sm @(isActive ? "btn-sapio-danger" : "btn-sapio-success")">
+                                            <i class="fas @(isActive ? "fa-ban" : "fa-check")"></i>
+                                            @(isActive ? "Deaktiviraj" : "Aktiviraj")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+   
+    <script>
+        $(document).ready(function () {
+            $('#companiesTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih kompanija",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}

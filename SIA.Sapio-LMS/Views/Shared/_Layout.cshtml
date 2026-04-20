@@ -8,7 +8,37 @@
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
 }
+@* <style>
+    .user-status-btn {
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
 
+    .user-active {
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+    }
+
+        .user-active:hover {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+    .user-inactive {
+        background-color: #6c757d;
+        color: #fff;
+        border: none;
+    }
+
+        .user-inactive:hover {
+            background-color: #28a745;
+            color: #fff;
+        }
+</style>
+ *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,12 +54,14 @@
     <link href="~/lms/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="~/lms/css/argon-dashboard.css" rel="stylesheet" />
+    <link href="~/lms/css/custom.css" rel="stylesheet" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
 
     @RenderSection("Styles", required: false)
 </head>
 
 <body class="g-sidenav-show bg-gray-100">
-    <div class="min-height-300 bg-primary position-absolute w-100"></div>
+    <div class="sapio-hero-bg"></div>
 
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
@@ -47,53 +79,31 @@
         <div class="collapse navbar-collapse w-auto h-auto" id="sidenav-collapse-main">
             <ul class="navbar-nav">
 
-                @if (User.IsInRole("Admin"))
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
-                    <li class="nav-item">
-                        <a class="nav-link @(currentArea == "Admin" && currentController == "Dashboard" ? "active" : "")"
-                           href="/Admin/Dashboard">
-                            <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
-                                <i class="ni ni-shop text-primary text-sm opacity-10"></i>
-                            </div>
-                            <span class="nav-link-text ms-1">Dashboard</span>
-                        </a>
-                    </li>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item mt-3">
+                            <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Admin</h6>
+                        </li>
+                        <partial name="~/Views/Shared/MenuPartials/_AdminMenu.cshtml" />
+                    }
 
-                    <li class="nav-item">
-                        <a class="nav-link @(currentArea == "Admin" && currentController == "Users" ? "active" : "")"
-                           href="/Admin/Users">
-                            <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
-                                <i class="ni ni-single-02 text-warning text-sm opacity-10"></i>
-                            </div>
-                            <span class="nav-link-text ms-1">Korisnici</span>
-                        </a>
-                    </li>
-                }
+                    @if (User.IsInRole("Instruktor"))
+                    {
+                        <li class="nav-item mt-3">
+                            <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Instruktor</h6>
+                        </li>
+                        <partial name="~/Views/Shared/MenuPartials/_InstructorMenu.cshtml" />
+                    }
 
-                @if (User.IsInRole("Instructor"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link @(currentArea == "Instructor" && currentController == "Dashboard" ? "active" : "")"
-                           href="/Instructor/Dashboard">
-                            <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
-                                <i class="ni ni-hat-3 text-info text-sm opacity-10"></i>
-                            </div>
-                            <span class="nav-link-text ms-1">Dashboard</span>
-                        </a>
-                    </li>
-                }
-
-                @if (User.IsInRole("Student"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link @(currentArea == "Student" && currentController == "Dashboard" ? "active" : "")"
-                           href="/Student/Dashboard">
-                            <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
-                                <i class="ni ni-book-bookmark text-success text-sm opacity-10"></i>
-                            </div>
-                            <span class="nav-link-text ms-1">Dashboard</span>
-                        </a>
-                    </li>
+                    @if (User.IsInRole("Student"))
+                    {
+                        <li class="nav-item mt-3">
+                            <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Student</h6>
+                        </li>
+                        <partial name="~/Views/Shared/MenuPartials/_StudentMenu.cshtml" />
+                    }
                 }
             </ul>
         </div>
@@ -109,12 +119,14 @@
                                 <i class="ni ni-box-2"></i>
                             </a>
                         </li>
+
                         @if (!string.IsNullOrEmpty(currentArea))
                         {
                             <li class="breadcrumb-item text-sm text-white">
                                 <a class="opacity-5 text-white" href="javascript:;">@currentArea</a>
                             </li>
                         }
+
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">
                             @ViewData["Title"]
                         </li>
@@ -134,31 +146,23 @@
                 </div>
 
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4 justify-content-end" id="navbar">
-                    <ul class="navbar-nav justify-content-end">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        var currentUser = await UserManager.GetUserAsync(User);
 
-                        @if (SignInManager.IsSignedIn(User))
-                        {
-                            var currentUser = await UserManager.GetUserAsync(User);
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center text-white fw-bold">
+                                <i class="fa fa-user me-2"></i>
+                                <span>@currentUser?.FirstName @currentUser?.LastName</span>
+                            </div>
 
-                            <li class="nav-item d-flex align-items-center me-3">
-                                <span class="nav-link text-white font-weight-bold px-0">
-                                    <i class="fa fa-user me-sm-1"></i>
-                                    <span class="d-sm-inline d-none">
-                                        @currentUser?.FirstName @currentUser?.LastName
-                                    </span>
-                                </span>
-                            </li>
-
-                            <li class="nav-item d-flex align-items-center">
-                                <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post" class="m-0">
-                                    <button type="submit" class="btn btn-link nav-link text-white font-weight-bold px-0 border-0">
-                                        <i class="fas fa-sign-out-alt me-1"></i>
-                                        Logout
-                                    </button>
-                                </form>
-                            </li>
-                        }
-                    </ul>
+                            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post" class="m-0">
+                                <button type="submit" class="btn-sapio btn-sapio-secondary">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+                    }
                 </div>
             </div>
         </nav>
@@ -187,11 +191,14 @@
         </div>
     </main>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="~/lms/js/core/popper.min.js"></script>
     <script src="~/lms/js/core/bootstrap.min.js"></script>
     <script src="~/lms/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="~/lms/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="~/lms/js/argon-dashboard.min.js"></script>
+    <script src="~/lms/js/argon-dashboard.min.js"></script>  
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
         var win = navigator.platform.indexOf('Win') > -1;
@@ -199,6 +206,79 @@
             var options = { damping: '0.5' };
             Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
         }
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @if (TempData["ImportMessage"] != null)
+    {
+        var message = TempData["ImportMessage"]?.ToString()?.Replace("'", "\\'");
+        var hasErrors = TempData["ImportErrors"] != null;
+        var icon = hasErrors ? "warning" : "success";
+
+        <script>
+            Swal.fire({
+                icon: '@icon',
+                title: 'Obavijest',
+                text: '@Html.Raw(message)',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#5e72e4'
+            });
+        </script>
+    }
+
+    @if (TempData["ImportErrors"] != null)
+    {
+        var errors = TempData["ImportErrors"]?.ToString()
+        ?.Replace("'", "\\'")
+        .Replace("\n", "\\n");
+
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Greška',
+                text: '@Html.Raw(errors)',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#f5365c'
+            });
+        </script>
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.js-confirm-form').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed === 'true') {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    const title = form.getAttribute('data-confirm-title') || 'Da li ste sigurni?';
+                    const text = form.getAttribute('data-confirm-text') || 'Potvrdite akciju.';
+                    const icon = form.getAttribute('data-confirm-icon') || 'warning';
+                    const confirmButtonText = form.getAttribute('data-confirm-button') || 'Da';
+                    const cancelButtonText = form.getAttribute('data-confirm-cancel') || 'Odustani';
+
+                    Swal.fire({
+                        title: title,
+                        text: text,
+                        icon: icon,
+                        showCancelButton: true,
+                        confirmButtonText: confirmButtonText,
+                        cancelButtonText: cancelButtonText,
+                        confirmButtonColor: '#5e72e4',
+                        cancelButtonColor: '#8392ab'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.dataset.confirmed = 'true';
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
     </script>
 
     @RenderSection("Scripts", required: false)

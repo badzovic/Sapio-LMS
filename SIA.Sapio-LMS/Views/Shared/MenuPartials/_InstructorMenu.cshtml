@@ -1,0 +1,14 @@
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
+}
+
+<li class="nav-item">
+    <a class="nav-link @(currentArea == "Instruktor" && currentController == "Dashboard" ? "active" : "")"
+       href="/Instructor/Dashboard">
+        <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
+            <i class="ni ni-hat-3 text-info text-sm opacity-10"></i>
+        </div>
+        <span class="nav-link-text ms-1">Instructor Dashboard</span>
+    </a>
+</li>

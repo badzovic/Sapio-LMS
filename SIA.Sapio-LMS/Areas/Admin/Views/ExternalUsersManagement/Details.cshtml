@@ -1,0 +1,229 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@using SIA.Sapio_LMS.Areas.Admin.Models
+@model ExternalUserDetailsVM
+
+@{
+    ViewData["Title"] = "External User Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userRoles = ViewBag.UserRoles as IList<string> ?? new List<string>();
+    var allRoles = ViewBag.AllRoles as IList<string> ?? new List<string>();
+    var companies = ViewBag.Companies as List<SelectListItem> ?? new List<SelectListItem>();
+    var isActive = ViewBag.IsActive is bool active && active;
+    var tipKorisnikaText = ViewBag.TipKorisnikaText as string ?? "-";
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+}
+
+<div class="container-fluid">
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Detalji eksternog korisnika</h3>
+
+            <a asp-area="Admin"
+               asp-controller="ExternalUsers"
+               asp-action="Index"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na listu
+            </a>
+        </div>
+
+        <div class="info-row" hidden><span class="info-label">Lokalni ID:</span> @Model.ID</div>
+        <div class="info-row" hidden><span class="info-label">External V3 ID:</span> @Model.ExternalV3Id</div>
+        <div class="info-row" hidden><span class="info-label">User ID:</span> @Model.UserId</div>
+
+        <div class="info-row"><span class="info-label">Ime:</span> @Model.Ime</div>
+        <div class="info-row"><span class="info-label">Prezime:</span> @Model.Prezime</div>
+        <div class="info-row"><span class="info-label">Ime oca:</span> @Model.ImeOca</div>
+        <div class="info-row"><span class="info-label">Mjesto rođenja:</span> @Model.MjestoRodjenja</div>
+
+        <div class="info-row">
+            <span class="info-label">Email:</span>
+
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsersManagement"
+                  asp-action="UpdateEmail"
+                  method="post"
+                  style="display:inline-flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ID" />
+
+                <input type="email"
+                       name="email"
+                       value="@Model.Email"
+                       class="form-control"
+                       placeholder="Email"
+                       style="width:240px; height:34px; font-size:0.8rem;"
+                       required />
+
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-save"></i> Sačuvaj
+                </button>
+            </form>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Kompanija:</span>
+            @(string.IsNullOrWhiteSpace(Model.Kompanija) ? "-" : Model.Kompanija)
+        </div>
+
+        <div class="info-row" hidden><span class="info-label">Kompanija ID:</span> @Model.KompanijaId</div>
+
+        <div class="info-row">
+            <span class="info-label">Tip korisnika:</span> @tipKorisnikaText
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Aktivan:</span> @Model.Aktivan
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Akcije</h5>
+
+        <div class="action-buttons">
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsersManagement"
+                  asp-action="ResetPassword"
+                  method="post"
+                  class="js-confirm-form d-inline"
+                  data-confirm-title="Reset password?"
+                  data-confirm-text="Resetovati password za korisnika @Model.Ime @Model.Prezime na Sarajevo2026!?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, resetuj">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ID" />
+                <button type="submit" class="btn-sapio btn-sapio-danger">
+                    <i class="fas fa-key"></i> Reset password
+                </button>
+            </form>
+
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsersManagement"
+                  asp-action="ToggleActive"
+                  method="post"
+                  class="js-confirm-form d-inline"
+                  data-confirm-title="Promjena statusa?"
+                  data-confirm-text="Da li želite promijeniti status korisnika?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Potvrdi">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ID" />
+
+                <button type="submit"
+                        class="btn-sapio @(isActive ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    <i class="fas @(isActive ? "fa-user-slash" : "fa-user-check")"></i>
+                    @(isActive ? " Deaktiviraj" : " Aktiviraj")
+                </button>
+            </form>
+
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsersManagement"
+                  asp-action="SyncSingleUser"
+                  method="post"
+                  class="js-confirm-form d-inline"
+                  data-confirm-title="Sync korisnika?"
+                  data-confirm-text="Da li želite povući najnovije podatke iz V3 za ovog korisnika?"
+                  data-confirm-icon="question"
+                  data-confirm-button="Da, sync">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ID" />
+
+                <button type="submit" class="btn-sapio btn-sapio-warning">
+                    <i class="fas fa-sync-alt"></i> Sync korisnika
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Kompanija</h5>
+
+        <form asp-area="Admin"
+              asp-controller="ExternalUsersManagement"
+              asp-action="UpdateCompany"
+              method="post"
+              class="company-form-row">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="id" value="@Model.ID" />
+
+            <div class="company-select-wrap">
+                <label class="form-label" for="kompanijaId">Odaberi kompaniju</label>
+                <select name="kompanijaId" id="kompanijaId" class="form-select sapio-select2">
+                    <option value="">-- Bez kompanije --</option>
+                    @foreach (var company in companies)
+                    {
+                        if (Model.KompanijaId.HasValue && company.Value == Model.KompanijaId.Value.ToString())
+                        {
+                            <option value="@company.Value" selected>@company.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@company.Value">@company.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div>
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-save"></i> Sačuvaj kompaniju
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Role korisnika</h5>
+
+        <div class="role-buttons">
+            @foreach (var role in allRoles)
+            {
+                var hasRole = userRoles.Contains(role);
+
+                <form asp-area="Admin"
+                      asp-controller="ExternalUsersManagement"
+                      asp-action="ToggleRole"
+                      method="post"
+                      class="js-confirm-form d-inline"
+                      data-confirm-title="Promjena role"
+                      data-confirm-text="Da li želite @(hasRole ? "ukloniti" : "dodijeliti") rolu '@role' korisniku @Model.Ime @Model.Prezime?"
+                      data-confirm-icon="question"
+                      data-confirm-button="Da, potvrdi">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.ID" />
+                    <input type="hidden" name="roleName" value="@role" />
+
+                    <button type="submit"
+                            class="btn-sapio @(hasRole ? "btn-sapio-success" : "btn-sapio-secondary")">
+                        @role
+                    </button>
+                </form>
+            }
+        </div>
+
+        <div class="mt-3">
+            <small class="text-muted">
+                Zelena boja znači da je rola aktivna. Siva znači da nije dodijeljena.
+            </small>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#kompanijaId').select2({
+                placeholder: 'Pretraži kompaniju...',
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+}

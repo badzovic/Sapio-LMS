@@ -1,0 +1,79 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@model CompaniesVM
+
+@{
+    ViewData["Title"] = "Create Company";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .card-custom {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        .form-group-custom {
+            margin-bottom: 18px;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+}
+
+<div class="container-fluid">
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Nova kompanija</h3>
+
+            <a asp-area="Admin"
+               asp-controller="Companies"
+               asp-action="Index"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad
+            </a>
+        </div>
+
+        <form asp-area="Admin" asp-controller="Companies" asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="form-group-custom">
+                <label class="form-label">Naziv</label>
+                <input asp-for="Naziv" class="form-control" />
+                <span asp-validation-for="Naziv" class="text-danger"></span>
+            </div>
+
+            <div class="form-group-custom">
+                <label class="form-label">Napomena</label>
+                <textarea asp-for="Napomena" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Napomena" class="text-danger"></span>
+            </div>
+
+            <div class="actions-row">
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-save"></i> Sačuvaj
+                </button>
+
+                <a asp-area="Admin"
+                   asp-controller="Companies"
+                   asp-action="Index"
+                   class="btn-sapio btn-sapio-secondary">
+                    Odustani
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

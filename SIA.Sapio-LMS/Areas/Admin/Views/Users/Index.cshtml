@@ -6,10 +6,36 @@
 
 <h1>Korisnici</h1>
 <a asp-action="Create" class="btn btn-primary mb-3">Novi korisnik</a>
+<a asp-area="Admin" asp-controller="InternalUsers" asp-action="Index" class="btn btn-outline-secondary mb-3 ms-2">
+    Učitaj interne korisnike
+</a>
+
+@if (TempData["ImportMessage"] != null)
+{
+    <div class="alert alert-info">
+        @TempData["ImportMessage"]
+    </div>
+}
+
+@if (TempData["ImportErrors"] != null)
+{
+    <div class="alert alert-danger" style="white-space: pre-wrap;">
+        @TempData["ImportErrors"]
+    </div>
+}
+
+<form asp-area="Admin" asp-controller="InternalUsers" asp-action="ImportAll" method="post" class="mb-3">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-success"
+            onclick="return confirm('Da li ste sigurni da želite pokrenuti import internih korisnika?');">
+        Import all u LMS
+    </button>
+</form>
+
 <table class="table table-bordered">
     <thead>
         <tr>
-            <th>Email</th>
+            <th>EmailXXXXX</th>
             <th>Ime</th>
             <th>Prezime</th>
             <th>Aktivan</th>

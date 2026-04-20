@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - SIA Sapio LMS</title>
+
+    <link rel="apple-touch-icon" sizes="76x76" href="~/lms/img/apple-icon.png">
+    <link rel="icon" type="image/png" href="~/lms/img/favicon.png">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <link href="~/lms/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="~/lms/css/nucleo-svg.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <link id="pagestyle" href="~/lms/css/argon-dashboard.css" rel="stylesheet" />
+    <link href="~/lms/css/custom.css" rel="stylesheet" asp-append-version="true" />
+
+    <style>
+        body.auth-page {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(15,23,42,0.78), rgba(30,41,59,0.72)), url('/lms/img/dashboard-bg.jpg') center center / cover no-repeat;
+        }
+
+            /* Ako nemaš sliku login-bg.jpg, ostavi ovu dodatnu pozadinu */
+            body.auth-page::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(circle at top left, rgba(59,130,246,0.22), transparent 35%), radial-gradient(circle at bottom right, rgba(16,185,129,0.18), transparent 35%);
+                pointer-events: none;
+            }
+
+            body.auth-page::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                pointer-events: none;
+            }
+
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 430px;
+            background: rgba(255,255,255,0.94);
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+            padding: 35px 30px;
+        }
+
+        .auth-logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            background: #f6f9fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+            box-shadow: inset 0 0 0 1px rgba(94,114,228,.12);
+        }
+
+        .auth-title {
+            text-align: center;
+            font-weight: 700;
+            color: #344767;
+            margin-bottom: 6px;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: #67748e;
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+        }
+
+        .auth-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #344767;
+            margin-bottom: 6px;
+        }
+
+        .auth-input {
+            border-radius: 10px !important;
+            border: 1px solid #d2d6da !important;
+            padding: 0.75rem 0.9rem !important;
+            font-size: 0.95rem;
+            box-shadow: none !important;
+        }
+
+            .auth-input:focus {
+                border-color: #5e72e4 !important;
+                box-shadow: 0 0 0 3px rgba(94,114,228,0.12) !important;
+            }
+
+        .auth-btn {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            background: #5e72e4;
+            color: #fff;
+            font-weight: 700;
+            transition: 0.2s ease-in-out;
+        }
+
+            .auth-btn:hover {
+                background: #324cdd;
+                color: #fff;
+                transform: translateY(-1px);
+            }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 22px;
+            color: #8392ab;
+            font-size: 0.85rem;
+        }
+    </style>
+
+    @RenderSection("Styles", required: false)
+</head>
+<body class="auth-page">
+    <div class="auth-wrapper">
+        @RenderBody()
+    </div>
+
+    <script src="~/lms/js/core/popper.min.js"></script>
+    <script src="~/lms/js/core/bootstrap.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
