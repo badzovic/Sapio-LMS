@@ -18,5 +18,7 @@ namespace SIA.Sapio.LMS.Data.Identity
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; }
+        public bool MustChangePassword { get; set; }
     }
 }

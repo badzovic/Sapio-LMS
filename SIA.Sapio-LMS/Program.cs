@@ -3,14 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using SIA.Sapio.LMS.Data.Context;
 using SIA.Sapio.LMS.Data.Identity;
 using SIA.Sapio.LMS.Data.Seed;
+using SIA.Sapio_LMS.Helpers;
 using SIA.Sapio_LMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                      ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
@@ -18,10 +22,12 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     options.SignIn.RequireConfirmedAccount = false;
 })
 .AddRoles<IdentityRole>()
+.AddErrorDescriber<BosnianIdentityErrorDescriber>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddControllersWithViews();
 
-//api service builder
+// api service builder
 builder.Services.AddHttpClient<InternalUsersApiService>();
 builder.Services.AddHttpClient<ExternalUsersApiService>();
 
@@ -35,7 +41,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -46,7 +51,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ?? REDIRECT NA LOGIN
+// REDIRECT NA LOGIN
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/Identity/Account/Login");

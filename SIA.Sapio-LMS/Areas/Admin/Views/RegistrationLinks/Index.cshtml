@@ -1,0 +1,194 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models.RegistrationLinks
+@using SIA.Sapio_LMS.Models.Shared
+@model RegistrationLinkIndexVM
+
+@{
+    ViewData["Title"] = "Registration Links";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Registration Links",
+                 Subtitle = "Generisanje i upravljanje registracijskim linkovima"
+             }' />
+
+    <div class="card-custom mb-4">
+        <form asp-area="Admin"
+              asp-controller="RegistrationLinks"
+              asp-action="Create"
+              method="post"
+              class="js-confirm-form"
+              data-confirm-title="Generisati novi link?"
+              data-confirm-text="Svi trenutno aktivni registracijski linkovi će biti deaktivirani i kreiraće se novi."
+              data-confirm-icon="warning"
+              data-confirm-button="Da, generiši">
+
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="CreateForm.DurationMinutes" class="form-label">Trajanje (minute)</label>
+                    <select asp-for="CreateForm.DurationMinutes" class="form-select">
+                        <option value="">-- Odaberite trajanje --</option>
+                        <option value="15">15 minuta</option>
+                        <option value="30">30 minuta</option>
+                        <option value="45">45 minuta</option>
+                        <option value="60">60 minuta</option>
+                        <option value="240">240 minuta</option>
+                    </select>
+                    <span asp-validation-for="CreateForm.DurationMinutes" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-8 mb-3">
+                    <label asp-for="CreateForm.Note" class="form-label">Napomena <span class="text-muted">(opcionalno)</span></label>
+                    <input asp-for="CreateForm.Note" class="form-control" />
+                    <span asp-validation-for="CreateForm.Note" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="action-buttons mt-2">
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-link"></i> Generiši novi link
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ActiveRegistrationUrl))
+    {
+        <div class="card-custom mb-4">
+            <h5 class="mb-3">Aktivni registracijski link</h5>
+
+            <div class="mb-3">
+                <input type="text" class="form-control" value="@Model.ActiveRegistrationUrl" readonly id="activeRegistrationUrl" />
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-sapio btn-sapio-secondary" onclick="copyRegistrationLink()">
+                    <i class="fas fa-copy"></i> Kopiraj link
+                </button>
+            </div>
+        </div>
+    }
+
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="registrationLinksTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Kreirano</th>
+                        <th>Važi do</th>
+                        <th>Status</th>
+                        <th>Iskorišteno</th>
+                        <th>Napomena</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Links != null && Model.Links.Any())
+                    {
+                        foreach (var link in Model.Links)
+                        {
+                            <tr>
+                                <td>@link.Token</td>
+                                <td>@link.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@link.ExpiresAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    @if (link.IsCurrentlyValid)
+                                    {
+                                        <span class="badge bg-success">Aktivan</span>
+                                    }
+                                    else if (link.IsActive == "Y")
+                                    {
+                                        <span class="badge bg-warning text-dark">Istekao</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Deaktiviran</span>
+                                    }
+                                </td>
+                                <td>@link.UsedCount</td>
+                                <td>@link.Note</td>
+                                <td>
+                                    @if (link.IsActive == "Y")
+                                    {
+                                        <form asp-area="Admin"
+                                              asp-controller="RegistrationLinks"
+                                              asp-action="Deactivate"
+                                              method="post"
+                                              class="js-confirm-form d-inline"
+                                              data-confirm-title="Deaktivirati link?"
+                                              data-confirm-text="Da li ste sigurni da želite deaktivirati ovaj registracijski link?"
+                                              data-confirm-icon="warning"
+                                              data-confirm-button="Da, deaktiviraj">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@link.Id" />
+
+                                            <button type="submit" class="btn-sapio btn-sapio-danger btn-sapio-sm">
+                                                <i class="fas fa-ban"></i> Deaktiviraj
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            $('#registrationLinksTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih registracijskih linkova",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+
+        function copyRegistrationLink() {
+            const input = document.getElementById('activeRegistrationUrl');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Kopirano',
+                text: 'Registracijski link je kopiran.',
+                confirmButtonColor: '#5e72e4'
+            });
+        }
+    </script>
+}

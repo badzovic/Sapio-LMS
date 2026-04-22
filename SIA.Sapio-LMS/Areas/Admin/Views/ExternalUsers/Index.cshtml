@@ -1,4 +1,5 @@
 ﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
 @model List<ExternalUsersVM>
 
 @{
@@ -7,116 +8,92 @@
     var currentStatus = (ViewBag.CurrentStatus as string ?? "active").ToLower();
 }
 
-@*
-@section Styles {
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
-    <style>
-        .page-title-wrap {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-custom {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
-
-        .table th, .table td {
-            vertical-align: middle;
-            white-space: nowrap;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-    </style>
-}
-*@
-
 <div class="container-fluid">
-    <div class="page-title-wrap">
-        <div>
-            <h2 class="mb-1">External Users</h2>
-            <p class="text-muted mb-0">Pregled eksternih korisnika povučenih iz V3 baze</p>
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "External Users",
+                 Subtitle = "Pregled eksternih korisnika povučenih iz V3 baze"
+             }' />
+
+    <div class="card-custom page-toolbar">
+        <div class="page-toolbar-row">
+            <a asp-area="Admin"
+               asp-controller="ExternalUsers"
+               asp-action="Index"
+               asp-route-status="active"
+               class="btn-sapio @(currentStatus == "active" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                <i class="fas fa-user-check"></i> Aktivni
+            </a>
+
+            <a asp-area="Admin"
+               asp-controller="ExternalUsers"
+               asp-action="Index"
+               asp-route-status="inactive"
+               class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+                <i class="fas fa-user-slash"></i> Neaktivni
+            </a>
+
+            <a asp-area="Admin"
+               asp-controller="ExternalUsers"
+               asp-action="Index"
+               asp-route-status="all"
+               class="btn-sapio @(currentStatus == "all" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                <i class="fas fa-users"></i> Svi
+            </a>
+
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsers"
+                  asp-action="ImportAll"
+                  method="post"
+                  class="js-confirm-form m-0"
+                  data-confirm-title="Import eksternih korisnika?"
+                  data-confirm-text="Da li želite importovati eksterne korisnike u LMS bazu i Identity?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, importuj">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-download"></i> Import eksternih korisnika
+                </button>
+            </form>
+
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsers"
+                  asp-action="SyncAllExternalUsers"
+                  method="post"
+                  class="js-confirm-form m-0"
+                  data-confirm-title="Sync svih eksternih korisnika?"
+                  data-confirm-text="Da li želite osvježiti postojeće eksterne korisnike iz V3 baze? Ova akcija će updateovati podatke i u LMS i u Identity tabelama."
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, syncuj">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn-sapio btn-sapio-success">
+                    <i class="fas fa-sync-alt"></i> Sync svih eksternih korisnika
+                </button>
+            </form>
+
+            @*
+            <form asp-area="Admin"
+                  asp-controller="ExternalUsers"
+                  asp-action="SyncCompanyIds"
+                  method="post"
+                  class="js-confirm-form m-0"
+                  data-confirm-title="Sync kompanija?"
+                  data-confirm-text="Da li želite mapirati KOMPANIJA_ID za eksterne korisnike na osnovu V3 podataka?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, sync">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn-sapio btn-sapio-warning">
+                    <i class="fas fa-building"></i> Sync Company IDs
+                </button>
+            </form>
+            *@
         </div>
     </div>
-
-    <div class="mb-3 d-flex flex-wrap gap-2">
-        <a asp-area="Admin"
-           asp-controller="ExternalUsers"
-           asp-action="Index"
-           asp-route-status="active"
-           class="btn-sapio @(currentStatus == "active" ? "btn-sapio-primary" : "btn-sapio-secondary")">
-            <i class="fas fa-user-check"></i> Aktivni
-        </a>
-
-        <a asp-area="Admin"
-           asp-controller="ExternalUsers"
-           asp-action="Index"
-           asp-route-status="inactive"
-           class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-warning" : "btn-sapio-secondary")">
-            <i class="fas fa-user-slash"></i> Neaktivni
-        </a>
-
-        <a asp-area="Admin"
-           asp-controller="ExternalUsers"
-           asp-action="Index"
-           asp-route-status="all"
-           class="btn-sapio @(currentStatus == "all" ? "btn-sapio-success" : "btn-sapio-secondary")">
-            <i class="fas fa-users"></i> Svi
-        </a>
-    </div>
-
-    <form asp-area="Admin"
-          asp-controller="ExternalUsers"
-          asp-action="ImportAll"
-          method="post"
-          class="mb-3 js-confirm-form"
-          data-confirm-title="Import eksternih korisnika?"
-          data-confirm-text="Da li želite importovati eksterne korisnike u LMS bazu i Identity?"
-          data-confirm-icon="warning"
-          data-confirm-button="Da, importuj">
-        @Html.AntiForgeryToken()
-
-        <button type="submit" class="btn-sapio btn-sapio-primary">
-            <i class="fas fa-download"></i> Import eksternih korisnika
-        </button>
-    </form>
-    <form asp-area="Admin"
-          asp-controller="ExternalUsers"
-          asp-action="SyncAllExternalUsers"
-          method="post"
-          class="mb-3 js-confirm-form"
-          data-confirm-title="Sync svih eksternih korisnika?"
-          data-confirm-text="Da li želite osvježiti postojeće eksterne korisnike iz V3 baze? Ova akcija će updateovati podatke i u LMS i u Identity tabelama."
-          data-confirm-icon="warning"
-          data-confirm-button="Da, syncuj">
-        @Html.AntiForgeryToken()
-
-        <button type="submit" class="btn-sapio btn-sapio-success">
-            <i class="fas fa-sync-alt"></i> Sync svih eksternih korisnika
-        </button>
-    </form>
-
-    @*<form asp-area="Admin"
-          asp-controller="ExternalUsers"
-          asp-action="SyncCompanyIds"
-          method="post"
-          class="mb-3 js-confirm-form"
-          data-confirm-title="Sync kompanija?"
-          data-confirm-text="Da li želite mapirati KOMPANIJA_ID za eksterne korisnike na osnovu V3 podataka?"
-          data-confirm-icon="warning"
-          data-confirm-button="Da, sync">
-        @Html.AntiForgeryToken()
-
-        <button type="submit" class="btn-sapio btn-sapio-warning">
-            <i class="fas fa-building"></i> Sync Company IDs
-        </button>
-    </form>*@
 
     <div class="card-custom">
         <div class="table-responsive">
@@ -161,10 +138,6 @@
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-
     <script>
         $(document).ready(function () {
             $('#externalUsersTable').DataTable({

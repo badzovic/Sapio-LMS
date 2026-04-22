@@ -191,6 +191,64 @@
         </div>
     </main>
 
+    @{
+        ApplicationUser? layoutUser = null;
+        bool mustChangePassword = false;
+
+        if (SignInManager.IsSignedIn(User))
+        {
+            layoutUser = await UserManager.GetUserAsync(User);
+            mustChangePassword = layoutUser?.MustChangePassword ?? false;
+        }
+    }
+
+    @if (mustChangePassword)
+    {
+        <div id="forcePasswordOverlay" class="force-password-overlay">
+            <div class="force-password-panel">
+                <div class="force-password-title">Promjena passworda je obavezna</div>
+                <div class="force-password-subtitle">
+                    Prije nastavka rada morate postaviti novi password. Dok to ne uradite, pristup sistemu je ograničen.
+                </div>
+
+                <form id="forceChangePasswordForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label">Novi password</label>
+                        <input type="password" name="NewPassword" class="form-control" autocomplete="new-password" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Potvrdi password</label>
+                        <input type="password" name="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    </div>
+
+                    <div id="forcePasswordError" class="force-password-error" style="display:none;"></div>
+
+                    <div class="force-password-actions">
+                        <button type="submit" class="btn-sapio btn-sapio-primary">
+                            Sačuvaj novi password
+                        </button>
+
+                        <button type="button" id="forceLogoutBtn" class="btn-sapio btn-sapio-secondary">
+                            Logout
+                        </button>
+                    </div>
+                </form>
+
+                <form asp-area="Identity"
+                      asp-page="/Account/Logout"
+                      asp-route-returnUrl="/"
+                      method="post"
+                      id="forceLogoutForm"
+                      class="d-none">
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+        </div>
+    }
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="~/lms/js/core/popper.min.js"></script>
     <script src="~/lms/js/core/bootstrap.min.js"></script>
@@ -280,6 +338,61 @@
             });
         });
     </script>
+
+    @if (mustChangePassword)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.getElementById('forceChangePasswordForm');
+                const errorBox = document.getElementById('forcePasswordError');
+                const logoutBtn = document.getElementById('forceLogoutBtn');
+                const logoutForm = document.getElementById('forceLogoutForm');
+
+                logoutBtn.addEventListener('click', function () {
+                    logoutForm.submit();
+                });
+
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    errorBox.style.display = 'none';
+                    errorBox.innerText = '';
+
+                    const formData = new FormData(form);
+
+                    try {
+                        const response = await fetch('/Profile/ForceChangePassword', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+
+                        const result = await response.json();
+
+                        if (!result.success) {
+                            errorBox.innerText = result.message;
+                            errorBox.style.display = 'block';
+                            return;
+                        }
+
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Uspješno',
+                            text: result.message,
+                            confirmButtonColor: '#5e72e4'
+                        });
+
+                        window.location.reload();
+                    } catch {
+                        errorBox.innerText = 'Došlo je do greške prilikom promjene passworda.';
+                        errorBox.style.display = 'block';
+                    }
+                });
+            });
+        </script>
+    }
 
     @RenderSection("Scripts", required: false)
 </body>

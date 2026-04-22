@@ -1,57 +1,157 @@
 ﻿@model List<SIA.Sapio.LMS.Data.Identity.ApplicationUser>
+@using SIA.Sapio_LMS.Models.Shared
 
 @{
     ViewData["Title"] = "Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Korisnici</h1>
-<a asp-action="Create" class="btn btn-primary mb-3">Novi korisnik</a>
-<a asp-area="Admin" asp-controller="InternalUsers" asp-action="Index" class="btn btn-outline-secondary mb-3 ms-2">
-    Učitaj interne korisnike
-</a>
+<div class="container-fluid">
 
-@if (TempData["ImportMessage"] != null)
-{
-    <div class="alert alert-info">
-        @TempData["ImportMessage"]
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Users",
+                 Subtitle = "Pregled korisnika i administrativne akcije"
+             }' />
+
+    <div class="card-custom page-toolbar">
+        <div class="page-toolbar-row">
+
+            <a asp-action="Index" asp-route-status="all"
+               class="btn-sapio @(ViewBag.Status == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                Svi
+            </a>
+
+            <a asp-action="Index" asp-route-status="active"
+               class="btn-sapio @(ViewBag.Status == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                Aktivni
+            </a>
+
+            <a asp-action="Index" asp-route-status="pending"
+               class="btn-sapio @(ViewBag.Status == "pending" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+                Čekaju odobrenje
+            </a>
+
+            <a asp-action="Create" class="btn-sapio btn-sapio-primary">
+                <i class="fas fa-plus"></i> Novi korisnik
+            </a>
+
+            <a asp-area="Admin"
+               asp-controller="InternalUsers"
+               asp-action="Index"
+               class="btn-sapio btn-sapio-secondary">
+                <i class="fas fa-users"></i> Interni korisnici
+            </a>
+
+            <a asp-area="Admin"
+               asp-controller="RegistrationLinks"
+               asp-action="Index"
+               class="btn-sapio btn-sapio-warning">
+                <i class="fas fa-link"></i> Registration Links
+            </a>
+
+            <form asp-area="Admin"
+                  asp-controller="InternalUsers"
+                  asp-action="ImportAll"
+                  method="post"
+                  class="js-confirm-form m-0"
+                  data-confirm-title="Import internih korisnika?"
+                  data-confirm-text="Da li ste sigurni da želite pokrenuti import internih korisnika u LMS?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, importuj">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn-sapio btn-sapio-success">
+                    <i class="fas fa-download"></i> Import all u LMS
+                </button>
+            </form>
+        </div>
     </div>
-}
 
-@if (TempData["ImportErrors"] != null)
-{
-    <div class="alert alert-danger" style="white-space: pre-wrap;">
-        @TempData["ImportErrors"]
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="usersTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Ime</th>
+                        <th>Prezime</th>
+                        <th>Aktivan</th>
+                        <th>Eksterni saradnik</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.Email</td>
+                                <td>@user.FirstName</td>
+                                <td>@user.LastName</td>
+                                <td>@(user.IsActive ? "Da" : "Ne")</td>
+                                <td>@(user.IsExternalCollaborator ? "Da" : "Ne")</td>
+                                <td>
+                                    @if (!user.IsActive)
+                                    {
+                                        <form asp-action="ApproveAsExternal" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+
+                                            <button class="btn-sapio btn-sapio-success btn-sapio-sm">
+                                                Eksterni
+                                            </button>
+                                        </form>
+
+                                        <form asp-action="ApproveAsSeasonal" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+
+                                            <button class="btn-sapio btn-sapio-warning btn-sapio-sm">
+                                                Sezonac
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#usersTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih korisnika",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
 }
-
-<form asp-area="Admin" asp-controller="InternalUsers" asp-action="ImportAll" method="post" class="mb-3">
-    @Html.AntiForgeryToken()
-    <button type="submit" class="btn btn-success"
-            onclick="return confirm('Da li ste sigurni da želite pokrenuti import internih korisnika?');">
-        Import all u LMS
-    </button>
-</form>
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>EmailXXXXX</th>
-            <th>Ime</th>
-            <th>Prezime</th>
-            <th>Aktivan</th>
-            <th>Eksterni saradnik</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td>@user.Email</td>
-                <td>@user.FirstName</td>
-                <td>@user.LastName</td>
-                <td>@user.IsActive</td>
-                <td>@user.IsExternalCollaborator</td>
-            </tr>
-        }
-    </tbody>
-</table>

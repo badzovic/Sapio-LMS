@@ -1,98 +1,71 @@
 ﻿@using SIA.Sapio_LMS.Areas.Admin.Controllers
+@using SIA.Sapio_LMS.Models.Shared
 @model List<InternalUserDto>
 
 @{
     ViewData["Title"] = "Internal Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-@*
-@section Styles {
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
-    <style>
-        .page-title-wrap {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-custom {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
-
-        .table th, .table td {
-            vertical-align: middle;
-            white-space: nowrap;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-    </style>
-}
-*@
 
 <div class="container-fluid">
-    <div class="page-title-wrap">
-        <div>
-            <h2 class="mb-1">Internal Users</h2>
-            <p class="text-muted mb-0">Pregled korisnika povučenih preko internog API-ja</p>
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Internal Users",
+                 Subtitle = "Pregled korisnika povučenih preko internog API-ja"
+             }' />
+
+    <div class="card-custom page-toolbar">
+        <div class="page-toolbar-row">
+            <form asp-area="Admin"
+                  asp-controller="InternalUsers"
+                  asp-action="SyncInternalUsers"
+                  method="post"
+                  class="js-confirm-form m-0"
+                  data-confirm-title="Sync korisnika?"
+                  data-confirm-text="Pokrenuti sync internih korisnika i dopuniti IME_OCA?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, sync">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn-sapio btn-sapio-warning">
+                    <i class="fas fa-sync-alt"></i> Sync korisnika
+                </button>
+            </form>
+
+            @*
+            <form asp-area="Admin"
+                  asp-controller="InternalUsers"
+                  asp-action="AssignDefaultRoleToAllUsers"
+                  method="post"
+                  class="js-confirm-form m-0"
+                  data-confirm-title="Dodjela role?"
+                  data-confirm-text="Da li ste sigurni da želite svim korisnicima dodijeliti zadanu rolu?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Potvrdi">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-user-tag"></i> Dodijeli rolu svim korisnicima
+                </button>
+            </form>
+            *@
         </div>
     </div>
-    <div class="d-flex gap-2 flex-wrap mb-3">
-        <!-- oba form-a unutra -->
-    <form asp-area="Admin" asp-controller="InternalUsers" asp-action="SyncInternalUsers"
-          method="post" class="mb-3 js-confirm-form"
-          data-confirm-title="Sync korisnika?"
-          data-confirm-text="Pokrenuti sync internih korisnika i dopuniti IME_OCA?"
-          data-confirm-icon="warning"
-          data-confirm-button="Da, sync">
 
-        @Html.AntiForgeryToken()
-
-        <button type="submit" class="btn-sapio btn-sapio-warning">
-            <i class="fas fa-sync-alt"></i> Sync korisnika
-        </button>
-    </form>
-
-    @* <form asp-area="Admin" asp-controller="InternalUsers" asp-action="ResetAllPasswords" method="post" class="mb-3">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-danger"
-                onclick="return confirm('Da li ste sigurni da želite svim korisnicima osim admina postaviti lozinku Sarajevo2026!?');">
-            Reset svih passworda
-        </button>
-    </form> *@
-
-    @* <form asp-area="Admin" asp-controller="InternalUsers" asp-action="AssignDefaultRoleToAllUsers"
-          method="post" class="mb-3 js-confirm-form"
-          data-confirm-title="Dodjela role?"
-          data-confirm-text="Da li ste sigurni da želite svim korisnicima dodijeliti zadanu rolu?"
-          data-confirm-icon="warning"
-          data-confirm-button="Potvrdi">
-
-        @Html.AntiForgeryToken()
-
-        <button type="submit" class="btn-sapio btn-sapio-primary">
-            <i class="fas fa-user-tag"></i> Dodijeli rolu svim korisnicima
-        </button>
-    </form> *@
-    </div>
     <div class="card-custom">
         <div class="table-responsive">
             <table id="internalUsersTable" class="table table-bordered table-striped w-100">
                 <thead>
                     <tr>
-                        @* <th>HRM ID</th> *@
                         <th>Ime</th>
                         <th>Prezime</th>
                         <th>Ime oca</th>
-                        @* <th>JMB</th> *@
                         <th>Email</th>
                         <th>Kompanija</th>
-                        @* <th>Access Key</th> *@
                         <th>Akcije</th>
                     </tr>
                 </thead>
@@ -102,14 +75,11 @@
                         foreach (var user in Model)
                         {
                             <tr>
-                               @*  <td>@user.HrmId</td> *@
                                 <td>@user.Ime</td>
                                 <td>@user.Prezime</td>
                                 <td>@user.ImeOca</td>
-                                @* <td>@user.Jmb</td> *@
                                 <td>@user.Email</td>
-                                <td>@user.Kompanija </td>
-                                @* <td>@user.AccessKey</td> *@
+                                <td>@user.Kompanija</td>
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(user.UserId))
                                     {
@@ -117,7 +87,7 @@
                                            asp-controller="InternalUsersManagement"
                                            asp-action="Details"
                                            asp-route-userId="@user.UserId"
-                                           class="btn-sapio btn-sapio-primary">
+                                           class="btn-sapio btn-sapio-primary btn-sapio-sm">
                                             <i class="fas fa-eye"></i> Detalji
                                         </a>
                                     }
@@ -135,8 +105,7 @@
     </div>
 </div>
 
-@section Scripts {   
-
+@section Scripts {
     <script>
         $(document).ready(function () {
             $('#internalUsersTable').DataTable({

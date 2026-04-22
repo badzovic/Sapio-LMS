@@ -16,6 +16,7 @@ namespace SIA.Sapio.LMS.Data.Context
         public DbSet<Kompanija> KOMPANIJE { get; set; }
         public DbSet<TipKorisnika> TIPOVI_KORISNIKA { get; set; }
 
+        public DbSet<RegistrationToken> REGISTRATION_TOKENS { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

@@ -1,0 +1,22 @@
+﻿@using SIA.Sapio_LMS.Models.Shared
+
+@{
+    ViewData["Title"] = "Nevažeći link";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Registracijski link nije validan",
+                 Subtitle = "Link je istekao, deaktiviran ili nije ispravan"
+             }' />
+
+    <div class="card-custom">
+        <p class="mb-0">
+            Molimo obratite se administratoru kako biste dobili novi registracijski link.
+        </p>
+    </div>
+</div>

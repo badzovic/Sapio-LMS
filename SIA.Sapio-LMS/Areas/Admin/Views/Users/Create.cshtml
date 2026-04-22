@@ -1,52 +1,93 @@
 ﻿@model SIA.Sapio_LMS.Areas.Admin.Models.CreateUserVM
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using SIA.Sapio_LMS.Models.Shared
 
 @{
     ViewData["Title"] = "Kreiraj korisnika";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var roles = ViewBag.Roles as List<SelectListItem> ?? new List<SelectListItem>();
+    var tipoviKorisnika = ViewBag.TipoviKorisnika as List<SelectListItem> ?? new List<SelectListItem>();
+    var defaultPassword = ViewBag.DefaultPassword as string ?? "Sarajevo2026!";
 }
 
-<h1>Kreiraj korisnika</h1>
+<div class="container-fluid">
 
-<form asp-action="Create" method="post">
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Kreiraj korisnika",
+                 Subtitle = "Ručno kreiranje eksternog ili sezonskog korisnika"
+             }' />
+
+    <div class="card-custom">        
+
+        <form asp-action="Create"
+              method="post"
+              class="js-confirm-form"
+              data-confirm-title="Kreirati korisnika?"
+              data-confirm-text="Novi korisnik će biti kreiran sa defaultnim passwordom: Sarajevo2026!"
+              data-confirm-icon="warning"
+              data-confirm-button="Da, kreiraj"
+              novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="TipKorisnikaId" class="form-label">Tip korisnika</label>
+                    <select asp-for="TipKorisnikaId" asp-items="tipoviKorisnika" class="form-select">
+                        <option value="">-- Odaberite tip korisnika --</option>
+                    </select>
+                    <span asp-validation-for="TipKorisnikaId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Role" class="form-label">Rola</label>
+                    <select asp-for="Role" asp-items="roles" class="form-select">
+                        <option value="">-- Odaberite rolu --</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="FirstName" class="form-label">Ime</label>
+                    <input asp-for="FirstName" class="form-control" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ImeOca" class="form-label">Ime oca</label>
+                    <input asp-for="ImeOca" class="form-control" />
+                    <span asp-validation-for="ImeOca" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="LastName" class="form-label">Prezime</label>
+                    <input asp-for="LastName" class="form-control" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Email" class="form-label">
+                        Email <span class="text-muted">(opcionalno)</span>
+                    </label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="action-buttons mt-3">
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-save"></i> Sačuvaj
+                </button>
+
+                <a asp-action="Index" class="btn-sapio btn-sapio-secondary">
+                    Nazad
+                </a>
+            </div>
+        </form>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="FirstName" class="form-label"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="LastName" class="form-label"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
-        <input asp-for="Password" class="form-control" type="password" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Role" class="form-label"></label>
-        <select asp-for="Role" asp-items="ViewBag.Roles" class="form-control">
-            <option value="">-- Odaberite rolu --</option>
-        </select>
-        <span asp-validation-for="Role" class="text-danger"></span>
-    </div>
-
-    <div class="form-check mb-3">
-        <input asp-for="IsExternalCollaborator" class="form-check-input" />
-        <label asp-for="IsExternalCollaborator" class="form-check-label"></label>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Sačuvaj</button>
-    <a asp-action="Index" class="btn btn-secondary">Nazad</a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -1,0 +1,113 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@model ExternalUserDetailsVM
+
+@{
+    ViewData["Title"] = "Seasonal User Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userRoles = ViewBag.UserRoles as IList<string> ?? new List<string>();
+    var allRoles = ViewBag.AllRoles as IList<string> ?? new List<string>();
+    var isActive = ViewBag.IsActive is bool active && active;
+    var tipKorisnikaText = ViewBag.TipKorisnikaText as string ?? "-";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new SIA.Sapio_LMS.Models.Shared.PageHeaderVM
+             {
+                 Title = "Seasonal User Details",
+                 Subtitle = "Pregled i upravljanje sezonskim radnikom"
+             }' />
+
+    <div class="card-custom">
+        <div class="info-row" hidden><span class="info-label">Lokalni ID:</span> @Model.ID</div>
+        <div class="info-row" hidden><span class="info-label">User ID:</span> @Model.UserId</div>
+
+        <div class="info-row"><span class="info-label">Ime:</span> @Model.Ime</div>
+        <div class="info-row"><span class="info-label">Prezime:</span> @Model.Prezime</div>
+        <div class="info-row"><span class="info-label">Ime oca:</span> @Model.ImeOca</div>
+        <div class="info-row"><span class="info-label">Mjesto rođenja:</span> @Model.MjestoRodjenja</div>
+        <div class="info-row"><span class="info-label">Email:</span> @(string.IsNullOrWhiteSpace(Model.Email) ? "-" : Model.Email)</div>
+        <div class="info-row"><span class="info-label">Tip korisnika:</span> @tipKorisnikaText</div>
+        <div class="info-row"><span class="info-label">Aktivan:</span> @Model.Aktivan</div>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Akcije</h5>
+
+        <div class="action-buttons">
+            <form asp-area="Admin"
+                  asp-controller="SeasonalUsersManagement"
+                  asp-action="ResetPassword"
+                  method="post"
+                  class="js-confirm-form d-inline"
+                  data-confirm-title="Reset password?"
+                  data-confirm-text="Resetovati password za korisnika @Model.Ime @Model.Prezime na Sarajevo2026!?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, resetuj">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ID" />
+
+                <button type="submit" class="btn-sapio btn-sapio-danger">
+                    <i class="fas fa-key"></i> Reset password
+                </button>
+            </form>
+
+            <form asp-area="Admin"
+                  asp-controller="SeasonalUsersManagement"
+                  asp-action="ToggleActive"
+                  method="post"
+                  class="js-confirm-form d-inline"
+                  data-confirm-title="Promjena statusa?"
+                  data-confirm-text="Da li želite promijeniti status korisnika?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Potvrdi">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ID" />
+
+                <button type="submit"
+                        class="btn-sapio @(isActive ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    <i class="fas @(isActive ? "fa-user-slash" : "fa-user-check")"></i>
+                    @(isActive ? " Deaktiviraj" : " Aktiviraj")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Role korisnika</h5>
+
+        <div class="role-buttons">
+            @foreach (var role in allRoles)
+            {
+                var hasRole = userRoles.Contains(role);
+
+                <form asp-area="Admin"
+                      asp-controller="SeasonalUsersManagement"
+                      asp-action="ToggleRole"
+                      method="post"
+                      class="js-confirm-form d-inline"
+                      data-confirm-title="Promjena role"
+                      data-confirm-text="Da li želite @(hasRole ? "ukloniti" : "dodijeliti") rolu '@role' korisniku @Model.Ime @Model.Prezime?"
+                      data-confirm-icon="question"
+                      data-confirm-button="Da, potvrdi">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.ID" />
+                    <input type="hidden" name="roleName" value="@role" />
+
+                    <button type="submit"
+                            class="btn-sapio @(hasRole ? "btn-sapio-success" : "btn-sapio-secondary")">
+                        @role
+                    </button>
+                </form>
+            }
+        </div>
+
+        <div class="mt-3">
+            <small class="text-muted">
+                Zelena boja znači da je rola aktivna. Siva znači da nije dodijeljena.
+            </small>
+        </div>
+    </div>
+</div>

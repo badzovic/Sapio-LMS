@@ -1,0 +1,73 @@
+﻿@model SIA.Sapio_LMS.Models.RegisterUserVM
+
+@{
+    ViewData["Title"] = "Registracija";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="auth-card">
+
+    <div class="auth-logo">
+        <img src="~/lms/img/logo-ct-dark.png" style="max-width:34px;" />
+    </div>
+
+    <h3 class="auth-title">SIA Sapio LMS</h3>
+    <div class="auth-subtitle">Registracija novog korisnika</div>
+
+    <form asp-action="Register"
+          method="post"
+          class="js-confirm-form"
+          data-confirm-title="Potvrda registracije"
+          data-confirm-text="Vaš nalog će biti kreiran sa defaultnim passwordom: Sarajevo2026! Nakon toga čeka odobrenje administratora."
+          data-confirm-icon="warning"
+          data-confirm-button="Da, registruj">
+
+        @Html.AntiForgeryToken()
+        <input asp-for="Token" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="FirstName" class="auth-label">Ime</label>
+            <input asp-for="FirstName" class="form-control auth-input" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LastName" class="auth-label">Prezime</label>
+            <input asp-for="LastName" class="form-control auth-input" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ImeOca" class="auth-label">Ime oca</label>
+            <input asp-for="ImeOca" class="form-control auth-input" />
+            <span asp-validation-for="ImeOca" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="auth-label">Email <span class="text-muted">(opcionalno)</span></label>
+            <input asp-for="Email" class="form-control auth-input" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="MjestoRodjenja" class="auth-label">Mjesto rođenja <span class="text-muted">(opcionalno)</span></label>
+            <input asp-for="MjestoRodjenja" class="form-control auth-input" />
+            <span asp-validation-for="MjestoRodjenja" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="auth-btn">
+            <i class="fas fa-user-plus"></i> Registruj se
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        © @DateTime.Now.Year SIA Sapio LMS
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

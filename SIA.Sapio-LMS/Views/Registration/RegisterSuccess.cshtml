@@ -1,0 +1,22 @@
+﻿@using SIA.Sapio_LMS.Models.Shared
+
+@{
+    ViewData["Title"] = "Registracija završena";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Registracija završena",
+                 Subtitle = "Vaš zahtjev je uspješno zaprimljen"
+             }' />
+
+    <div class="card-custom">
+        <p class="mb-0">
+            Vaš nalog je kreiran i trenutno čeka odobrenje administratora.
+        </p>
+    </div>
+</div>

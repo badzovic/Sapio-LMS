@@ -1,0 +1,123 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model List<ExternalUsersVM>
+
+@{
+    ViewData["Title"] = "Seasonal Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var currentStatus = (ViewBag.CurrentStatus as string ?? "active").ToLower();
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Seasonal Users",
+                 Subtitle = "Pregled sezonskih radnika"
+             }' />
+
+    <div class="card-custom page-toolbar">
+        <div class="page-toolbar-row">
+            <a asp-area="Admin"
+               asp-controller="SeasonalUsers"
+               asp-action="Index"
+               asp-route-status="active"
+               class="btn-sapio @(currentStatus == "active" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                <i class="fas fa-user-check"></i> Aktivni
+            </a>
+
+            <a asp-area="Admin"
+               asp-controller="SeasonalUsers"
+               asp-action="Index"
+               asp-route-status="inactive"
+               class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+                <i class="fas fa-user-slash"></i> Neaktivni
+            </a>
+
+            <a asp-area="Admin"
+               asp-controller="SeasonalUsers"
+               asp-action="Index"
+               asp-route-status="all"
+               class="btn-sapio @(currentStatus == "all" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                <i class="fas fa-users"></i> Svi
+            </a>            
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="seasonalUsersTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Ime</th>
+                        <th>Prezime</th>
+                        <th>Ime oca</th>
+                        <th>Mjesto rođenja</th>
+                        <th>Kompanija</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.Ime</td>
+                                <td>@user.Prezime</td>
+                                <td>@user.ImeOca</td>
+                                <td>@user.MjestoRodjenja</td>
+                                <td>@user.Kompanija</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(user.UserId))
+                                    {
+                                        <a asp-area="Admin"
+                                           asp-controller="SeasonalUsersManagement"
+                                           asp-action="Details"
+                                           asp-route-id="@user.ID"
+                                           class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                            <i class="fas fa-eye"></i> Detalji
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Nema usera</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#seasonalUsersTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih sezonskih korisnika",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}
