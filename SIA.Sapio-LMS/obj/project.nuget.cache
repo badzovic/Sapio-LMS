@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "YiNKi/MBwYQ=",
+  "dgSpecHash": "qvo9Lc0ACQ0=",
   "success": true,
-  "projectFilePath": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj",
+  "projectFilePath": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\mandzo dino\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\mandzo dino\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

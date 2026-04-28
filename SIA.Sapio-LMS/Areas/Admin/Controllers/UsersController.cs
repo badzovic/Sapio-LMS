@@ -7,6 +7,7 @@ using SIA.Sapio.LMS.Data.Context;
 using SIA.Sapio.LMS.Data.Entities;
 using SIA.Sapio.LMS.Data.Identity;
 using SIA.Sapio_LMS.Areas.Admin.Models;
+using SIA.Sapio_LMS.Areas.Admin.Models.Users;
 
 namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 {
@@ -25,26 +26,114 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             _userManager = userManager;
         }
 
-        public IActionResult Index(string status = "all")
+        //public IActionResult Index(string status = "all")
+        //{
+        //    var usersQuery = _userManager.Users
+        //        .Where(x => !x.IsDeleted)
+        //        .AsQueryable();
+
+        //    if (status == "pending")
+        //    {
+        //        usersQuery = usersQuery.Where(x => !x.IsActive);
+        //    }
+        //    else if (status == "active")
+        //    {
+        //        usersQuery = usersQuery.Where(x => x.IsActive);
+        //    }
+
+        //    var users = usersQuery.ToList();
+
+        //    ViewBag.Status = status;
+
+        //    return View(users);
+        //}
+
+        public async Task<IActionResult> Index(string status = "all", string type = "all")
         {
-            var usersQuery = _userManager.Users
-                .Where(x => !x.IsDeleted)
-                .AsQueryable();
+            status = (status ?? "all").ToLower();
+            type = (type ?? "all").ToLower();
+
+            var query =
+                from u in _dbContext.Users
+                join k in _dbContext.KORISNICI on u.Id equals k.USER_ID into korisniciJoin
+                from k in korisniciJoin.DefaultIfEmpty()
+                join tk in _dbContext.TIPOVI_KORISNIKA on k.TIP_KORISNIKA_ID equals tk.ID into tipoviJoin
+                from tk in tipoviJoin.DefaultIfEmpty()
+                where !u.IsDeleted
+                select new UserIndexRowVM
+                {
+                    UserId = u.Id,
+                    KorisnikId = k != null ? k.ID : (int?)null,
+                    Email = u.Email,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    ImeOca = k != null ? k.IME_OCA : null,
+
+                    IsActiveIdentity = u.IsActive,
+                    AktivanLocal = k != null ? k.AKTIVAN : "N",
+
+                    //IsExternalCollaborator = u.IsExternalCollaborator,
+                    //MustChangePassword = u.MustChangePassword,
+
+                    TipKorisnikaId = k != null ? k.TIP_KORISNIKA_ID : null,
+                    TipKorisnikaNaziv = tk != null ? tk.Naziv : null,
+
+                    IsPending = !u.IsActive && (k == null || k.TIP_KORISNIKA_ID == null),
+
+                    DetailsController =
+                        tk != null && tk.Naziv == "Interni" ? "InternalUsersManagement" :
+                        tk != null && tk.Naziv == "Eksterni" ? "ExternalUsersManagement" :
+                        tk != null && tk.Naziv == "Sezonski radnik" ? "SeasonalUsersManagement" :
+                        "Users",
+
+                    DetailsAction = "Details",
+
+                    DetailsRouteType =
+                        tk != null && tk.Naziv == "Interni" ? "userId" :
+                        "id"
+                };
 
             if (status == "pending")
             {
-                usersQuery = usersQuery.Where(x => !x.IsActive);
+                query = query.Where(x => x.IsPending);
             }
             else if (status == "active")
             {
-                usersQuery = usersQuery.Where(x => x.IsActive);
+                query = query.Where(x => x.IsActiveIdentity);
+            }
+            else if (status == "inactive")
+            {
+                query = query.Where(x => !x.IsActiveIdentity && !x.IsPending);
             }
 
-            var users = usersQuery.ToList();
+            if (type == "internal")
+            {
+                query = query.Where(x => x.TipKorisnikaNaziv == "Interni");
+            }
+            else if (type == "external")
+            {
+                query = query.Where(x => x.TipKorisnikaNaziv == "Eksterni");
+            }
+            else if (type == "seasonal")
+            {
+                query = query.Where(x => x.TipKorisnikaNaziv == "Sezonski radnik");
+            }
+            else if (type == "pending")
+            {
+                query = query.Where(x => x.IsPending);
+            }
 
-            ViewBag.Status = status;
+            var model = new UserIndexVM
+            {
+                Users = await query
+                    .OrderBy(x => x.LastName)
+                    .ThenBy(x => x.FirstName)
+                    .ToListAsync(),
+                Status = status,
+                TypeFilter = type
+            };
 
-            return View(users);
+            return View(model);
         }
 
         [HttpGet]

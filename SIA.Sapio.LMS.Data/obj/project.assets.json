@@ -4183,11 +4183,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
+      "projectUniqueName": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
       "projectName": "SIA.Sapio.LMS.Data",
-      "projectPath": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
+      "projectPath": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj",
       "packagesPath": "C:\\Users\\mandzo dino\\.nuget\\packages\\",
-      "outputPath": "D:\\GitHub\\VMS-1.2\\Sapio-LMS\\SIA.Sapio.LMS.Data\\obj\\",
+      "outputPath": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

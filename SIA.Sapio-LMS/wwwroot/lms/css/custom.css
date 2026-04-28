@@ -479,3 +479,61 @@ button.btn-sapio {
     font-size: 0.9rem;
     margin-top: 8px;
 }
+
+/* =========================
+   USERS FILTER TOOLBAR
+   ========================= */
+
+.page-toolbar-group {
+    margin-bottom: 14px;
+}
+
+    .page-toolbar-group:last-child {
+        margin-bottom: 0;
+    }
+
+.page-toolbar-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #67748e;
+    margin-bottom: 8px;
+}
+
+.filter-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    margin-bottom: 14px;
+}
+
+.filter-summary-label {
+    font-size: 0.85rem;
+    color: #67748e;
+    font-weight: 600;
+}
+
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #5e72e4;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.page-toolbar-divider {
+    height: 1px;
+    background: #edf2f7;
+    margin: 14px 0;
+}

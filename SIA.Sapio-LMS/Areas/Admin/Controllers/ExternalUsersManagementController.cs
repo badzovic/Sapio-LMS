@@ -29,7 +29,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             _externalUsersApiService = externalUsersApiService;
         }
 
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, string? returnUrl = null)
         {
             var lokalniUser = await _dbContext.KORISNICI
                 .Include(x => x.Kompanija)
@@ -101,9 +101,15 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                 TipKorisnikaId = lokalniUser.TIP_KORISNIKA_ID,
                 Aktivan = lokalniUser.AKTIVAN
             };
+            
+
+            ViewBag.ReturnUrl = string.IsNullOrWhiteSpace(returnUrl)
+                ? Url.Action("Index", "Users", new { area = "Admin", status = "all", type = "all" })
+                : returnUrl;
 
             return View(model);
         }
+        
 
         [HttpPost]
         [ValidateAntiForgeryToken]

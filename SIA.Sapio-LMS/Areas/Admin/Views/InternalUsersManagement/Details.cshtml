@@ -8,6 +8,8 @@
     var userRoles = ViewBag.UserRoles as IList<string> ?? new List<string>();
     var allRoles = ViewBag.AllRoles as IList<string> ?? new List<string>();
     var isActive = ViewBag.IsActive is bool active && active;
+    var returnUrl = ViewBag.ReturnUrl as string
+        ?? Url.Action("Index", "Users", new { area = "Admin", status = "all", type = "all" });
 }
 
 @*section Styles {
@@ -43,11 +45,7 @@
     <div class="card-custom">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0">Detalji korisnika</h3>
-
-            <a asp-area="Admin"
-               asp-controller="InternalUsers"
-               asp-action="Index"
-               class="btn-sapio btn-sapio-secondary">
+            <a href="@returnUrl" class="btn-sapio btn-sapio-secondary">
                 Nazad na listu
             </a>
         </div>

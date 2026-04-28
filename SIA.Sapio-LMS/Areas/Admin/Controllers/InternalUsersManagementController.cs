@@ -28,7 +28,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             _internalUsersApiService = internalUsersApiService;
         }
 
-        public async Task<IActionResult> Details(string userId)
+        public async Task<IActionResult> Details(string userId, string? returnUrl = null)
         {
             if (string.IsNullOrWhiteSpace(userId))
                 return NotFound();
@@ -58,6 +58,10 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             ViewBag.UserRoles = userRoles;
             ViewBag.AllRoles = new List<string> { "Admin", "Student", "Instruktor" };
             ViewBag.IsActive = localUser?.AKTIVAN == "Y";
+
+            ViewBag.ReturnUrl = string.IsNullOrWhiteSpace(returnUrl)
+            ? Url.Action("Index", "Users", new { area = "Admin", status = "all", type = "all" })
+            : returnUrl;
 
             return View(model);
         }

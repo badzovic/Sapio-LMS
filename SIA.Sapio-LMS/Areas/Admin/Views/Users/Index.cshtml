@@ -1,9 +1,37 @@
-﻿@model List<SIA.Sapio.LMS.Data.Identity.ApplicationUser>
+﻿@model SIA.Sapio_LMS.Areas.Admin.Models.Users.UserIndexVM
 @using SIA.Sapio_LMS.Models.Shared
 
 @{
     ViewData["Title"] = "Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var currentStatus = (Model?.Status ?? "all").ToLower();
+    var currentType = (Model?.TypeFilter ?? "all").ToLower();
+
+    var backUrl = Url.Action("Index", "Users", new
+    {
+        area = "Admin",
+        status = currentStatus,
+        type = currentType
+    });
+
+    string statusText = currentStatus switch
+    {
+        "active" => "Aktivni",
+        "inactive" => "Neaktivni",
+        "pending" => "Čekaju odobrenje",
+        _ => "Svi"
+    };
+
+    string typeText = currentType switch
+    {
+        "internal" => "Interni",
+        "external" => "Eksterni",
+        "seasonal" => "Sezonski",
+        "pending" => "Pending",
+        _ => "Svi tipovi"
+    };
+
 }
 
 <div class="container-fluid">
@@ -12,36 +40,92 @@
              model='new PageHeaderVM
              {
                  Title = "Users",
-                 Subtitle = "Pregled korisnika i administrativne akcije"
+                 Subtitle = "Centralni pregled svih korisnika i administrativnih akcija"
              }' />
 
     <div class="card-custom page-toolbar">
-        <div class="page-toolbar-row">
 
-            <a asp-action="Index" asp-route-status="all"
-               class="btn-sapio @(ViewBag.Status == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+    <div class="filter-summary">
+        <span class="filter-summary-label">Aktivni filteri:</span>
+        <span class="filter-pill">@statusText</span>
+        <span class="filter-pill">@typeText</span>
+    </div>
+
+    <div class="page-toolbar-group">
+        <span class="page-toolbar-label">Status korisnika</span>
+        <div class="page-toolbar-row">
+            <a asp-action="Index"
+               asp-route-status="all"
+               asp-route-type="@currentType"
+               class="btn-sapio @(currentStatus == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
                 Svi
             </a>
 
-            <a asp-action="Index" asp-route-status="active"
-               class="btn-sapio @(ViewBag.Status == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
+            <a asp-action="Index"
+               asp-route-status="active"
+               asp-route-type="@currentType"
+               class="btn-sapio @(currentStatus == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
                 Aktivni
             </a>
 
-            <a asp-action="Index" asp-route-status="pending"
-               class="btn-sapio @(ViewBag.Status == "pending" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+            <a asp-action="Index"
+               asp-route-status="inactive"
+               asp-route-type="@currentType"
+               class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-danger" : "btn-sapio-secondary")">
+                Neaktivni
+            </a>
+
+            <a asp-action="Index"
+               asp-route-status="pending"
+               asp-route-type="@currentType"
+               class="btn-sapio @(currentStatus == "pending" ? "btn-sapio-warning" : "btn-sapio-secondary")">
                 Čekaju odobrenje
             </a>
+        </div>
+    </div>
 
-            <a asp-action="Create" class="btn-sapio btn-sapio-primary">
-                <i class="fas fa-plus"></i> Novi korisnik
+    <div class="page-toolbar-divider"></div>
+
+    <div class="page-toolbar-group">
+        <span class="page-toolbar-label">Tip korisnika</span>
+        <div class="page-toolbar-row">
+            <a asp-action="Index"
+               asp-route-status="@currentStatus"
+               asp-route-type="all"
+               class="btn-sapio @(currentType == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                Svi tipovi
             </a>
 
-            <a asp-area="Admin"
-               asp-controller="InternalUsers"
-               asp-action="Index"
-               class="btn-sapio btn-sapio-secondary">
-                <i class="fas fa-users"></i> Interni korisnici
+            <a asp-action="Index"
+               asp-route-status="@currentStatus"
+               asp-route-type="internal"
+               class="btn-sapio @(currentType == "internal" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                Interni
+            </a>
+
+            <a asp-action="Index"
+               asp-route-status="@currentStatus"
+               asp-route-type="external"
+               class="btn-sapio @(currentType == "external" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                Eksterni
+            </a>
+
+            <a asp-action="Index"
+               asp-route-status="@currentStatus"
+               asp-route-type="seasonal"
+               class="btn-sapio @(currentType == "seasonal" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                Sezonski
+            </a>
+        </div>
+    </div>
+
+    <div class="page-toolbar-divider"></div>
+
+    <div class="page-toolbar-group">
+        <span class="page-toolbar-label">Opšte admin opcije</span>
+        <div class="page-toolbar-row">
+            <a asp-action="Create" class="btn-sapio btn-sapio-primary">
+                <i class="fas fa-plus"></i> Novi korisnik
             </a>
 
             <a asp-area="Admin"
@@ -50,24 +134,47 @@
                class="btn-sapio btn-sapio-warning">
                 <i class="fas fa-link"></i> Registration Links
             </a>
-
-            <form asp-area="Admin"
-                  asp-controller="InternalUsers"
-                  asp-action="ImportAll"
-                  method="post"
-                  class="js-confirm-form m-0"
-                  data-confirm-title="Import internih korisnika?"
-                  data-confirm-text="Da li ste sigurni da želite pokrenuti import internih korisnika u LMS?"
-                  data-confirm-icon="warning"
-                  data-confirm-button="Da, importuj">
-                @Html.AntiForgeryToken()
-
-                <button type="submit" class="btn-sapio btn-sapio-success">
-                    <i class="fas fa-download"></i> Import all u LMS
-                </button>
-            </form>
         </div>
     </div>
+
+        @if (currentType == "internal")
+        {
+            <div class="page-toolbar-divider"></div>
+
+            <div class="page-toolbar-group">
+                <span class="page-toolbar-label">Opcije za interne korisnike</span>
+                <div class="page-toolbar-row">
+                    @* <a asp-area="Admin"
+                       asp-controller="InternalUsers"
+                       asp-action="Index"
+                       class="btn-sapio btn-sapio-secondary">
+                        <i class="fas fa-users"></i> Interni korisnici
+                    </a> *@
+
+                    <form asp-area="Admin"
+                          asp-controller="InternalUsers"
+                          asp-action="SyncInternalUsers"
+                          method="post"
+                          class="js-confirm-form m-0"
+                          data-confirm-title="Sync korisnika?"
+                          data-confirm-text="Sinhronizacija podataka internih korisnika - ime, prezime, ime oca, email i access-key ce biti sinhronizirani prema podatcima iz HRM."
+                          data-confirm-icon="warning"
+                          data-confirm-button="Da, sync">
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn-sapio btn-sapio-warning">
+                            <i class="fas fa-sync-alt"></i> Sync korisnika
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+    @* Kasnije ovdje isto možemo dodati:
+       - Opcije za eksterne korisnike
+       - Opcije za sezonske korisnike *@
+
+</div>
 
     <div class="card-custom">
         <div class="table-responsive">
@@ -77,47 +184,108 @@
                         <th>Email</th>
                         <th>Ime</th>
                         <th>Prezime</th>
-                        <th>Aktivan</th>
-                        <th>Eksterni saradnik</th>
+                        <th>Ime oca</th>
+                        <th>Tip korisnika</th>
+                        <th>Status</th>
+                       @*  <th>Eksterni saradnik</th>
+                        <th>Promjena passworda</th> *@
                         <th>Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Any())
+                    @if (Model?.Users != null && Model.Users.Any())
                     {
-                        foreach (var user in Model)
+                        foreach (var user in Model.Users)
                         {
                             <tr>
-                                <td>@user.Email</td>
+                                <td>@(string.IsNullOrWhiteSpace(user.Email) ? "-" : user.Email)</td>
                                 <td>@user.FirstName</td>
                                 <td>@user.LastName</td>
-                                <td>@(user.IsActive ? "Da" : "Ne")</td>
-                                <td>@(user.IsExternalCollaborator ? "Da" : "Ne")</td>
+                                <td>@(string.IsNullOrWhiteSpace(user.ImeOca) ? "-" : user.ImeOca)</td>
                                 <td>
-                                    @if (!user.IsActive)
+                                    @if (user.IsPending)
                                     {
-                                        <form asp-action="ApproveAsExternal" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="userId" value="@user.Id" />
-
-                                            <button class="btn-sapio btn-sapio-success btn-sapio-sm">
-                                                Eksterni
-                                            </button>
-                                        </form>
-
-                                        <form asp-action="ApproveAsSeasonal" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="userId" value="@user.Id" />
-
-                                            <button class="btn-sapio btn-sapio-warning btn-sapio-sm">
-                                                Sezonac
-                                            </button>
-                                        </form>
+                                        <span class="badge bg-warning text-dark">Pending</span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted">-</span>
+                                        @(!string.IsNullOrWhiteSpace(user.TipKorisnikaNaziv) ? user.TipKorisnikaNaziv : "-")
                                     }
+                                </td>
+                                <td>
+                                    @if (user.IsPending)
+                                    {
+                                        <span class="badge bg-warning text-dark">Čeka odobrenje</span>
+                                    }
+                                    else if (user.IsActiveIdentity)
+                                    {
+                                        <span class="badge bg-success">Aktivan</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Neaktivan</span>
+                                    }
+                                </td>
+                               @*  <td>@(user.IsExternalCollaborator ? "Da" : "Ne")</td>
+                                <td>@(user.MustChangePassword ? "Da" : "Ne")</td> *@
+                                <td>
+                                    <div class="action-buttons">
+
+                                        @if (user.IsPending)
+                                        {
+                                            <form asp-action="ApproveAsExternal" method="post" class="js-confirm-form d-inline"
+                                                  data-confirm-title="Odobriti korisnika?"
+                                                  data-confirm-text="Korisnik će biti aktiviran kao eksterni."
+                                                  data-confirm-icon="question"
+                                                  data-confirm-button="Da, odobri">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.UserId" />
+
+                                                <button type="submit" class="btn-sapio btn-sapio-success btn-sapio-sm">
+                                                    Eksterni
+                                                </button>
+                                            </form>
+
+                                            <form asp-action="ApproveAsSeasonal" method="post" class="js-confirm-form d-inline"
+                                                  data-confirm-title="Odobriti korisnika?"
+                                                  data-confirm-text="Korisnik će biti aktiviran kao sezonski radnik."
+                                                  data-confirm-icon="question"
+                                                  data-confirm-button="Da, odobri">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.UserId" />
+
+                                                <button type="submit" class="btn-sapio btn-sapio-warning btn-sapio-sm">
+                                                    Sezonac
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (!user.IsPending && !string.IsNullOrWhiteSpace(user.DetailsController))
+                                        {
+                                            if (user.DetailsRouteType == "userId")
+                                            {
+                                                <a asp-area="Admin"
+                                                   asp-controller="@user.DetailsController"
+                                                   asp-action="@user.DetailsAction"
+                                                   asp-route-userId="@user.UserId"
+                                                   asp-route-returnUrl="@backUrl"
+                                                   class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                                    <i class="fas fa-eye"></i> Detalji
+                                                </a>
+                                            }
+                                            else if (user.KorisnikId.HasValue)
+                                            {
+                                                <a asp-area="Admin"
+                                                   asp-controller="@user.DetailsController"
+                                                   asp-action="@user.DetailsAction"
+                                                   asp-route-id="@user.KorisnikId"
+                                                   asp-route-returnUrl="@backUrl"
+                                                   class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                                    <i class="fas fa-eye"></i> Detalji
+                                                </a>
+                                            }
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

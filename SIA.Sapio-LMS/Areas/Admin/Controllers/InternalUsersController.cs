@@ -272,15 +272,89 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                         continue;
                     }
 
-                    postojeci.IME = apiUser.Ime;
-                    postojeci.PREZIME = apiUser.Prezime;
-                    postojeci.IME_OCA = apiUser.ImeOca;
-                    postojeci.EMAIL = string.IsNullOrWhiteSpace(apiUser.Email) ? null : apiUser.Email.Trim();
-                    postojeci.ACCESS_KEY = apiUser.AccessKey;
-                    postojeci.KOMPANIJA = apiUser.Kompanija ?? "MAS";
-                    postojeci.AKTIVAN = "Y";
+                    bool hasChanges = false;
 
-                    updated++;
+                    var novoIme = string.IsNullOrWhiteSpace(apiUser.Ime) ? null : apiUser.Ime.Trim();
+                    var novoPrezime = string.IsNullOrWhiteSpace(apiUser.Prezime) ? null : apiUser.Prezime.Trim();
+                    var novoImeOca = string.IsNullOrWhiteSpace(apiUser.ImeOca) ? null : apiUser.ImeOca.Trim();
+                    var noviEmail = string.IsNullOrWhiteSpace(apiUser.Email) ? null : apiUser.Email.Trim();
+
+                    if ((postojeci.IME ?? string.Empty).Trim() != (novoIme ?? string.Empty))
+                    {
+                        postojeci.IME = novoIme;
+                        hasChanges = true;
+                    }
+
+                    if ((postojeci.PREZIME ?? string.Empty).Trim() != (novoPrezime ?? string.Empty))
+                    {
+                        postojeci.PREZIME = novoPrezime;
+                        hasChanges = true;
+                    }
+
+                    if ((postojeci.IME_OCA ?? string.Empty).Trim() != (novoImeOca ?? string.Empty))
+                    {
+                        postojeci.IME_OCA = novoImeOca;
+                        hasChanges = true;
+                    }
+
+                    if ((postojeci.EMAIL ?? string.Empty).Trim() != (noviEmail ?? string.Empty))
+                    {
+                        postojeci.EMAIL = noviEmail;
+                        hasChanges = true;
+                    }
+
+                    // ACCESS_KEY je int
+                    if (postojeci.ACCESS_KEY != apiUser.AccessKey)
+                    {
+                        postojeci.ACCESS_KEY = apiUser.AccessKey;
+                        hasChanges = true;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(postojeci.USER_ID))
+                    {
+                        var identityUser = await _userManager.FindByIdAsync(postojeci.USER_ID);
+
+                        if (identityUser != null)
+                        {
+                            bool identityChanged = false;
+
+                            if ((identityUser.FirstName ?? string.Empty).Trim() != (novoIme ?? string.Empty))
+                            {
+                                identityUser.FirstName = novoIme ?? string.Empty;
+                                identityChanged = true;
+                            }
+
+                            if ((identityUser.LastName ?? string.Empty).Trim() != (novoPrezime ?? string.Empty))
+                            {
+                                identityUser.LastName = novoPrezime ?? string.Empty;
+                                identityChanged = true;
+                            }
+
+                            if ((identityUser.Email ?? string.Empty).Trim() != (noviEmail ?? string.Empty))
+                            {
+                                identityUser.Email = noviEmail;
+                                identityChanged = true;
+                            }
+
+                            if (identityChanged)
+                            {
+                                var updateResult = await _userManager.UpdateAsync(identityUser);
+
+                                if (!updateResult.Succeeded)
+                                {
+                                    throw new Exception("Identity update failed: " +
+                                        string.Join(" | ", updateResult.Errors.Select(e => e.Description)));
+                                }
+
+                                hasChanges = true;
+                            }
+                        }
+                    }
+
+                    if (hasChanges)
+                    {
+                        updated++;
+                    }
                 }
                 catch (Exception ex)
                 {
