@@ -1,0 +1,206 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model List<PredmetVM>
+
+@{
+    ViewData["Title"] = "Predmeti";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var currentStatus = ((ViewBag.Status as string) ?? "active").ToLower();
+
+    var backUrl = Url.Action("Index", "Predmeti", new
+    {
+        area = "Admin",
+        status = currentStatus
+    });
+
+    string statusText = currentStatus switch
+    {
+        "active" => "Aktivni",
+        "inactive" => "Neaktivni",
+        _ => "Svi"
+    };
+}
+
+@functions {
+    private string WrapText(string? text, int maxLineLength = 60)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return "-";
+
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var lines = new List<string>();
+        var currentLine = "";
+
+        foreach (var word in words)
+        {
+            if (string.IsNullOrWhiteSpace(currentLine))
+            {
+                currentLine = word;
+                continue;
+            }
+
+            if ((currentLine.Length + 1 + word.Length) > maxLineLength)
+            {
+                lines.Add(currentLine.Trim());
+                currentLine = word;
+            }
+            else
+            {
+                currentLine += " " + word;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(currentLine))
+            lines.Add(currentLine.Trim());
+
+        return string.Join("<br />", lines);
+    }
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Predmeti",
+                 Subtitle = "Pregled i administracija predmeta"
+             }' />
+
+    <div class="card-custom page-toolbar">
+
+        <div class="filter-summary">
+            <span class="filter-summary-label">Aktivni filteri:</span>
+            <span class="filter-pill">@statusText</span>
+        </div>
+
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Status predmeta</span>
+            <div class="page-toolbar-row">
+                <a asp-action="Index"
+                   asp-route-status="all"
+                   class="btn-sapio @(currentStatus == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Svi
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-status="active"
+                   class="btn-sapio @(currentStatus == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    Aktivni
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-status="inactive"
+                   class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-danger" : "btn-sapio-secondary")">
+                    Neaktivni
+                </a>
+            </div>
+        </div>
+
+        <div class="page-toolbar-divider"></div>
+
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Import</span>
+            <div class="page-toolbar-row">
+                <form asp-area="Admin"
+                      asp-controller="Predmeti"
+                      asp-action="ImportFromV3"
+                      method="post"
+                      class="js-confirm-form m-0"
+                      data-confirm-title="Import predmeta?"
+                      data-confirm-text="Da li želite povući predmete iz V3 sistema?"
+                      data-confirm-icon="warning"
+                      data-confirm-button="Da, importuj">
+
+                    @Html.AntiForgeryToken()
+
+                    <div class="d-flex gap-2">
+                        <input type="number"
+                               name="vrstaId"
+                               value="11"
+                               class="form-control"
+                               style="width:120px;" />
+
+                        <button type="submit" class="btn-sapio btn-sapio-primary">
+                            <i class="fas fa-download"></i> Import iz V3
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="predmetiTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Naziv</th>
+                        <th>Naziv ENG</th>
+                        <th>Status</th>
+                        <th style="width:160px;">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model ?? new List<PredmetVM>())
+                    {
+                        <tr>
+                            <td>@Html.Raw(WrapText(item.Naziv, 60))</td>
+                            <td>@Html.Raw(WrapText(item.NazivEng, 60))</td>
+                            <td>
+                                @if (item.Aktivno == "Y")
+                                {
+                                    <span class="badge bg-success">Aktivan</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Neaktivan</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-area="Admin"
+                                   asp-controller="Predmeti"
+                                   asp-action="Details"
+                                   asp-route-id="@item.ID"
+                                   asp-route-returnUrl="@backUrl"
+                                   class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                    <i class="fas fa-eye"></i> Detalji
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#predmetiTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih predmeta",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}

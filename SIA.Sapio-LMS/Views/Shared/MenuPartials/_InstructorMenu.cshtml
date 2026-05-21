@@ -12,3 +12,23 @@
         <span class="nav-link-text ms-1">Instructor Dashboard</span>
     </a>
 </li>
+
+<li class="nav-item">
+    <a class="nav-link @(currentArea == "Instructor" && currentController == "MySubjects" ? "active" : "")"
+       href="/Instructor/MySubjects">
+        <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
+            <i class="ni ni-books text-success text-sm opacity-10"></i>
+        </div>
+        <span class="nav-link-text ms-1">Moji predmeti</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a class="nav-link @(currentController == "TestAssignments" ? "active" : "")"
+       href="/TestAssignments?mode=instructor">
+        <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
+            <i class="ni ni-check-bold text-primary text-sm opacity-10"></i>
+        </div>
+        <span class="nav-link-text ms-1">Testiranja</span>
+    </a>
+</li>

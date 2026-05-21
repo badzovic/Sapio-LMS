@@ -1,0 +1,583 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model CreateSubjectQuestionVM
+
+@{
+    ViewData["Title"] = "Novo pitanje";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Novo pitanje",
+                 Subtitle = Model.PredmetNaziv
+             }' />
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Kreiranje pitanja</h3>
+
+            <a asp-area="Instructor"
+               asp-controller="SubjectQuestions"
+               asp-action="Index"
+               asp-route-predmetId="@Model.PredmetId"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na pitanja
+            </a>
+        </div>
+
+        <form asp-area="Instructor"
+              asp-controller="SubjectQuestions"
+              asp-action="Create"
+              method="post"
+              id="createQuestionForm">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="PredmetId" />
+
+            <div class="card-custom">
+                <h5 class="mb-3">1. Tekst pitanja</h5>
+
+                <div class="mb-3">
+                    <label asp-for="TekstPitanja" class="form-label">Tekst pitanja</label>
+                    <textarea asp-for="TekstPitanja"
+                              id="tekstPitanja"
+                              class="form-control"
+                              rows="5"
+                              required></textarea>
+                    <span asp-validation-for="TekstPitanja" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="card-custom">
+                <h5 class="mb-3">2. Tip i težina pitanja</h5>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TipPitanjaId" class="form-label">Tip pitanja</label>
+                        <select asp-for="TipPitanjaId"
+                                asp-items="Model.TipoviPitanja"
+                                id="tipPitanjaId"
+                                class="form-control"
+                                required>
+                            <option value="">-- Odaberite tip pitanja --</option>
+                        </select>
+                        <span asp-validation-for="TipPitanjaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TipTezineId" class="form-label">Težina pitanja</label>
+                        <select asp-for="TipTezineId"
+                                asp-items="Model.TipoviTezine"
+                                id="tipTezineId"
+                                class="form-control"
+                                required>
+                            <option value="">-- Odaberite težinu --</option>
+                        </select>
+                        <span asp-validation-for="TipTezineId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    Nakon odabira tipa i težine pitanja otvorit će se sekcija za bodovanje.
+                </small>
+            </div>
+
+            <div class="card-custom" id="scoringSection" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-1">3. Bodovanje</h5>
+                        <small class="text-muted" id="scoringHelpText">
+                            Sistem automatski raspoređuje bodove.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Bodovi" class="form-label">Ukupno bodova pitanja</label>
+                        <input asp-for="Bodovi"
+                               class="form-control"
+                               type="number"
+                               step="0.01"
+                               min="0.01" />
+                        <span asp-validation-for="Bodovi" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3 multiple-only-field">
+                        <label asp-for="ParcijalnoBodovanje" class="form-label">Parcijalno bodovanje</label>
+                        <select asp-for="ParcijalnoBodovanje" class="form-control">
+                            <option value="N">Ne</option>
+                            <option value="Y">Da</option>
+                        </select>
+                        <small class="text-muted">
+                            Bodovi se dijele na sve tačne odgovore.
+                        </small>
+                        <span asp-validation-for="ParcijalnoBodovanje" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-custom" id="answersSection" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-1">4. Ponuđeni odgovori</h5>
+                        <small class="text-muted" id="answersHelpText">
+                            Unesite ponuđene odgovore i označite tačne odgovore.
+                        </small>
+                    </div>
+
+                    <button type="button" class="btn-sapio btn-sapio-secondary" id="addAnswerBtn">
+                        <i class="fas fa-plus"></i> Dodaj odgovor
+                    </button>
+                </div>
+
+                <div id="answersContainer">
+                    @for (int i = 0; i < Model.Odgovori.Count; i++)
+                    {
+                        <div class="answer-row border rounded p-3 mb-3">
+                            <input type="hidden" name="Odgovori[@i].Redoslijed" value="@(i + 1)" />
+
+                            <div class="row align-items-end">
+                                <div class="col-md-6 mb-3 answer-text-col">
+                                    <label class="form-label">Tekst odgovora</label>
+                                    <input name="Odgovori[@i].TekstOdgovora"
+                                           value="@Model.Odgovori[i].TekstOdgovora"
+                                           class="form-control answer-text"
+                                           type="text" />
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Tačan</label>
+                                    <select name="Odgovori[@i].IsTacan"
+                                            class="form-control answer-correct">
+                                        @if (Model.Odgovori[i].IsTacan)
+                                        {
+                                            <option value="false">Ne</option>
+                                            <option value="true" selected>Da</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="false" selected>Ne</option>
+                                            <option value="true">Da</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2 mb-3 answer-points-col">
+                                    <label class="form-label">Bodovi</label>
+                                    <input name="Odgovori[@i].Bodovi"
+                                           value="@Model.Odgovori[i].Bodovi"
+                                           class="form-control answer-points"
+                                           type="number"
+                                           step="0.01"
+                                           min="0"
+                                           readonly />
+                                </div>
+
+                                <div class="col-md-2 mb-3 answer-negative-points-col">
+                                    <label class="form-label">Kazneni bodovi</label>
+                                    <input name="Odgovori[@i].NegativniBodovi"
+                                           value="@Model.Odgovori[i].NegativniBodovi"
+                                           class="form-control answer-negative-points"
+                                           type="number"
+                                           step="0.01"
+                                           min="0"
+                                           readonly />
+                                </div>
+
+                                <div class="col-md-1 mb-3">
+                                    <button type="button"
+                                            class="btn-sapio btn-sapio-danger btn-sapio-sm remove-answer-btn">
+                                        <i class="fas fa-times"></i>
+                                        Ukloni
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="page-toolbar-row mt-3">
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-save"></i> Sačuvaj pitanje
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('createQuestionForm');
+            const tekstPitanja = document.getElementById('tekstPitanja');
+            const tipSelect = document.getElementById('tipPitanjaId');
+            const tezinaSelect = document.getElementById('tipTezineId');
+
+            const scoringSection = document.getElementById('scoringSection');
+            const answersSection = document.getElementById('answersSection');
+            const answersContainer = document.getElementById('answersContainer');
+            const addAnswerBtn = document.getElementById('addAnswerBtn');
+
+            const answersHelpText = document.getElementById('answersHelpText');
+            const scoringHelpText = document.getElementById('scoringHelpText');
+            const totalPointsInput = document.querySelector('[name="Bodovi"]');
+
+            const typeMap = {};
+            @foreach (var item in Model.TipoviPitanja)
+            {
+                    var text = item.Text?.ToLower() ?? "";
+
+                    if (text.Contains("esej"))
+                    {
+                            <text>typeMap["@item.Value"] = "ESSAY";</text>
+                    }
+                    else if (text.Contains("više"))
+                    {
+                            <text>typeMap["@item.Value"] = "MULTIPLE_CHOICE";</text>
+                    }
+                    else
+                    {
+                            <text>typeMap["@item.Value"] = "SINGLE_CHOICE";</text>
+                    }
+            }
+
+            function showValidation(message) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Provjerite unos',
+                    text: message,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#5e72e4'
+                });
+            }
+
+            function getCurrentType() {
+                return typeMap[tipSelect.value] || "";
+            }
+
+            function canShowScoring() {
+                return tipSelect.value && tezinaSelect.value;
+            }
+
+            function getAllAnswerRows() {
+                return Array.from(answersContainer.querySelectorAll('.answer-row'));
+            }
+
+            function calculateAnswerPoints() {
+                const type = getCurrentType();
+                const totalPoints = parseFloat(totalPointsInput.value || '0');
+                const rows = getAllAnswerRows();
+
+                if (type === 'ESSAY' || !type || totalPoints <= 0) {
+                    return;
+                }
+
+                const correctRows = rows.filter(row => row.querySelector('.answer-correct')?.value === 'true');
+                const incorrectRows = rows.filter(row => row.querySelector('.answer-correct')?.value !== 'true');
+
+                if (type === 'SINGLE_CHOICE') {
+                    rows.forEach(row => {
+                        const isCorrect = row.querySelector('.answer-correct')?.value === 'true';
+                        row.querySelector('.answer-points').value = isCorrect ? totalPoints.toFixed(2) : '0.00';
+                        row.querySelector('.answer-negative-points').value = '0.00';
+                    });
+                }
+
+                if (type === 'MULTIPLE_CHOICE') {
+                    const correctCount = correctRows.length;
+                    const incorrectCount = incorrectRows.length;
+
+                    const pointsPerCorrect = correctCount > 0 ? totalPoints / correctCount : 0;
+                    const negativePerIncorrect = incorrectCount > 0 ? totalPoints / incorrectCount : 0;
+
+                    rows.forEach(row => {
+                        const isCorrect = row.querySelector('.answer-correct')?.value === 'true';
+                        row.querySelector('.answer-points').value = isCorrect ? pointsPerCorrect.toFixed(2) : '0.00';
+                        row.querySelector('.answer-negative-points').value = isCorrect ? '0.00' : negativePerIncorrect.toFixed(2);
+                    });
+                }
+            }
+
+            function refreshAnswerColumns() {
+                const type = getCurrentType();
+
+                const pointsCols = answersContainer.querySelectorAll('.answer-points-col');
+                const negativePointsCols = answersContainer.querySelectorAll('.answer-negative-points-col');
+                const textCols = answersContainer.querySelectorAll('.answer-text-col');
+
+                if (type === 'SINGLE_CHOICE') {
+                    pointsCols.forEach(x => x.style.display = 'none');
+                    negativePointsCols.forEach(x => x.style.display = 'none');
+
+                    textCols.forEach(x => {
+                        x.classList.remove('col-md-5', 'col-md-6', 'col-md-7');
+                        x.classList.add('col-md-8');
+                    });
+                }
+                else if (type === 'MULTIPLE_CHOICE') {
+                    pointsCols.forEach(x => x.style.display = 'block');
+                    negativePointsCols.forEach(x => x.style.display = 'block');
+
+                    textCols.forEach(x => {
+                        x.classList.remove('col-md-5', 'col-md-7', 'col-md-8');
+                        x.classList.add('col-md-6');
+                    });
+                }
+                else {
+                    pointsCols.forEach(x => x.style.display = 'none');
+                    negativePointsCols.forEach(x => x.style.display = 'none');
+                }
+            }
+
+            function refreshQuestionTypeUi() {
+                const type = getCurrentType();
+
+                if (!canShowScoring()) {
+                    scoringSection.style.display = 'none';
+                    answersSection.style.display = 'none';
+                    return;
+                }
+
+                scoringSection.style.display = 'block';
+
+                const multipleOnlyFields = document.querySelectorAll('.multiple-only-field');
+
+                if (type === 'ESSAY') {
+                    answersSection.style.display = 'none';
+                    multipleOnlyFields.forEach(x => x.style.display = 'none');
+                    scoringHelpText.innerText = 'Za esejsko pitanje unosite samo maksimalan broj bodova.';
+                }
+                else {
+                    answersSection.style.display = 'block';
+
+                    if (type === 'MULTIPLE_CHOICE') {
+                        multipleOnlyFields.forEach(x => x.style.display = 'block');
+                        answersHelpText.innerText = 'Bodovi se dijele na sve tačne odgovore, a kazneni bodovi na sve netačne odgovore.';
+                        scoringHelpText.innerText = 'Sistem automatski raspoređuje ukupne bodove na tačne i netačne odgovore.';
+                    }
+                    else {
+                        multipleOnlyFields.forEach(x => x.style.display = 'none');
+                        answersHelpText.innerText = 'Označite tačno jedan tačan odgovor. Tačan odgovor nosi ukupan broj bodova pitanja.';
+                        scoringHelpText.innerText = 'Kod pitanja sa jednim tačnim odgovorom tačan odgovor nosi ukupan broj bodova.';
+                    }
+                }
+
+                refreshAnswerColumns();
+                calculateAnswerPoints();
+            }
+
+            function reindexAnswers() {
+                const rows = getAllAnswerRows();
+
+                rows.forEach((row, index) => {
+                    row.querySelectorAll('input, select').forEach(input => {
+                        const name = input.getAttribute('name');
+                        if (!name) return;
+
+                        input.setAttribute('name', name.replace(/Odgovori\[\d+\]/, `Odgovori[${index}]`));
+                    });
+
+                    const orderInput = row.querySelector('input[name$=".Redoslijed"]');
+
+                    if (orderInput) {
+                        orderInput.value = index + 1;
+                    }
+                });
+            }
+
+            function createAnswerRow(index) {
+                const div = document.createElement('div');
+                div.className = 'answer-row border rounded p-3 mb-3';
+
+                div.innerHTML = `
+                    <input type="hidden" name="Odgovori[${index}].Redoslijed" value="${index + 1}" />
+
+                    <div class="row align-items-end">
+                        <div class="col-md-6 mb-3 answer-text-col">
+                            <label class="form-label">Tekst odgovora</label>
+                            <input name="Odgovori[${index}].TekstOdgovora"
+                                   class="form-control answer-text"
+                                   type="text" />
+                        </div>
+
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Tačan</label>
+                            <select name="Odgovori[${index}].IsTacan"
+                                    class="form-control answer-correct">
+                                <option value="false" selected>Ne</option>
+                                <option value="true">Da</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-2 mb-3 answer-points-col">
+                            <label class="form-label">Bodovi</label>
+                            <input name="Odgovori[${index}].Bodovi"
+                                   class="form-control answer-points"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   readonly />
+                        </div>
+
+                        <div class="col-md-2 mb-3 answer-negative-points-col">
+                            <label class="form-label">Kazneni bodovi</label>
+                            <input name="Odgovori[${index}].NegativniBodovi"
+                                   class="form-control answer-negative-points"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   readonly />
+                        </div>
+
+                        <div class="col-md-1 mb-3">
+                            <button type="button"
+                                    class="btn-sapio btn-sapio-danger btn-sapio-sm remove-answer-btn">
+                                <i class="fas fa-times"></i>
+                                Ukloni
+                            </button>
+                        </div>
+                    </div>`;
+
+                return div;
+            }
+
+            function validateBeforeSubmit(e) {
+                const type = getCurrentType();
+                const totalPoints = parseFloat(totalPointsInput.value || '0');
+
+                if (!tekstPitanja.value.trim()) {
+                    e.preventDefault();
+                    showValidation('Unesite tekst pitanja.');
+                    return false;
+                }
+
+                if (!tipSelect.value) {
+                    e.preventDefault();
+                    showValidation('Odaberite tip pitanja.');
+                    return false;
+                }
+
+                if (!tezinaSelect.value) {
+                    e.preventDefault();
+                    showValidation('Odaberite težinu pitanja.');
+                    return false;
+                }
+
+                if (!totalPoints || totalPoints <= 0) {
+                    e.preventDefault();
+                    showValidation('Unesite ukupan broj bodova veći od 0.');
+                    return false;
+                }
+
+                if (type !== 'ESSAY') {
+                    const rows = getAllAnswerRows();
+
+                    if (rows.length < 2) {
+                        e.preventDefault();
+                        showValidation('Pitanje mora imati najmanje 2 ponuđena odgovora.');
+                        return false;
+                    }
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const input = rows[i].querySelector('.answer-text');
+
+                        if (!input || !input.value.trim()) {
+                            e.preventDefault();
+                            showValidation(`Unesite tekst za odgovor broj ${i + 1}.`);
+                            input?.focus();
+                            return false;
+                        }
+                    }
+
+                    const correctCount = rows
+                        .filter(row => row.querySelector('.answer-correct')?.value === 'true')
+                        .length;
+
+                    if (type === 'SINGLE_CHOICE' && correctCount !== 1) {
+                        e.preventDefault();
+                        showValidation('Pitanje sa jednim tačnim odgovorom mora imati tačno jedan označen tačan odgovor.');
+                        return false;
+                    }
+
+                    if (type === 'MULTIPLE_CHOICE' && correctCount < 1) {
+                        e.preventDefault();
+                        showValidation('Pitanje sa više tačnih odgovora mora imati barem jedan označen tačan odgovor.');
+                        return false;
+                    }
+                }
+
+                calculateAnswerPoints();
+                return true;
+            }
+
+            tipSelect.addEventListener('change', refreshQuestionTypeUi);
+            tezinaSelect.addEventListener('change', refreshQuestionTypeUi);
+            totalPointsInput.addEventListener('input', calculateAnswerPoints);
+
+            answersContainer.addEventListener('input', function (e) {
+                if (e.target.classList.contains('answer-text')) {
+                    calculateAnswerPoints();
+                }
+            });
+
+            answersContainer.addEventListener('change', function (e) {
+                if (e.target.classList.contains('answer-correct')) {
+                    const type = getCurrentType();
+
+                    if (type === 'SINGLE_CHOICE' && e.target.value === 'true') {
+                        answersContainer.querySelectorAll('.answer-correct').forEach(select => {
+                            if (select !== e.target) {
+                                select.value = 'false';
+                            }
+                        });
+                    }
+
+                    calculateAnswerPoints();
+                }
+            });
+
+            addAnswerBtn.addEventListener('click', function () {
+                const index = getAllAnswerRows().length;
+                answersContainer.appendChild(createAnswerRow(index));
+                refreshAnswerColumns();
+                calculateAnswerPoints();
+            });
+
+            answersContainer.addEventListener('click', function (e) {
+                const button = e.target.closest('.remove-answer-btn');
+
+                if (!button) return;
+
+                const rows = getAllAnswerRows();
+
+                if (rows.length <= 2) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Nije moguće ukloniti',
+                        text: 'Minimalno 2 odgovora su potrebna za pitanje sa ponuđenim odgovorima.',
+                        confirmButtonColor: '#5e72e4'
+                    });
+                    return;
+                }
+
+                button.closest('.answer-row').remove();
+                reindexAnswers();
+                refreshAnswerColumns();
+                calculateAnswerPoints();
+            });
+
+            form.addEventListener('submit', validateBeforeSubmit);
+
+            refreshQuestionTypeUi();
+        });
+    </script>
+}

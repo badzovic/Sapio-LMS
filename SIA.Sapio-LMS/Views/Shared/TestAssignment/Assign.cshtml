@@ -1,0 +1,237 @@
+﻿@model SIA.Sapio_LMS.Areas.Models.AssignTestStudentsVM
+
+@{
+    ViewData["Title"] = "Dodjela testa studentima";
+
+    var mode = Context.Request.Query["mode"].ToString();
+    if (string.IsNullOrWhiteSpace(mode))
+    {
+        mode = "instructor";
+    }
+
+    var studentFilter = Context.Request.Query["studentFilter"].ToString();
+    if (string.IsNullOrWhiteSpace(studentFilter))
+    {
+        studentFilter = "dueSoon";
+    }
+}
+
+<div class="page-toolbar d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">Dodjela testa studentima</h2>
+        <p class="text-muted mb-0">
+            @Model.TestNaziv
+            @if (!string.IsNullOrWhiteSpace(Model.PredmetNaziv))
+            {
+                <span> / @Model.PredmetNaziv</span>
+            }
+        </p>
+    </div>
+
+    <a href="/TestAssignments?mode=@mode" class="btn-sapio btn-sapio-secondary">
+        Nazad
+    </a>
+</div>
+
+<div class="card-custom">
+    <form asp-controller="TestAssignments" asp-action="Assign" method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="TestId" />
+        <input type="hidden" name="mode" value="@mode" />
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-1">Studenti</h5>
+                <p class="text-muted mb-0">
+                    Default prikaz prikazuje studente kojima obuka nedostaje, istekla je ili ističe u naredna 3 mjeseca.
+                </p>
+            </div>
+
+            <button type="submit" class="btn-sapio btn-sapio-primary">
+                Sačuvaj dodjelu
+            </button>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a href="/TestAssignments/Assign/@Model.TestId?mode=@mode&studentFilter=dueSoon"
+               class="btn-sapio @(studentFilter == "dueSoon" ? "btn-sapio-primary" : "btn-sapio-secondary") btn-sm">
+                Za polaganje u 3 mjeseca
+            </a>
+
+            <a href="/TestAssignments/Assign/@Model.TestId?mode=@mode&studentFilter=allMatrix"
+               class="btn-sapio @(studentFilter == "allMatrix" ? "btn-sapio-primary" : "btn-sapio-secondary") btn-sm">
+                Svi iz matrice
+            </a>
+
+            <a href="/TestAssignments/Assign/@Model.TestId?mode=@mode&studentFilter=all"
+               class="btn-sapio @(studentFilter == "all" ? "btn-sapio-primary" : "btn-sapio-secondary") btn-sm">
+                Svi korisnici
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table id="assignStudentsTable" class="table table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">
+                            <input type="checkbox" id="selectAllStudents" />
+                        </th>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Kompanija</th>
+                        <th>Važi do</th>
+                        <th>Status obuke</th>
+                        <th>Dodjela</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Studenti.Count; i++)
+                    {
+                        var s = Model.Studenti[i];
+
+                        <tr>
+                            <td>
+                                <input type="checkbox"
+                                       name="SelectedStudentIds"
+                                       value="@s.KorisnikId"
+                                       class="student-check form-check-input"
+                                       @(s.Odabran ? "checked" : "") />
+                            </td>
+
+                            <td>
+                                <strong>@s.ImePrezime</strong>
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(s.Email))
+                                {
+                                    @s.Email
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(s.Kompanija))
+                                {
+                                    @s.Kompanija
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (s.DatumVaziDo.HasValue)
+                                {
+                                    @s.DatumVaziDo.Value.ToString("dd.MM.yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Nema evidencije</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (s.StatusObuke == "Nema evidenciju")
+                                {
+                                    <span class="badge bg-warning text-dark">Nema evidenciju</span>
+                                }
+                                else if (s.StatusObuke == "Isteklo")
+                                {
+                                    <span class="badge bg-danger">Isteklo</span>
+                                }
+                                else if (s.StatusObuke == "Ističe u 3 mjeseca")
+                                {
+                                    <span class="badge bg-info">Ističe u 3 mjeseca</span>
+                                }
+                                else if (s.StatusObuke == "Važeće")
+                                {
+                                    <span class="badge bg-success">Važeće</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@s.StatusObuke</span>
+                                }
+
+                                @if (s.DanaDoIsteka.HasValue)
+                                {
+                                    <div class="text-muted small mt-1">
+                                        @s.DanaDoIsteka dana
+                                    </div>
+                                }
+                            </td>
+
+                            <td>
+                                @if (s.VecDodijeljen)
+                                {
+                                    <span class="badge bg-success">Već dodijeljen</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Nije dodijeljen</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+            <button type="submit" class="btn-sapio btn-sapio-primary">
+                Sačuvaj dodjelu
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var table = $('#assignStudentsTable').DataTable({
+                pageLength: 25,
+                order: [[1, 'asc']],
+                responsive: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikazano _START_ do _END_ od ukupno _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih studenata",
+                    paginate: {
+                        previous: "Prethodna",
+                        next: "Sljedeća"
+                    }
+                }
+            });
+
+            $('#selectAllStudents').on('change', function () {
+                var checked = this.checked;
+
+                table.rows({ search: 'applied' }).every(function () {
+                    $(this.node()).find('.student-check').prop('checked', checked);
+                });
+            });
+
+            $('form').on('submit', function () {
+                table.rows().every(function () {
+                    var row = $(this.node());
+                    var checkbox = row.find('.student-check');
+
+                    if (checkbox.length && checkbox.prop('checked')) {
+                        $('<input>')
+                            .attr('type', 'hidden')
+                            .attr('name', 'SelectedStudentIds')
+                            .val(checkbox.val())
+                            .appendTo('form');
+                    }
+                });
+            });
+        });
+    </script>
+}

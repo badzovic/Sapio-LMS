@@ -1,0 +1,295 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model PredmetVM
+
+@{
+    ViewData["Title"] = "Detalji predmeta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var returnUrl = ViewBag.ReturnUrl as string
+        ?? Url.Action("Index", "Predmeti", new { area = "Admin", status = "active" });
+
+    var isActive = Model.Aktivno == "Y";
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Detalji predmeta",
+                 Subtitle = "Pregled i izmjena osnovnih podataka predmeta"
+             }' />
+
+   @*  @if (TempData["ImportMessage"] != null)
+    {
+        <div class="alert alert-info">@TempData["ImportMessage"]</div>
+    }
+
+    @if (TempData["ImportErrors"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ImportErrors"]</div>
+    } *@
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Detalji predmeta</h3>
+
+            <a href="@returnUrl" class="btn-sapio btn-sapio-secondary">
+                Nazad na listu
+            </a>
+        </div>
+
+        <form asp-area="Admin"
+              asp-controller="Predmeti"
+              asp-action="Details"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="ID" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label asp-for="Naziv" class="form-label">Naziv</label>
+                    <input asp-for="Naziv" class="form-control" />
+                    <span asp-validation-for="Naziv" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label asp-for="NazivEng" class="form-label">Naziv ENG</label>
+                    <input asp-for="NazivEng" class="form-control" />
+                    <span asp-validation-for="NazivEng" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label asp-for="PrakticnaObuka" class="form-label">Praktična obuka:</label>
+
+                    <select asp-for="PrakticnaObuka" class="form-control">
+                        <option value="">-- Odaberite --</option>
+                        <option value="DA">DA</option>
+                        <option value="NE">NE</option>
+                    </select>
+
+                    <span asp-validation-for="PrakticnaObuka" class="text-danger"></span>
+                </div>
+
+                @* <div class="col-md-4 mb-3">
+                    <label asp-for="PointSifra" class="form-label">POINT šifra</label>
+                    <input asp-for="PointSifra" class="form-control" type="number" />
+                    <span asp-validation-for="PointSifra" class="text-danger"></span>
+                </div> *@
+            </div>
+
+            <div class="page-toolbar-row mt-3">
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-save"></i> Spasi izmjene
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Status predmeta</h5>
+
+        <div class="role-buttons">
+            <form asp-area="Admin"
+                  asp-controller="Predmeti"
+                  asp-action="ToggleActive"
+                  method="post"
+                  class="js-confirm-form d-inline"
+                  data-confirm-title="Promjena statusa"
+                  data-confirm-text="Da li želite @(isActive ? "deaktivirati" : "aktivirati") predmet '@Model.Naziv'?"
+                  data-confirm-icon="warning"
+                  data-confirm-button="Da, potvrdi">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="id" value="@Model.ID" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <button type="submit"
+                        class="btn-sapio @(isActive ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    <i class="fas @(isActive ? "fa-ban" : "fa-check")"></i>
+                    @(isActive ? " Deaktiviraj" : " Aktiviraj")
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-3">
+            <small class="text-muted">
+                Zeleno znači da je predmet trenutno aktivan. Sivo znači da je predmet trenutno neaktivan.
+            </small>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Instruktori na predmetu</h5>
+
+        @if (Model.Aktivno != "Y")
+        {
+            <div class="alert alert-warning">
+                <strong>Napomena:</strong> Predmet je neaktivan. Dodjeljivanje i pregled instruktora je moguć samo za aktivne predmete.
+            </div>
+        }
+        else
+        {
+            <form asp-area="Admin"
+                  asp-controller="Predmeti"
+                  asp-action="AddInstructor"
+                  method="post"
+                  class="js-confirm-form mb-3"
+                  data-confirm-title="Dodavanje instruktora"
+                  data-confirm-text="Da li želite dodati instruktora na ovaj predmet?"
+                  data-confirm-icon="question"
+                  data-confirm-button="Da, dodaj">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="predmetId" value="@Model.ID" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div class="company-form-row">
+                    <div class="company-select-wrap">
+                        <label class="form-label" for="korisnikId">Odaberi instruktora</label>
+
+                        <select name="korisnikId"
+                                id="korisnikId"
+                                class="form-select sapio-select2">
+                            <option value="">-- Odaberite instruktora --</option>
+                            @foreach (var item in Model.DostupniInstruktori)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="btn-sapio btn-sapio-primary">
+                            <i class="fas fa-plus"></i> Dodaj instruktora
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped w-100">
+                    <thead>
+                        <tr>
+                            <th>Instruktor</th>
+                            <th>Datum od</th>
+                            <th style="width:160px;">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Instruktori != null && Model.Instruktori.Any())
+                        {
+                            foreach (var instruktor in Model.Instruktori)
+                            {
+                                <tr>
+                                    <td>@instruktor.ImePrezime</td>
+                                    <td>@instruktor.DatumOd.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        <form asp-area="Admin"
+                                              asp-controller="Predmeti"
+                                              asp-action="RemoveInstructor"
+                                              method="post"
+                                              class="js-confirm-form d-inline"
+                                              data-confirm-title="Skidanje instruktora"
+                                              data-confirm-text="Da li želite skinuti instruktora '@instruktor.ImePrezime' sa ovog predmeta?"
+                                              data-confirm-icon="warning"
+                                              data-confirm-button="Da, skini">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden" name="id" value="@instruktor.ID" />
+                                            <input type="hidden" name="predmetId" value="@Model.ID" />
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                                            <button type="submit" class="btn-sapio btn-sapio-danger btn-sapio-sm">
+                                                <i class="fas fa-user-minus"></i> Skini
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-muted">Nema dodijeljenih instruktora.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Historija instruktora</h5>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Instruktor</th>
+                        <th>Datum od</th>
+                        <th>Datum do</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.HistorijaInstruktora != null && Model.HistorijaInstruktora.Any())
+                    {
+                        foreach (var item in Model.HistorijaInstruktora)
+                        {
+                            <tr>
+                                <td>@item.ImePrezime</td>
+                                <td>@item.DatumOd.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@(item.DatumDo.HasValue? item.DatumDo.Value.ToString("dd.MM.yyyy HH:mm") : "-")</td>
+                                <td>
+                                    @if (item.Aktivno == "Y")
+                                    {
+                                        <span class="badge bg-success">Aktivan</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Neaktivan</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-muted">Nema historije instruktora.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#korisnikId').select2({
+                placeholder: 'Pretraži instruktora...',
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+}

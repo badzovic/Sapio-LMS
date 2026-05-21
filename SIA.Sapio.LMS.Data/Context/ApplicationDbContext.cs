@@ -17,6 +17,23 @@ namespace SIA.Sapio.LMS.Data.Context
         public DbSet<TipKorisnika> TIPOVI_KORISNIKA { get; set; }
 
         public DbSet<RegistrationToken> REGISTRATION_TOKENS { get; set; }
+        public DbSet<VrstaPrograma> VRSTE_PROGRAMA { get; set; }
+        public DbSet<Predmet> PREDMETI { get; set; }
+        public DbSet<PredmetInstruktor> PREDMET_INSTRUKTORI { get; set; }
+        public DbSet<PredmetMaterijal> PREDMET_MATERIJALI { get; set; }
+        public DbSet<TipPitanja> TIPOVI_PITANJA { get; set; }
+        public DbSet<TipTezinePitanja> TIPOVI_TEZINE_PITANJA { get; set; }
+        public DbSet<PredmetPitanje> PREDMET_PITANJA { get; set; }
+        public DbSet<PredmetPitanjeOdgovor> PREDMET_PITANJE_ODGOVORI { get; set; }
+        public DbSet<Test> TESTOVI { get; set; }
+        public DbSet<TestPitanje> TEST_PITANJA { get; set; }
+        public DbSet<TestPitanjeOdgovor> TEST_PITANJE_ODGOVORI { get; set; }
+        public DbSet<PolaganjeTesta> POLAGANJE_TESTA { get; set; }
+        public DbSet<PolaganjePitanja> POLAGANJE_PITANJA { get; set; }
+        public DbSet<PolaganjeOdgovori> POLAGANJE_ODGOVORI { get; set; }
+        public DbSet<StudentOdgovor> STUDENT_ODGOVORI { get; set; }
+        public DbSet<DodijeljeniTest> DODIJELJENI_TESTOVI { get; set; }
+        public DbSet<TestKlasa> TEST_KLASE { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

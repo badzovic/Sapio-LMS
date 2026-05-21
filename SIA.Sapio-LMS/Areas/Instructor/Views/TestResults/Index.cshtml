@@ -1,0 +1,235 @@
+﻿@using SIA.Sapio_LMS.Models.Shared
+@using SIA.Sapio.LMS.Web.Areas.Instructor.Models.TestResults
+
+@model InstructorTestResultsIndexVM
+
+@{
+    ViewData["Title"] = "Rezultati testova";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Rezultati testova",
+                 Subtitle = Model.PredmetNaziv
+             }' />
+
+    <div class="card-custom">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3 class="mb-1">
+                    @Model.PredmetNaziv
+                </h3>
+
+                <small class="text-muted">
+                    Pregled svih pokušaja polaganja za ovaj predmet.
+                </small>
+            </div>
+
+            <a asp-area="Instructor"
+               asp-controller="MySubjects"
+               asp-action="Details"
+               asp-route-id="@Model.PredmetId"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na predmet
+            </a>
+
+        </div>
+
+        @if (Model.Results == null || !Model.Results.Any())
+        {
+            <div class="alert alert-info">
+                Nema evidentiranih pokušaja polaganja.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+
+                <table id="testResultsTable"
+                       class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Test</th>
+                            <th>Početak</th>
+                            <th>Završetak</th>
+                            <th>Status</th>
+                            <th>Pokušaj</th>
+                            <th>Bodovi</th>
+                            <th>Procenat</th>
+                            <th>Prolaz</th>
+                            <th>Essay</th>
+                            <th class="text-end">Akcije</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model.Results)
+                        {
+                            <tr>
+
+                                <td>
+                                    @item.StudentImePrezime
+                                </td>
+
+                                <td>
+                                    @item.TestNaziv
+                                </td>
+
+                                <td>
+                                    @item.DatumPocetka.ToString("dd.MM.yyyy")
+                                </td>
+
+                                <td>
+                                    @(item.DatumZavrsetka.HasValue
+                                                                ? item.DatumZavrsetka.Value.ToString("dd.MM.yyyy")
+                                                                : "-")
+                        </td>
+
+                                <td>
+
+                            @if (item.Status == "SUBMITTED")
+                                    {
+                                        <span class="badge bg-success">
+                                            Predan
+                                        </span>
+                                    }
+                                    else if (item.Status == "TIME_EXPIRED")
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Vrijeme isteklo
+                                        </span>
+                                    }
+                                    else if (item.Status == "IN_PROGRESS")
+                                    {
+                                        <span class="badge bg-primary">
+                                            U toku
+                                        </span>
+                                    }
+                                    else if (item.Status == "CANCELLED")
+                                    {
+                                        <span class="badge bg-danger">
+                                            Otkazan
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @item.Status
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+                                    #@item.RedniBrojPokusaja
+                                </td>
+
+                                <td>
+                                    @item.OstvareniBodovi / @item.MaxBodovi
+                                </td>
+
+                                <td>
+                                    @item.Procenat.ToString("0.##")%
+                                </td>
+
+                                <td>
+
+                                    @if (item.IsPassed)
+                                    {
+                                        <span class="badge bg-success">
+                                            Prošao
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            Nije prošao
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    @if (item.HasPendingEssayReview)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Čeka ocjenu
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            Ocijenjeno
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td class="text-end">
+
+                                    <a asp-area="Instructor"
+                                       asp-controller="TestResults"
+                                       asp-action="Details"
+                                       asp-route-id="@item.PolaganjeId"
+                                       class="btn-sapio btn-sapio-primary btn-sm">
+                                        Detalji
+                                    </a>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+
+            $('#testResultsTable').DataTable({
+
+                pageLength: 10,
+
+                order: [[3, 'desc']],
+
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od ukupno _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    infoFiltered: "(filtrirano od ukupno _MAX_ zapisa)",
+                    zeroRecords: "Nema pronađenih rezultata",
+
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+
+        });
+    </script>
+
+}

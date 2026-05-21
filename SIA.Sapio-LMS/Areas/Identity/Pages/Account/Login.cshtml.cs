@@ -185,7 +185,7 @@ namespace SIA.Sapio_LMS.Areas.Identity.Pages.Account
 
                 if (await _userManager.IsInRoleAsync(user, "Instruktor"))
                 {
-                    return RedirectToAction("Index", "Dashboard", new { area = "Instruktor" });
+                    return RedirectToAction("Index", "Dashboard", new { area = "Instructor" });
                 }
 
                 if (await _userManager.IsInRoleAsync(user, "Student"))

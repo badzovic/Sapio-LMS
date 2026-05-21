@@ -62,3 +62,23 @@
         <span class="nav-link-text ms-1">Companies</span>
     </a>
 </li>
+
+<li class="nav-item">
+    <a class="nav-link @(currentArea == "Admin" && currentController == "Predmeti" ? "active" : "")"
+       href="/Admin/Predmeti">
+        <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
+            <i class="ni ni-books text-primary text-sm opacity-10"></i>
+        </div>
+        <span class="nav-link-text ms-1">Predmeti</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a class="nav-link @(currentController == "TestAssignments" ? "active" : "")"
+       href="/TestAssignments?mode=admin">
+        <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
+            <i class="ni ni-check-bold text-primary text-sm opacity-10"></i>
+        </div>
+        <span class="nav-link-text ms-1">Testiranja</span>
+    </a>
+</li>

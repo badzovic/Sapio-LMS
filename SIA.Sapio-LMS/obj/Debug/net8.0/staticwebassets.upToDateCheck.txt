@@ -377,3 +377,6 @@ wwwroot\lms\scss\argon-dashboard\variables\_timeline.scss
 wwwroot\lms\scss\argon-dashboard\variables\_utilities-extend.scss
 wwwroot\lms\scss\argon-dashboard\variables\_utilities.scss
 wwwroot\lms\scss\argon-dashboard\variables\_virtual-reality.scss
+wwwroot\uploads\subject-materials\1\1eef5084-e815-48b1-b6a9-55d2686a8a11.png
+wwwroot\uploads\subject-materials\1\75f910d6-7f83-4cf3-967b-73b9c28c7e9d.docx
+wwwroot\uploads\subject-materials\1\9f199c2c-ab1d-408a-bd39-08323e287afe.pptx

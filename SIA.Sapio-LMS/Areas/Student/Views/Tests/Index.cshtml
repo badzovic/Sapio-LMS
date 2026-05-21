@@ -1,0 +1,132 @@
+﻿@using SIA.Sapio_LMS.Areas.Student.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model List<StudentAssignedTestVM>
+
+@{
+    ViewData["Title"] = "Moji testovi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Moji testovi",
+                 Subtitle = "Pregled testova koji su vam dodijeljeni za polaganje"
+             }' />
+
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="studentTestsTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Naziv testa</th>
+                        <th>Predmet</th>
+                        <th>Period</th>
+                        <th>Trajanje</th>
+                        <th>Pokušaji</th>
+                        <th>Status</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var test in Model)
+                    {
+                        var nemaPokusaja = test.BrojPokusajaPreostalo <= 0;
+
+                        <tr>
+                            <td>
+                                <strong>@test.NazivTesta</strong>
+
+                                @if (!string.IsNullOrWhiteSpace(test.Opis))
+                                {
+                                    <div class="text-muted small">@test.Opis</div>
+                                }
+                            </td>
+
+                            <td>@(test.Predmet ?? "-")</td>
+
+                            <td>
+                                @test.DatumOd?.ToString("dd.MM.yyyy HH:mm")
+                                <br />
+                                <span class="text-muted">
+                                    do @test.DatumDo?.ToString("dd.MM.yyyy HH:mm")
+                                </span>
+                            </td>
+
+                            <td>@test.VrijemeTrajanjaMin min</td>
+
+                            <td>
+                                @test.BrojPokusajaIskoristeno / @test.BrojPokusajaDozvoljeno
+                            </td>
+
+                            <td>
+                                @if (nemaPokusaja)
+                                {
+                                    <span class="badge bg-danger">Nema pokušaja</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Dostupno</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (!nemaPokusaja)
+                                {
+                                    <form action="/Student/Tests/Start/@test.TestId"
+                                          method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit"
+                                                class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                            <i class="fas fa-play"></i> Polaži test
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="btn-sapio btn-sapio-secondary btn-sapio-sm"
+                                            disabled>
+                                        <i class="fas fa-ban"></i> Nedostupno
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#studentTestsTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Trenutno nemate dodijeljenih testova za polaganje",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}

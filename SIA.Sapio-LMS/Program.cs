@@ -30,6 +30,9 @@ builder.Services.AddControllersWithViews();
 // api service builder
 builder.Services.AddHttpClient<InternalUsersApiService>();
 builder.Services.AddHttpClient<ExternalUsersApiService>();
+builder.Services.AddHttpClient<V3ProgramsApiService>();
+builder.Services.AddHttpClient<V3MatrixApiService>();
+builder.Services.AddScoped<UserTrainingMatrixService>();
 
 var app = builder.Build();
 

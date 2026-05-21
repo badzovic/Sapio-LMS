@@ -1,0 +1,229 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model SubjectQuestionDetailsVM
+
+@{
+    ViewData["Title"] = "Detalji pitanja";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Detalji pitanja",
+                 Subtitle = Model.PredmetNaziv
+             }' />
+
+    <div class="card-custom">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3 class="mb-1">Pregled pitanja</h3>
+
+                <small class="text-muted">
+                    Pitanje se ne može uređivati. Moguće je samo aktivirati/deaktivirati pitanje.
+                </small>
+            </div>
+
+            <div class="action-buttons">
+
+                <form asp-area="Instructor"
+                      asp-controller="SubjectQuestions"
+                      asp-action="ToggleActive"
+                      method="post"
+                      class="d-inline js-confirm-form"
+                      data-confirm-title="Promjena statusa pitanja"
+                      data-confirm-text="Da li ste sigurni da želite promijeniti status ovog pitanja?"
+                      data-confirm-icon="warning"
+                      data-confirm-button="Da, potvrdi">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="id" value="@Model.ID" />
+                    <input type="hidden" name="predmetId" value="@Model.PredmetId" />
+
+                    @if (Model.Aktivno == "Y")
+                    {
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-danger">
+                            <i class="fas fa-ban"></i>
+                            Deaktiviraj
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-success">
+                            <i class="fas fa-check"></i>
+                            Aktiviraj
+                        </button>
+                    }
+
+                </form>
+
+                <a asp-area="Instructor"
+                   asp-controller="SubjectQuestions"
+                   asp-action="Index"
+                   asp-route-predmetId="@Model.PredmetId"
+                   class="btn-sapio btn-sapio-secondary">
+                    Nazad na pitanja
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-8">
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Tekst pitanja</label>
+
+                    <div class="border rounded p-3 bg-light">
+                        @Model.TekstPitanja
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tip pitanja</label>
+
+                    <div class="border rounded p-2 bg-light">
+                        @Model.TipPitanja
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Težina</label>
+
+                    <div class="border rounded p-2 bg-light">
+                        @Model.Tezina
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ukupno bodova</label>
+
+                    <div class="border rounded p-2 bg-light">
+                        @Model.Bodovi.ToString("0.##")
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Parcijalno bodovanje</label>
+
+                    <div class="border rounded p-2 bg-light">
+                        @(Model.ParcijalnoBodovanje == "Y" ? "Da" : "Ne")
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Status</label>
+
+                    <div class="border rounded p-2 bg-light">
+                        @if (Model.Aktivno == "Y")
+                        {
+                            <span class="badge bg-success">
+                                Aktivno
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">
+                                Neaktivno
+                            </span>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    @if (Model.TipPitanjaSifra != "ESSAY")
+    {
+        <div class="card-custom">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="mb-1">Odgovori</h4>
+
+                    <small class="text-muted">
+                        Pregled ponuđenih odgovora i bodovanja.
+                    </small>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped w-100">
+
+                    <thead>
+                        <tr>
+                            <th style="width:80px;">#</th>
+                            <th>Odgovor</th>
+                            <th style="width:120px;">Tačan</th>
+                            <th style="width:140px;">Bodovi</th>
+                            <th style="width:160px;">Kazneni bodovi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var odgovor in Model.Odgovori)
+                        {
+                            <tr>
+
+                                <td>
+                                    @odgovor.Redoslijed
+                                </td>
+
+                                <td>
+                                    @odgovor.TekstOdgovora
+                                </td>
+
+                                <td>
+                                    @if (odgovor.IsTacan == "Y")
+                                    {
+                                        <span class="badge bg-success">
+                                            DA
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            NE
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @((odgovor.Bodovi ?? 0).ToString("0.##"))
+                                </td>
+
+                                <td>
+                                    @((odgovor.NegativniBodovi ?? 0).ToString("0.##"))
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+
+</div>

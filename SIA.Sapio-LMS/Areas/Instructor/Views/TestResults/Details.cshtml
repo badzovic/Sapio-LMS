@@ -1,0 +1,377 @@
+﻿@using SIA.Sapio_LMS.Models.Shared
+@using SIA.Sapio.LMS.Web.Areas.Instructor.Models.TestResults
+
+@model InstructorTestResultDetailsVM
+
+@{
+    ViewData["Title"] = "Detalji rezultata";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Detalji rezultata",
+                 Subtitle = Model.TestNaziv
+             }' />
+
+    <div class="card-custom mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-1">@Model.TestNaziv</h3>
+                <small class="text-muted">@Model.StudentImePrezime</small>
+            </div>
+
+            <a asp-area="Instructor"
+               asp-controller="TestResults"
+               asp-action="Index"
+               asp-route-predmetId="@Model.PredmetId"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad
+            </a>
+        </div>
+    </div>
+
+    <div class="card-custom mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Status:</strong><br />
+                @Model.Status
+            </div>
+
+            <div class="col-md-3">
+                <strong>Bodovi:</strong><br />
+                @Model.OstvareniBodovi / @Model.MaxBodovi
+            </div>
+
+            <div class="col-md-3">
+                <strong>Procenat:</strong><br />
+                @Model.Procenat.ToString("0.##")%
+            </div>
+
+            <div class="col-md-3">
+                <strong>Rezultat:</strong><br />
+                @if (Model.IsPassed)
+                {
+                    <span class="badge bg-success">Prošao</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">Nije prošao</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Questions == null || !Model.Questions.Any())
+    {
+        <div class="alert alert-info">
+            Nema pitanja za ovaj pokušaj polaganja.
+        </div>
+    }
+    else
+    {
+        var rb = 1;
+
+        foreach (var pitanje in Model.Questions)
+        {
+            <div class="card-custom mb-4">
+
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-2">
+                            @rb. @pitanje.PitanjeTekst
+                        </h5>
+
+                        <span class="badge bg-secondary">
+                            @pitanje.TipPitanjaSifra
+                        </span>
+                    </div>
+
+                    <div class="text-end">
+
+                        <div class="mb-1">
+                            <strong>Ukupno:</strong>
+                            @pitanje.Bodovi
+                        </div>
+
+                        <div class="mb-1">
+
+                            <strong>Osvojeno:</strong>
+
+                            @if (pitanje.TipPitanjaSifra == "ESSAY")
+                            {
+                                @(pitanje.DodijeljeniBodovi ?? 0)
+                            }
+                            else
+                            {
+                                @(pitanje.Odgovori
+                                                    .Where(x => x.IsSelectedByStudent)
+                                                    .Sum(x => x.Bodovi - x.NegativniBodovi))
+                                        }
+
+                        </div>
+
+                    </div>
+                </div>
+
+                @if (pitanje.TipPitanjaSifra == "ESSAY")
+                {
+                    <div class="mb-3">
+                        <strong>Odgovor studenta:</strong>
+
+                        <div class="border rounded p-3 bg-light mt-2">
+                            @if (!string.IsNullOrWhiteSpace(pitanje.EssayOdgovor))
+                            {
+                                @pitanje.EssayOdgovor
+                            }
+                            else
+                            {
+                                <span class="text-muted">
+                                    Student nije unio odgovor.
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (pitanje.StudentOdgovorId > 0)
+                    {
+                        <form asp-area="Instructor"
+                              asp-controller="TestResults"
+                              asp-action="GradeEssay"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="StudentOdgovorId"
+                                   value="@pitanje.StudentOdgovorId" />
+
+                            <div class="row align-items-end">
+
+                                <div class="col-md-3">
+                                    <label class="form-label">
+                                        Dodijeljeni bodovi
+                                    </label>
+
+                                    <input type="number"
+                                           step="0.01"
+                                           min="0"
+                                           max="@pitanje.MaxBodovi"
+                                           name="DodijeljeniBodovi"
+                                           value="@pitanje.DodijeljeniBodovi"
+                                           class="form-control essay-points-input"
+                                           data-max="@pitanje.MaxBodovi"
+                                           data-question="@rb"
+                                           required />
+
+                                    <small class="text-danger d-none essay-points-error"></small>
+
+                                    <small class="text-muted">
+                                        Maksimalno: @pitanje.MaxBodovi
+                                    </small>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <button type="submit"
+                                            class="btn-sapio btn-sapio-success">
+                                        Spasi bodove
+                                    </button>
+                                </div>
+
+                            </div>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 90px;">Odabrano</th>
+                                    <th>Odgovor</th>
+                                    <th style="width: 100px;">Tačan</th>
+                                    <th style="width: 120px;">Bodovi</th>
+                                    <th style="width: 140px;">Negativni bodovi</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var odgovor in pitanje.Odgovori)
+                                {
+                                    <tr class="@(odgovor.IsSelectedByStudent ? "table-primary" : "")">
+                                        <td class="text-center">
+                                            @if (odgovor.IsSelectedByStudent)
+                                            {
+                                                <span class="badge bg-primary">DA</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @odgovor.TekstOdgovora
+                                        </td>
+
+                                        <td>
+                                            @if (odgovor.IsTacan)
+                                            {
+                                                <span class="badge bg-success">DA</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">NE</span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @odgovor.Bodovi
+                                        </td>
+
+                                        <td class="text-danger">
+                                            @odgovor.NegativniBodovi
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+            </div>
+
+            rb++;
+        }
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            function showValidation(message) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Provjerite unos',
+                    text: message,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#5e72e4'
+                });
+            }
+
+            function toDecimal(value) {
+                if (!value) return 0;
+                return parseFloat(value.toString().replace(',', '.')) || 0;
+            }
+
+            function setEssayError(input, message) {
+                input.classList.add('is-invalid');
+
+                const wrapper = input.closest('.col-md-3');
+                const error = wrapper ? wrapper.querySelector('.essay-points-error') : null;
+
+                if (error) {
+                    error.textContent = message;
+                    error.classList.remove('d-none');
+                }
+            }
+
+            function clearEssayError(input) {
+                input.classList.remove('is-invalid');
+
+                const wrapper = input.closest('.col-md-3');
+                const error = wrapper ? wrapper.querySelector('.essay-points-error') : null;
+
+                if (error) {
+                    error.textContent = '';
+                    error.classList.add('d-none');
+                }
+            }
+
+            function validateEssayPoints(input, showSwal) {
+                const max = toDecimal(input.dataset.max);
+                const questionNo = input.dataset.question || '';
+                let value = toDecimal(input.value);
+
+                if (value < 0) {
+                    input.value = 0;
+                    value = 0;
+                }
+
+                if (value > max) {
+                    input.value = max;
+
+                    const message = `Za pitanje ${questionNo} ne možete unijeti više od ${max} bodova.`;
+
+                    setEssayError(input, message);
+
+                    if (showSwal) {
+                        showValidation(message);
+                    }
+
+                    return false;
+                }
+
+                clearEssayError(input);
+                return true;
+            }
+
+            document.querySelectorAll('.essay-points-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    validateEssayPoints(input, false);
+                });
+
+                input.addEventListener('change', function () {
+                    validateEssayPoints(input, true);
+                });
+            });
+
+            document.addEventListener('submit', function (e) {
+                const form = e.target;
+
+                if (!form.matches('form[action*="GradeEssay"]')) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                const input = form.querySelector('.essay-points-input');
+
+                if (!input) {
+                    return false;
+                }
+
+                if (!validateEssayPoints(input, true)) {
+                    return false;
+                }
+
+                const bodovi = input.value;
+                const max = input.dataset.max;
+
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Potvrda unosa',
+                    text: `Da li ste sigurni da želite spasiti ${bodovi} od maksimalno ${max} bodova za ovo essay pitanje?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Da, spasi bodove',
+                    cancelButtonText: 'Odustani',
+                    confirmButtonColor: '#2dce89',
+                    cancelButtonColor: '#adb5bd'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+
+                return false;
+            });
+
+        });
+    </script>
+}

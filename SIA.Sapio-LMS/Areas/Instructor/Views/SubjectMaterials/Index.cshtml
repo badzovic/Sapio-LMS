@@ -1,0 +1,177 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model List<SubjectMaterialVM>
+
+@{
+    ViewData["Title"] = "Materijali";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var predmetId = (int)(ViewBag.PredmetId ?? 0);
+    var predmetNaziv = ViewBag.PredmetNaziv as string ?? "";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Materijali",
+                 Subtitle = predmetNaziv
+             }' />
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Materijali predmeta</h3>
+
+            <a asp-area="Instructor"
+               asp-controller="MySubjects"
+               asp-action="Details"
+               asp-route-id="@predmetId"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na predmet
+            </a>
+        </div>
+
+        <form asp-area="Instructor"
+              asp-controller="SubjectMaterials"
+              asp-action="Upload"
+              method="post"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="predmetId" value="@predmetId" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Naslov</label>
+                    <input type="text" name="naslov" class="form-control" required />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Tip materijala</label>
+                    <select name="tipMaterijala" class="form-control">
+                        <option value="FILE">Fajl</option>
+                        <option value="LINK">Link</option>
+                    </select>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Opis / komentar</label>
+                    <textarea name="opis" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Fajl</label>
+                    <input type="file" name="file" class="form-control" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">URL / YouTube link</label>
+                    <input type="url" name="url" class="form-control" placeholder="https://..." />
+                </div>
+            </div>
+
+            <button type="submit" class="btn-sapio btn-sapio-primary">
+                <i class="fas fa-plus"></i> Dodaj materijal
+            </button>
+        </form>
+    </div>
+
+    <div class="card-custom">
+        <h5 class="mb-3">Postojeći materijali</h5>
+
+        <div class="table-responsive">
+            <table id="materialsTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Naslov</th>
+                        <th>Tip</th>
+                        <th>Opis</th>
+                        <th>Dokument / Link</th>
+                        <th>Datum</th>
+                        <th style="width:160px;">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model ?? new List<SubjectMaterialVM>())
+                    {
+                        <tr>
+                            <td>@item.Naslov</td>
+                            <td>@item.TipMaterijala</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Opis) ? "-" : item.Opis)</td>
+                            <td>
+                                @if (item.TipMaterijala == "FILE" && !string.IsNullOrWhiteSpace(item.FilePath))
+                                {
+                                    <a href="@item.FilePath" target="_blank" class="btn-sapio btn-sapio-secondary btn-sapio-sm">
+                                        <i class="fas fa-download"></i> Otvori fajl
+                                    </a>
+                                }
+                                else if (item.TipMaterijala == "LINK" && !string.IsNullOrWhiteSpace(item.Url))
+                                {
+                                    <a href="@item.Url" target="_blank" class="btn-sapio btn-sapio-secondary btn-sapio-sm">
+                                        <i class="fas fa-link"></i> Otvori link
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@item.DatumKreiranja.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <form asp-area="Instructor"
+                                      asp-controller="SubjectMaterials"
+                                      asp-action="Deactivate"
+                                      method="post"
+                                      class="js-confirm-form d-inline"
+                                      data-confirm-title="Deaktivacija materijala"
+                                      data-confirm-text="Da li želite deaktivirati materijal '@item.Naslov'?"
+                                      data-confirm-icon="warning"
+                                      data-confirm-button="Da, deaktiviraj">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden" name="id" value="@item.ID" />
+                                    <input type="hidden" name="predmetId" value="@predmetId" />
+
+                                    <button type="submit" class="btn-sapio btn-sapio-danger btn-sapio-sm">
+                                        <i class="fas fa-ban"></i> Deaktiviraj
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#materialsTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih materijala",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}

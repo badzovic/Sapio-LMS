@@ -1,0 +1,623 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model CreateSubjectTestVM
+
+@{
+    ViewData["Title"] = "Novi test";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Novi test",
+                 Subtitle = Model.PredmetNaziv
+             }' />
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="mb-1">Generisanje testa</h3>
+                <small class="text-muted">Definišite osnovne podatke, period važenja i strukturu pitanja.</small>
+            </div>
+
+            <a asp-area="Instructor"
+               asp-controller="SubjectTests"
+               asp-action="Index"
+               asp-route-predmetId="@Model.PredmetId"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na testove
+            </a>
+        </div>
+
+        <form asp-area="Instructor"
+              asp-controller="SubjectTests"
+              asp-action="Create"
+              method="post"
+              id="createTestForm">
+
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="PredmetId" />
+
+            <div class="card-custom">
+                <h5 class="mb-3">1. Osnovni podaci</h5>
+
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label asp-for="Naziv" class="form-label">Naziv testa</label>
+                        <input asp-for="Naziv" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="VrijemeTrajanjaMin" class="form-label">Trajanje testa / min</label>
+                        <input asp-for="VrijemeTrajanjaMin"
+                               class="form-control"
+                               type="number"
+                               min="1"
+                               step="1"
+                               required />
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Opis" class="form-label">Opis / napomena</label>
+                        <textarea asp-for="Opis" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-custom">
+                <h5 class="mb-3">2. Period važenja i pravila</h5>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="DatumOd" class="form-label">Datum od</label>
+                        <input name="DatumOd"
+                               id="DatumOd"
+                               class="form-control"
+                               type="datetime-local"
+                               value="@Model.DatumOd.ToString("yyyy-MM-ddTHH:mm")"
+                               required />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="DatumDo" class="form-label">Datum do</label>
+                        <input name="DatumDo"
+                               id="DatumDo"
+                               class="form-control"
+                               type="datetime-local"
+                               value="@Model.DatumDo.ToString("yyyy-MM-ddTHH:mm")"
+                               required />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="MinProcenatProlaza" class="form-label">Minimalni prolaz %</label>
+                        <input asp-for="MinProcenatProlaza"
+                               class="form-control"
+                               type="number"
+                               min="0"
+                               max="100"
+                               step="0.01"
+                               required />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="BrojPokusaja" class="form-label">Broj pokušaja</label>
+                        <input asp-for="BrojPokusaja"
+                               class="form-control"
+                               type="number"
+                               min="1"
+                               step="1"
+                               required />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="TestKlasaId" class="form-label">Klasa testa</label>
+
+                        <select asp-for="TestKlasaId" class="form-control">
+                            <option value="">-- Odaberite klasu --</option>
+
+                            @foreach (var klasa in Model.TestKlase)
+                            {
+                                <option value="@klasa.ID">
+                                    @klasa.NAZIV
+                                </option>
+                            }
+                        </select>
+
+                        <span asp-validation-for="TestKlasaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="RandomPitanja" class="form-label">Random pitanja</label>
+                        <select asp-for="RandomPitanja" class="form-control">
+                            <option value="Y">Da</option>
+                            <option value="N">Ne</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="RandomOdgovori" class="form-label">Random odgovori</label>
+                        <select asp-for="RandomOdgovori" class="form-control">
+                            <option value="Y">Da</option>
+                            <option value="N">Ne</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-custom">
+                <h5 class="mb-3">3. Struktura pitanja</h5>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="BrojLakih" class="form-label">Laka pitanja</label>
+                        <input asp-for="BrojLakih"
+                               id="brojLakih"
+                               class="form-control question-count"
+                               type="number"
+                               min="0"
+                               max="@Model.DostupnoLakih"
+                               step="1"
+                               data-tezina="LAKO"
+                               data-max="@Model.DostupnoLakih"
+                               data-label="lakih" />
+                        <small class="text-muted d-block">Dostupno: @Model.DostupnoLakih</small>
+                        <small class="text-danger d-none question-count-error" id="errorLakih"></small>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="BrojSrednjih" class="form-label">Srednja pitanja</label>
+                        <input asp-for="BrojSrednjih"
+                               id="brojSrednjih"
+                               class="form-control question-count"
+                               type="number"
+                               min="0"
+                               max="@Model.DostupnoSrednjih"
+                               step="1"
+                               data-tezina="SREDNJE"
+                               data-max="@Model.DostupnoSrednjih"
+                               data-label="srednjih" />
+                        <small class="text-muted d-block">Dostupno: @Model.DostupnoSrednjih</small>
+                        <small class="text-danger d-none question-count-error" id="errorSrednjih"></small>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="BrojTeskih" class="form-label">Teška pitanja</label>
+                        <input asp-for="BrojTeskih"
+                               id="brojTeskih"
+                               class="form-control question-count"
+                               type="number"
+                               min="0"
+                               max="@Model.DostupnoTeskih"
+                               step="1"
+                               data-tezina="TESKO"
+                               data-max="@Model.DostupnoTeskih"
+                               data-label="teških" />
+                        <small class="text-muted d-block">Dostupno: @Model.DostupnoTeskih</small>
+                        <small class="text-danger d-none question-count-error" id="errorTeskih"></small>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="BrojPitanja" class="form-label">Ukupno pitanja</label>
+                        <input asp-for="BrojPitanja"
+                               id="brojPitanja"
+                               class="form-control"
+                               type="number"
+                               readonly />
+                        <small class="text-muted">Automatski zbir.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-custom">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-1">4. Obavezna pitanja</h5>
+                        <small class="text-muted">
+                            Označena pitanja će obavezno ući u test. Sistem će preostala pitanja izabrati automatski.
+                        </small>
+                        <div class="mt-2">
+                            <small id="mandatorySummary" class="text-muted"></small>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.DostupnaPitanja == null || !Model.DostupnaPitanja.Any())
+                {
+                    <div class="training-empty">
+                        Nema aktivnih pitanja za ovaj predmet.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table id="availableQuestionsTable" class="table table-bordered table-striped w-100">
+                            <thead>
+                                <tr>
+                                    <th style="width:80px;">Obavezno</th>
+                                    <th>Pitanje</th>
+                                    <th>Tip</th>
+                                    <th>Težina</th>
+                                    <th>Bodovi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.DostupnaPitanja)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox"
+                                                   value="@item.ID"
+                                                   class="mandatory-question"
+                                                   data-id="@item.ID"
+                                                   data-tezina="@item.TezinaSifra" />
+                                        </td>
+                                        <td class="question-text-cell">
+                                            <div class="question-preview" title="@item.TekstPitanja">
+                                                @item.TekstPitanja
+                                            </div>
+                                        </td>
+                                        <td>@item.TipPitanja</td>
+                                        <td>@item.Tezina</td>
+                                        <td>@item.Bodovi.ToString("0.##")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="page-toolbar-row mt-3">
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-magic"></i> Generiši test
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('createTestForm');
+
+            const brojLakih = document.getElementById('brojLakih');
+            const brojSrednjih = document.getElementById('brojSrednjih');
+            const brojTeskih = document.getElementById('brojTeskih');
+            const brojPitanja = document.getElementById('brojPitanja');
+            const mandatorySummary = document.getElementById('mandatorySummary');
+
+            const selectedMandatory = new Map();
+
+            let dataTable = null;
+
+            function toInt(input) {
+                return parseInt(input.value || '0', 10) || 0;
+            }
+
+            function getRequestedByDifficulty() {
+                return {
+                    LAKO: toInt(brojLakih),
+                    SREDNJE: toInt(brojSrednjih),
+                    TESKO: toInt(brojTeskih)
+                };
+            }
+
+            function getMandatoryByDifficulty() {
+                const result = {
+                    LAKO: 0,
+                    SREDNJE: 0,
+                    TESKO: 0
+                };
+
+                selectedMandatory.forEach(function (tezina) {
+                    if (result.hasOwnProperty(tezina)) {
+                        result[tezina]++;
+                    }
+                });
+
+                return result;
+            }
+
+            function updateTotal() {
+                brojPitanja.value = toInt(brojLakih) + toInt(brojSrednjih) + toInt(brojTeskih);
+                updateMandatorySummary();
+            }
+
+            function showValidation(message) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Provjerite unos',
+                    text: message,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#5e72e4'
+                });
+            }
+
+            function setInputError(input, message) {
+                input.classList.add('is-invalid');
+
+                let errorElement = null;
+
+                if (input.id === 'brojLakih') errorElement = document.getElementById('errorLakih');
+                if (input.id === 'brojSrednjih') errorElement = document.getElementById('errorSrednjih');
+                if (input.id === 'brojTeskih') errorElement = document.getElementById('errorTeskih');
+
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.classList.remove('d-none');
+                }
+            }
+
+            function clearInputError(input) {
+                input.classList.remove('is-invalid');
+
+                let errorElement = null;
+
+                if (input.id === 'brojLakih') errorElement = document.getElementById('errorLakih');
+                if (input.id === 'brojSrednjih') errorElement = document.getElementById('errorSrednjih');
+                if (input.id === 'brojTeskih') errorElement = document.getElementById('errorTeskih');
+
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.classList.add('d-none');
+                }
+            }
+
+            function clampQuestionCount(input, showSwal) {
+                const max = parseInt(input.dataset.max || '0', 10) || 0;
+                const label = input.dataset.label || 'pitanja';
+
+                let value = toInt(input);
+
+                if (value < 0) {
+                    input.value = 0;
+                    value = 0;
+                }
+
+                if (value > max) {
+                    input.value = max;
+
+                    const message = `Ne možete unijeti više od ${max} ${label} pitanja jer je toliko trenutno dostupno.`;
+
+                    setInputError(input, message);
+
+                    if (showSwal) {
+                        showValidation(message);
+                    }
+
+                    updateTotal();
+                    return false;
+                }
+
+                clearInputError(input);
+                updateTotal();
+                return true;
+            }
+
+            function updateMandatorySummary() {
+                if (!mandatorySummary) return;
+
+                const requested = getRequestedByDifficulty();
+                const mandatory = getMandatoryByDifficulty();
+
+                mandatorySummary.innerHTML =
+                    `Obavezna pitanja: ` +
+                    `<span class="text-success">Laka ${mandatory.LAKO}/${requested.LAKO}</span>, ` +
+                    `<span class="text-warning">Srednja ${mandatory.SREDNJE}/${requested.SREDNJE}</span>, ` +
+                    `<span class="text-danger">Teška ${mandatory.TESKO}/${requested.TESKO}</span>`;
+            }
+
+            function syncCheckboxesToState() {
+                document.querySelectorAll('.mandatory-question').forEach(function (checkbox) {
+                    const id = checkbox.dataset.id;
+                    checkbox.checked = selectedMandatory.has(id);
+                });
+            }
+
+                    function handleMandatoryCheckboxChange(checkbox) {
+            const id = checkbox.dataset.id || checkbox.value;
+            const tezina = checkbox.dataset.tezina;
+
+            if (!id || !tezina) return;
+
+            if (!checkbox.checked) {
+                selectedMandatory.delete(id);
+                updateMandatorySummary();
+                return;
+            }
+
+            const requested = getRequestedByDifficulty();
+            const mandatory = getMandatoryByDifficulty();
+
+            if ((mandatory[tezina] + 1) > requested[tezina]) {
+                checkbox.checked = false;
+
+                let label = 'pitanja';
+
+                if (tezina === 'LAKO') label = 'lakih pitanja';
+                if (tezina === 'SREDNJE') label = 'srednjih pitanja';
+                if (tezina === 'TESKO') label = 'teških pitanja';
+
+                showValidation(`Ne možete označiti više obaveznih ${label} nego što je definisano u strukturi testa.`);
+
+                updateMandatorySummary();
+                return;
+            }
+
+            selectedMandatory.set(id, tezina);
+            updateMandatorySummary();
+        }
+
+            function validateMandatoryAgainstStructure() {
+                const requested = getRequestedByDifficulty();
+                const mandatory = getMandatoryByDifficulty();
+
+                if (mandatory.LAKO > requested.LAKO) {
+                    showValidation('Broj obaveznih lakih pitanja je veći od broja lakih pitanja u strukturi testa.');
+                    return false;
+                }
+
+                if (mandatory.SREDNJE > requested.SREDNJE) {
+                    showValidation('Broj obaveznih srednjih pitanja je veći od broja srednjih pitanja u strukturi testa.');
+                    return false;
+                }
+
+                if (mandatory.TESKO > requested.TESKO) {
+                    showValidation('Broj obaveznih teških pitanja je veći od broja teških pitanja u strukturi testa.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            function appendMandatoryHiddenInputs() {
+                form.querySelectorAll('input[data-generated-mandatory="true"]').forEach(function (input) {
+                    input.remove();
+                });
+
+                selectedMandatory.forEach(function (_, id) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'ObaveznaPitanjaIds';
+                    hidden.value = id;
+                    hidden.setAttribute('data-generated-mandatory', 'true');
+
+                    form.appendChild(hidden);
+                });
+            }
+
+            document.querySelectorAll('.question-count').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    clampQuestionCount(input, false);
+                    validateMandatoryAgainstStructure();
+                    updateMandatorySummary();
+                });
+
+                input.addEventListener('change', function () {
+                    clampQuestionCount(input, true);
+                    validateMandatoryAgainstStructure();
+                    updateMandatorySummary();
+                });
+            });
+
+            document.addEventListener('change', function (e) {
+                if (e.target.classList.contains('mandatory-question')) {
+                    handleMandatoryCheckboxChange(e.target);
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                updateTotal();
+
+                const naziv = document.querySelector('[name="Naziv"]').value.trim();
+                const datumOd = document.querySelector('[name="DatumOd"]').value;
+                const datumDo = document.querySelector('[name="DatumDo"]').value;
+                const trajanje = parseInt(document.querySelector('[name="VrijemeTrajanjaMin"]').value || '0', 10);
+                const prolaz = parseFloat(document.querySelector('[name="MinProcenatProlaza"]').value || '0');
+                const pokusaji = parseInt(document.querySelector('[name="BrojPokusaja"]').value || '0', 10);
+
+                const ukupno = toInt(brojLakih) + toInt(brojSrednjih) + toInt(brojTeskih);
+
+                if (!naziv) {
+                    e.preventDefault();
+                    showValidation('Unesite naziv testa.');
+                    return false;
+                }
+
+                if (!datumOd || !datumDo) {
+                    e.preventDefault();
+                    showValidation('Unesite datum od i datum do.');
+                    return false;
+                }
+
+                if (new Date(datumOd) >= new Date(datumDo)) {
+                    e.preventDefault();
+                    showValidation('Datum od mora biti manji od datuma do.');
+                    return false;
+                }
+
+                if (!trajanje || trajanje <= 0) {
+                    e.preventDefault();
+                    showValidation('Vrijeme trajanja mora biti veće od 0 minuta.');
+                    return false;
+                }
+
+                if (prolaz < 0 || prolaz > 100) {
+                    e.preventDefault();
+                    showValidation('Minimalni prolaz mora biti između 0 i 100%.');
+                    return false;
+                }
+
+                if (!pokusaji || pokusaji <= 0) {
+                    e.preventDefault();
+                    showValidation('Broj pokušaja mora biti veći od 0.');
+                    return false;
+                }
+
+                if (ukupno <= 0) {
+                    e.preventDefault();
+                    showValidation('Unesite broj pitanja za test.');
+                    return false;
+                }
+
+                let countsValid = true;
+
+                document.querySelectorAll('.question-count').forEach(function (input) {
+                    if (!clampQuestionCount(input, false)) {
+                        countsValid = false;
+                    }
+                });
+
+                if (!countsValid) {
+                    e.preventDefault();
+                    showValidation('Provjerite broj pitanja po težinama.');
+                    return false;
+                }
+
+                if (!validateMandatoryAgainstStructure()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                appendMandatoryHiddenInputs();
+
+                return true;
+            });
+
+            updateTotal();
+
+            if (window.jQuery && $.fn.DataTable) {
+                dataTable = $('#availableQuestionsTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    ordering: true,
+                    searching: true,
+                    responsive: false,
+                    scrollX: true,
+                    drawCallback: function () {
+                        syncCheckboxesToState();
+                    },
+                    language: {
+                        search: "Pretraga:",
+                        lengthMenu: "Prikaži _MENU_ zapisa",
+                        info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                        infoEmpty: "Nema zapisa",
+                        zeroRecords: "Nema pronađenih pitanja",
+                        paginate: {
+                            first: "Prva",
+                            last: "Zadnja",
+                            next: "Sljedeća",
+                            previous: "Prethodna"
+                        }
+                    }
+                });
+
+                syncCheckboxesToState();
+            }
+        });
+    </script>
+}

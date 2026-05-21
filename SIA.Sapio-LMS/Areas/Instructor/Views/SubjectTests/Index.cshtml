@@ -1,0 +1,351 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model SubjectTestIndexVM
+@{
+    ViewData["Title"] = "Testovi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var predmetId = Model.PredmetId;
+    var predmetNaziv = Model.PredmetNaziv;
+    var currentStatus = (Model.Status ?? "all").ToLower();
+
+    string statusText = currentStatus switch
+    {
+        "draft" => "Draft",
+        "active" => "Aktivni",
+        "archived" => "Arhivirani",
+        _ => "Svi"
+    };
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Testovi",
+                 Subtitle = predmetNaziv
+             }' />
+
+    <div class="card-custom page-toolbar">
+
+        <div class="filter-summary">
+            <span class="filter-summary-label">Aktivni filteri:</span>
+            <span class="filter-pill">@statusText</span>
+
+            @if (Model.DatumOd.HasValue || Model.DatumDo.HasValue)
+            {
+                <span class="filter-pill">
+                    Period:
+                    @(Model.DatumOd?.ToString("dd.MM.yyyy") ?? "...")
+                    -
+                    @(Model.DatumDo?.ToString("dd.MM.yyyy") ?? "...")
+                </span>
+            }
+        </div>
+
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Status testa</span>
+
+            <div class="page-toolbar-row">
+                <a asp-action="Index"
+                   asp-route-predmetId="@predmetId"
+                   asp-route-status="all"
+                   asp-route-datumOd="@Model.DatumOd?.ToString("yyyy-MM-dd")"
+                   asp-route-datumDo="@Model.DatumDo?.ToString("yyyy-MM-dd")"
+                   class="btn-sapio @(currentStatus == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Svi
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-predmetId="@predmetId"
+                   asp-route-status="draft"
+                   asp-route-datumOd="@Model.DatumOd?.ToString("yyyy-MM-dd")"
+                   asp-route-datumDo="@Model.DatumDo?.ToString("yyyy-MM-dd")"
+                   class="btn-sapio @(currentStatus == "draft" ? "btn-sapio-secondary" : "btn-sapio-secondary")">
+                    Draft
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-predmetId="@predmetId"
+                   asp-route-status="active"
+                   asp-route-datumOd="@Model.DatumOd?.ToString("yyyy-MM-dd")"
+                   asp-route-datumDo="@Model.DatumDo?.ToString("yyyy-MM-dd")"
+                   class="btn-sapio @(currentStatus == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    Aktivni
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-predmetId="@predmetId"
+                   asp-route-status="archived"
+                   asp-route-datumOd="@Model.DatumOd?.ToString("yyyy-MM-dd")"
+                   asp-route-datumDo="@Model.DatumDo?.ToString("yyyy-MM-dd")"
+                   class="btn-sapio @(currentStatus == "archived" ? "btn-sapio-dark" : "btn-sapio-secondary")">
+                    Arhivirani
+                </a>
+            </div>
+        </div>
+
+        <div class="page-toolbar-divider"></div>
+
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Period važenja</span>
+
+            <form asp-action="Index"
+                  method="get"
+                  class="page-toolbar-row align-items-end">
+
+                <input type="hidden" name="predmetId" value="@predmetId" />
+                <input type="hidden" name="status" value="@currentStatus" />
+
+                <div>
+                    <label class="form-label mb-1">Od</label>
+                    <input type="date"
+                           name="datumOd"
+                           value="@Model.DatumOd?.ToString("yyyy-MM-dd")"
+                           class="form-control" />
+                </div>
+
+                <div>
+                    <label class="form-label mb-1">Do</label>
+                    <input type="date"
+                           name="datumDo"
+                           value="@Model.DatumDo?.ToString("yyyy-MM-dd")"
+                           class="form-control" />
+                </div>
+
+                <button type="submit" class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-filter"></i> Filtriraj
+                </button>
+
+                <a asp-action="Index"
+                   asp-route-predmetId="@predmetId"
+                   asp-route-status="@currentStatus"
+                   class="btn-sapio btn-sapio-secondary">
+                    Reset datuma
+                </a>
+            </form>
+        </div>
+
+        <div class="page-toolbar-divider"></div>
+
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Opcije testa</span>
+
+            <div class="page-toolbar-row">
+                <a asp-area="Instructor"
+                   asp-controller="SubjectTests"
+                   asp-action="Create"
+                   asp-route-predmetId="@predmetId"
+                   class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-plus"></i> Novi test
+                </a>
+
+                <a asp-area="Instructor"
+                   asp-controller="MySubjects"
+                   asp-action="Details"
+                   asp-route-id="@predmetId"
+                   class="btn-sapio btn-sapio-secondary">
+                    Nazad na predmet
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card-custom">
+
+        @if (Model.Tests == null || !Model.Tests.Any())
+        {
+            <div class="training-empty">
+                Za ovaj predmet trenutno nema generisanih testova.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+
+                <table id="testsTable"
+                       class="table table-bordered table-striped w-100">
+
+                    <thead>
+                        <tr>
+                            <th>Naziv</th>
+                            <th>Period</th>
+                            <th>Trajanje</th>
+                            <th>Pitanja</th>
+                            <th>Prolaz</th>
+                            <th>Status</th>
+                            <th>Datum kreiranja</th>
+                            <th style="width:160px;">Akcije</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model.Tests)
+                        {
+                            <tr class="@(item.Aktivno == "Y" ? "" : "table-secondary")">
+
+                                <td>
+                                    <div class="fw-bold">
+                                        @item.Naziv
+                                    </div>
+
+                                    <div class="mt-1">
+                                        @if (item.TestKlasaNaziv == "Sticanje")
+                                        {
+                                            <span class="badge bg-primary">
+                                                @item.TestKlasaNaziv
+                                            </span>
+                                        }
+                                        else if (item.TestKlasaNaziv == "Obnova")
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                @item.TestKlasaNaziv
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                @item.TestKlasaNaziv
+                                            </span>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.Opis))
+                                    {
+                                        <div class="mt-1">
+                                            <small class="text-muted">
+                                                @item.Opis
+                                            </small>
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div>
+                                        <strong>Od:</strong>
+                                        @item.DatumOd.ToString("dd.MM.yyyy")
+                                    </div>
+
+                                    <div>
+                                        <strong>Do:</strong>
+                                        @item.DatumDo.ToString("dd.MM.yyyy")
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @item.VrijemeTrajanjaMin min
+                                </td>
+
+                                <td>
+
+                                    <div>
+                                        <strong>Ukupno:</strong>
+                                        @item.BrojPitanja
+                                    </div>
+
+                                    <small class="text-success">
+                                        L: @item.BrojLakih
+                                    </small>
+
+                                    <small class="text-warning ms-2">
+                                        S: @item.BrojSrednjih
+                                    </small>
+
+                                    <small class="text-danger ms-2">
+                                        T: @item.BrojTeskih
+                                    </small>
+
+                                </td>
+
+                                <td>
+                                    @item.MinProcenatProlaza.ToString("0.##")%
+                                </td>
+
+                                <td>
+
+                                    @if (item.Status == "DRAFT")
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Draft
+                                        </span>
+                                    }
+                                    else if (item.Status == "ACTIVE")
+                                    {
+                                        <span class="badge bg-success">
+                                            Aktivan
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark">
+                                            Arhiviran
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+                                    @item.DatumKreiranja.ToString("dd.MM.yyyy")
+                                </td>
+
+                                <td>
+
+                                    <a asp-area="Instructor"
+                                       asp-controller="SubjectTests"
+                                       asp-action="Details"
+                                       asp-route-id="@item.ID"
+                                       class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                        <i class="fas fa-eye"></i>
+                                        Detalji
+                                    </a>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+
+            $('#testsTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih testova",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+
+        });
+    </script>
+
+}

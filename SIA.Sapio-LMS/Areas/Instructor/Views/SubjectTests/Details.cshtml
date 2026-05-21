@@ -1,0 +1,270 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model SubjectTestDetailsVM
+
+@{
+    ViewData["Title"] = "Detalji testa";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Detalji testa",
+                 Subtitle = Model.Naziv
+             }' />
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-1">@Model.Naziv</h3>
+                <small class="text-muted">@Model.PredmetNaziv</small>
+            </div>
+
+            <div class="action-buttons">
+
+                @if (Model.Status == "DRAFT")
+                {
+                    <a asp-area="Instructor"
+                       asp-controller="SubjectTests"
+                       asp-action="Edit"
+                       asp-route-id="@Model.ID"
+                       class="btn-sapio btn-sapio-primary">
+                        <i class="fas fa-edit"></i> Uredi test
+                    </a>
+
+                    <form asp-area="Instructor"
+                          asp-controller="SubjectTests"
+                          asp-action="Activate"
+                          method="post"
+                          class="d-inline js-confirm-form"
+                          data-confirm-title="Aktivacija testa"
+                          data-confirm-text="Da li ste sigurni da želite aktivirati ovaj test?"
+                          data-confirm-icon="question"
+                          data-confirm-button="Da, aktiviraj">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.ID" />
+
+                        <button type="submit" class="btn-sapio btn-sapio-success">
+                            <i class="fas fa-check"></i> Aktiviraj
+                        </button>
+                    </form>
+                }
+
+                @if (Model.Status == "ACTIVE")
+                {
+                    <form asp-area="Instructor"
+                          asp-controller="SubjectTests"
+                          asp-action="Archive"
+                          method="post"
+                          class="d-inline js-confirm-form"
+                          data-confirm-title="Arhiviranje testa"
+                          data-confirm-text="Da li ste sigurni da želite arhivirati ovaj test?"
+                          data-confirm-icon="warning"
+                          data-confirm-button="Da, arhiviraj">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.ID" />
+
+                        <button type="submit" class="btn-sapio btn-sapio-danger">
+                            <i class="fas fa-archive"></i> Arhiviraj
+                        </button>
+                    </form>
+                }
+
+                <a asp-area="Instructor"
+                   asp-controller="SubjectTests"
+                   asp-action="Index"
+                   asp-route-predmetId="@Model.PredmetId"
+                   class="btn-sapio btn-sapio-secondary">
+                    Nazad na testove
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mb-3">
+                <label class="form-label fw-bold">Opis</label>
+                <div class="border rounded p-3 bg-light">
+                    @(string.IsNullOrWhiteSpace(Model.Opis) ? "-" : Model.Opis)
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <div class="border rounded p-3 bg-light">
+                    @if (Model.Status == "DRAFT")
+                    {
+                        <span class="badge bg-secondary">Draft</span>
+                    }
+                    else if (Model.Status == "ACTIVE")
+                    {
+                        <span class="badge bg-success">Aktivan</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-dark">Arhiviran</span>
+                    }
+                </div>
+            </div>
+
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Datum od</label>
+                <div class="border rounded p-2 bg-light">@Model.DatumOd.ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Datum do</label>
+                <div class="border rounded p-2 bg-light">@Model.DatumDo.ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Trajanje</label>
+                <div class="border rounded p-2 bg-light">@Model.VrijemeTrajanjaMin min</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Minimalni prolaz</label>
+                <div class="border rounded p-2 bg-light">@Model.MinProcenatProlaza.ToString("0.##")%</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Ukupno pitanja</label>
+                <div class="border rounded p-2 bg-light">@Model.BrojPitanja</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">L / S / T</label>
+                <div class="border rounded p-2 bg-light">
+                    @Model.BrojLakih / @Model.BrojSrednjih / @Model.BrojTeskih
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Random pitanja</label>
+                <div class="border rounded p-2 bg-light">@(Model.RandomPitanja == "Y" ? "Da" : "Ne")</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Random odgovori</label>
+                <div class="border rounded p-2 bg-light">@(Model.RandomOdgovori == "Y" ? "Da" : "Ne")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <h4 class="mb-3">Pitanja u testu</h4>
+
+        @foreach (var pitanje in Model.Pitanja)
+        {
+            <div class="border rounded p-3 mb-3 bg-light">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <strong>@pitanje.Redoslijed. @pitanje.TekstPitanja</strong>
+
+                        @if (pitanje.IsObavezno == "Y")
+                        {
+                            <span class="badge bg-primary ms-2">Obavezno</span>
+                        }
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        @* TIP PITANJA *@
+                        @if (pitanje.TipPitanja.Contains("Jedan"))
+                        {
+                            <span class="badge bg-primary">
+                                @pitanje.TipPitanja
+                            </span>
+                        }
+                        else if (pitanje.TipPitanja.Contains("Više"))
+                        {
+                            <span class="badge bg-info">
+                                @pitanje.TipPitanja
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-dark">
+                                @pitanje.TipPitanja
+                            </span>
+                        }
+
+                        @* TEŽINA *@
+                        @if (pitanje.Tezina.Contains("Lako"))
+                        {
+                            <span class="badge bg-success">
+                                @pitanje.Tezina
+                            </span>
+                        }
+                        else if (pitanje.Tezina.Contains("Srednje"))
+                        {
+                            <span class="badge bg-warning text-dark">
+                                @pitanje.Tezina
+                            </span>
+                        }
+                        else if (pitanje.Tezina.Contains("Teško"))
+                        {
+                            <span class="badge bg-danger">
+                                @pitanje.Tezina
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                @pitanje.Tezina
+                            </span>
+                        }
+
+                        @* BODOVI *@
+                        <span class="badge bg-secondary">
+                            @pitanje.Bodovi.ToString("0.##") bod.
+                        </span>
+
+                    </div>
+                </div>
+
+                @if (pitanje.Odgovori != null && pitanje.Odgovori.Any())
+                {
+                    <table class="table table-sm table-bordered bg-white mb-0">
+                        <thead>
+                            <tr>
+                                <th>Odgovor</th>
+                                <th style="width:100px;">Tačan</th>
+                                <th style="width:120px;">Bodovi</th>
+                                <th style="width:150px;">Kazneni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var odgovor in pitanje.Odgovori)
+                            {
+                                <tr>
+                                    <td>@odgovor.TekstOdgovora</td>
+                                    <td>
+                                        @if (odgovor.IsTacan == "Y")
+                                        {
+                                            <span class="badge bg-success">DA</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">NE</span>
+                                        }
+                                    </td>
+                                    <td>@((odgovor.Bodovi ?? 0).ToString("0.##"))</td>
+                                    <td>@((odgovor.NegativniBodovi ?? 0).ToString("0.##"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <small class="text-muted">Esejsko pitanje nema ponuđene odgovore.</small>
+                }
+            </div>
+        }
+    </div>
+
+</div>

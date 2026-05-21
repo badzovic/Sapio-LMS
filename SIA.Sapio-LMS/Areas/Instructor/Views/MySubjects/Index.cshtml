@@ -1,0 +1,99 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model List<MySubjectVM>
+
+@{
+    ViewData["Title"] = "Moji predmeti";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Moji predmeti",
+                 Subtitle = "Pregled predmeta koje trenutno predajete"
+             }' />
+
+    <div class="card-custom training-matrix-card">
+
+        <div class="training-matrix-header">
+            <div>
+                <h5 class="mb-1">Predmeti instruktora</h5>
+
+                <small class="text-muted">
+                    Predmeti na kojima ste trenutno aktivni kao instruktor
+                </small>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <span class="training-count">
+                    @Model.Count predmet(a)
+                </span>
+            }
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="training-empty">
+                Trenutno nemate dodijeljenih aktivnih predmeta.
+            </div>
+        }
+        else
+        {
+            <div class="training-list">
+
+                @{
+                    int rb = 1;
+                }
+
+                @foreach (var item in Model)
+                {
+                    <div class="training-row">
+
+                        <div class="training-index">
+                            @rb
+                        </div>
+
+                        <div class="training-content">
+
+                            <div class="training-title">
+                                @item.Naziv
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.NazivEng))
+                            {
+                                <div class="training-subtitle">
+                                    @item.NazivEng
+                                </div>
+                            }
+
+                            <div class="training-meta">
+                                Instruktor od: @item.DatumOd.ToString("dd.MM.yyyy")
+                            </div>
+
+                        </div>
+
+                        <div class="training-actions">
+                            <a asp-area="Instructor"
+                               asp-controller="MySubjects"
+                               asp-action="Details"
+                               asp-route-id="@item.PredmetId"
+                               class="btn-sapio btn-sapio-primary btn-sm">
+                                Upravljaj
+                            </a>
+                        </div>
+
+                    </div>
+
+                    rb++;
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>

@@ -1,0 +1,382 @@
+﻿@using SIA.Sapio_LMS.Areas.Student.Models
+@model TakeTestVM
+
+@{
+    Layout = null;
+    var remainingSeconds = Math.Max(0, (int)(Model.VrijemeIsteka - DateTime.Now).TotalSeconds);
+}
+
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="utf-8" />
+    <title>@Model.NazivTesta</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/custom.css" />
+
+    <style>
+        body {
+            background: #f4f6fb;
+            overflow: hidden;
+        }
+
+        .test-topbar {
+            background: #fff;
+            border-radius: 18px;
+            padding: 18px 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.06);
+            margin-bottom: 20px;
+        }
+
+        .question-card {
+            min-height: calc(100vh - 210px);
+            background: #fff;
+            border-radius: 22px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.07);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .question-pane {
+            display: none;
+        }
+
+            .question-pane.active {
+                display: block;
+            }
+
+        .question-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            text-align: center;
+            padding-top: 35px;
+        }
+
+        .question-title {
+            max-width: 1100px;
+            width: 100%;
+            margin-bottom: 38px;
+        }
+
+        .question-counter {
+            font-size: .95rem;
+            color: #8898aa;
+            margin-bottom: 12px;
+        }
+
+        .question-title h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.4;
+            color: #172b4d;
+            margin: 0;
+        }
+
+        .answers-wrap {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .answer-option {
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: all .15s ease;
+            font-size: 1.05rem;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,.03);
+        }
+
+            .answer-option:hover {
+                background: #f8f9fe;
+                border-color: #5e72e4;
+                transform: translateY(-1px);
+            }
+
+            .answer-option input {
+                margin-right: 10px;
+            }
+
+        .essay-answer {
+            width: 100%;
+            max-width: 900px;
+            border-radius: 16px;
+            padding: 18px;
+            font-size: 1.05rem;
+        }
+
+        .start-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,.94);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-align: center;
+        }
+
+        .test-nav-actions {
+            border-top: 1px solid #eef0f4;
+            padding-top: 22px;
+            margin-top: 28px;
+        }
+
+        #prevBtn,
+        #nextBtn,
+        #submitTestBtn {
+            transition: all .18s ease;
+            min-width: 135px;
+            font-weight: 600;
+        }
+
+            #prevBtn:hover,
+            #nextBtn:hover,
+            #submitTestBtn:hover {
+                transform: translateY(-2px);
+            }
+
+        #prevBtn {
+            background: #fff;
+            color: #525f7f;
+        }
+
+        #nextBtn {
+            background: linear-gradient(135deg, #5e72e4, #825ee4);
+            border: none;
+        }
+
+        #submitTestBtn {
+            background: linear-gradient(135deg, #2dce89, #28b97d);
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="startOverlay" class="start-overlay">
+        <div>
+            <h1 class="mb-3">@Model.NazivTesta</h1>
+            <p class="mb-4">Test će se otvoriti u fullscreen načinu rada.</p>
+            <button type="button" id="startFullscreenBtn" class="btn btn-light btn-lg">
+                Započni prikaz testa
+            </button>
+        </div>
+    </div>
+
+    <div class="container-fluid py-3">
+        <div class="test-topbar d-flex justify-content-between align-items-center">
+            <div>
+                <div class="text-muted small">Predmet</div>
+                <h4 class="mb-0">@Model.PredmetNaziv</h4>
+                <div class="text-muted">@Model.NazivTesta</div>
+            </div>
+
+            <div class="text-end">
+                <div class="text-danger fw-bold">Preostalo vrijeme</div>
+                <div id="testTimer" class="fs-3 fw-bold text-danger">00:00:00</div>
+                <div id="questionProgress" class="text-muted small"></div>
+            </div>
+        </div>
+
+        <form id="testForm" action="/Student/Tests/Submit/@Model.PolaganjeId" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.PolaganjeId" />
+
+            <div class="question-card">
+                <div>
+                    @for (int i = 0; i < Model.Pitanja.Count; i++)
+                    {
+                        var pitanje = Model.Pitanja[i];
+                        var tip = (pitanje.TipPitanjaSifra ?? "").Trim().ToUpper();
+
+                        <div class="question-pane @(i == 0 ? "active" : "")" data-index="@i">
+                            <div class="question-stage">
+                                <div class="question-title">
+                                    <div class="question-counter">
+                                        Pitanje @(i + 1) od @Model.Pitanja.Count
+                                    </div>
+
+                                    <h3>@pitanje.TekstPitanja</h3>
+                                </div>
+
+                                <div class="answers-wrap">
+                                    @if (tip == "SINGLE_CHOICE" || tip == "SINGLE")
+                                    {
+                                        foreach (var odgovor in pitanje.Odgovori.OrderBy(x => x.Redoslijed))
+                                        {
+                                            <label class="answer-option d-block">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       name="answers[@pitanje.PolaganjePitanjeId]"
+                                                       value="@odgovor.TestPitanjeOdgovorId" />
+                                                @odgovor.TekstOdgovora
+                                            </label>
+                                        }
+                                    }
+                                    else if (tip == "MULTIPLE_CHOICE" || tip == "MULTIPLE")
+                                    {
+                                        foreach (var odgovor in pitanje.Odgovori.OrderBy(x => x.Redoslijed))
+                                        {
+                                            <label class="answer-option d-block">
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       name="answers[@pitanje.PolaganjePitanjeId]"
+                                                       value="@odgovor.TestPitanjeOdgovorId" />
+                                                @odgovor.TekstOdgovora
+                                            </label>
+                                        }
+                                    }
+                                    else if (tip == "ESSAY")
+                                    {
+                                        <textarea class="form-control essay-answer"
+                                          rows="8"
+                                          name="essayAnswers[@pitanje.PolaganjePitanjeId]"
+                                          placeholder="Unesite vaš odgovor..."></textarea>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-warning">
+                                            Tip pitanja nije prepoznat: @tip
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center test-nav-actions">
+                    <button type="button"
+                            id="prevBtn"
+                            class="btn btn-light px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2 border-0">
+                        <span style="font-size:18px;">←</span>
+                        <span>Nazad</span>
+                    </button>
+
+                    <button type="button"
+                            id="nextBtn"
+                            class="btn btn-primary px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2">
+                        <span>Naprijed</span>
+                        <span style="font-size:18px;">→</span>
+                    </button>
+
+                    <button type="button"
+                            id="submitTestBtn"
+                            class="btn btn-success px-5 py-2 rounded-pill shadow-sm d-none fw-bold">
+                        ✓ Završi test
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        let currentIndex = 0;
+        let totalQuestions = @Model.Pitanja.Count;
+        let remainingSeconds = @remainingSeconds;
+        let testSubmitted = false;
+
+        function requestFullscreenMode() {
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen();
+        }
+
+        function showQuestion(index) {
+            $('.question-pane').removeClass('active');
+            $('.question-pane[data-index="' + index + '"]').addClass('active');
+
+            $('#prevBtn').toggleClass('d-none', index === 0);
+            $('#nextBtn').toggleClass('d-none', index === totalQuestions - 1);
+            $('#submitTestBtn').toggleClass('d-none', index !== totalQuestions - 1);
+
+            $('#questionProgress').text('Pitanje ' + (index + 1) + ' / ' + totalQuestions);
+        }
+
+        function updateTimer() {
+            let hours = Math.floor(remainingSeconds / 3600);
+            let minutes = Math.floor((remainingSeconds % 3600) / 60);
+            let seconds = remainingSeconds % 60;
+
+            $('#testTimer').text(
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0')
+            );
+
+            if (remainingSeconds <= 0) {
+                testSubmitted = true;
+                $('#testForm').submit();
+                return;
+            }
+
+            remainingSeconds--;
+        }
+
+        $('#startFullscreenBtn').on('click', function () {
+            requestFullscreenMode();
+            $('#startOverlay').fadeOut(200);
+        });
+
+        $('#nextBtn').on('click', function () {
+            if (currentIndex < totalQuestions - 1) {
+                currentIndex++;
+                showQuestion(currentIndex);
+            }
+        });
+
+        $('#prevBtn').on('click', function () {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showQuestion(currentIndex);
+            }
+        });
+
+        $('#submitTestBtn').on('click', function () {
+            Swal.fire({
+                title: 'Završiti test?',
+                text: 'Nakon potvrde više nećete moći mijenjati odgovore.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Završi test',
+                cancelButtonText: 'Odustani'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    testSubmitted = true;
+                    $('#testForm').submit();
+                }
+            });
+        });
+
+        document.addEventListener('fullscreenchange', function () {
+            if (!document.fullscreenElement && !testSubmitted) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Fullscreen je napušten',
+                    text: 'Za nastavak testa morate se vratiti u fullscreen.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    confirmButtonText: 'Vrati fullscreen'
+                }).then(() => requestFullscreenMode());
+            }
+        });
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        showQuestion(0);
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>

@@ -8,37 +8,6 @@
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
 }
-@* <style>
-    .user-status-btn {
-        border-radius: 8px;
-        padding: 6px 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .user-active {
-        background-color: #28a745;
-        color: #fff;
-        border: none;
-    }
-
-        .user-active:hover {
-            background-color: #dc3545;
-            color: #fff;
-        }
-
-    .user-inactive {
-        background-color: #6c757d;
-        color: #fff;
-        border: none;
-    }
-
-        .user-inactive:hover {
-            background-color: #28a745;
-            color: #fff;
-        }
-</style>
- *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -264,6 +233,48 @@
             var options = { damping: '0.5' };
             Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
         }
+    </script>
+
+    <!--validacija unosa-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            document.querySelectorAll('input[maxlength], textarea[maxlength]').forEach(function (field) {
+                const maxLength = parseInt(field.getAttribute('maxlength'));
+                if (!maxLength) return;
+
+                field.addEventListener('input', function () {
+                    if (field.value.length > maxLength) {
+                        field.value = field.value.substring(0, maxLength);
+                    }
+                });
+            });
+
+            document.querySelectorAll('form').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    const fields = form.querySelectorAll('input[maxlength], textarea[maxlength]');
+
+                    for (const field of fields) {
+                        const maxLength = parseInt(field.getAttribute('maxlength'));
+                        const label = field.getAttribute('data-maxlength-label') || field.name || 'Polje';
+
+                        if (field.value && field.value.length > maxLength) {
+                            e.preventDefault();
+
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Predug unos',
+                                text: `${label} može imati maksimalno ${maxLength} karaktera.`,
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#5e72e4'
+                            });
+
+                            return false;
+                        }
+                    }
+                });
+            });
+        });
     </script>
 
     <!-- SweetAlert2 -->

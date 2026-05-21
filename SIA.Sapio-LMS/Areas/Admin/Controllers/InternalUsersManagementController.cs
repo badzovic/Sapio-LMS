@@ -15,17 +15,20 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly InternalUsersApiService _internalUsersApiService;
+        private readonly UserTrainingMatrixService _userTrainingMatrixService;
 
         public InternalUsersManagementController(
-         ApplicationDbContext dbContext,
-         UserManager<ApplicationUser> userManager,
-         RoleManager<IdentityRole> roleManager,
-         InternalUsersApiService internalUsersApiService)
+        ApplicationDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        InternalUsersApiService internalUsersApiService,
+        UserTrainingMatrixService userTrainingMatrixService)
         {
             _dbContext = dbContext;
             _userManager = userManager;
             _roleManager = roleManager;
             _internalUsersApiService = internalUsersApiService;
+            _userTrainingMatrixService = userTrainingMatrixService;
         }
 
         public async Task<IActionResult> Details(string userId, string? returnUrl = null)
@@ -58,6 +61,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             ViewBag.UserRoles = userRoles;
             ViewBag.AllRoles = new List<string> { "Admin", "Student", "Instruktor" };
             ViewBag.IsActive = localUser?.AKTIVAN == "Y";
+            ViewBag.TrainingMatrix = await _userTrainingMatrixService.GetForRadnikAsync(localUser?.ACCESS_KEY);
 
             ViewBag.ReturnUrl = string.IsNullOrWhiteSpace(returnUrl)
             ? Url.Action("Index", "Users", new { area = "Admin", status = "all", type = "all" })
@@ -174,15 +178,6 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         {
             try
             {
-                var apiUser = await _internalUsersApiService.GetUserByHrmIdAsync(hrmId);
-
-                if (apiUser == null)
-                {
-                    TempData["ImportMessage"] = "Korisnik nije pronađen u API-u.";
-                    TempData["ImportErrors"] = $"HRM_ID={hrmId} ne postoji u API podacima.";
-                    return RedirectToAction(nameof(Details), new { userId });
-                }
-
                 var postojeci = await _dbContext.KORISNICI
                     .FirstOrDefaultAsync(x => x.HRM_ID == hrmId);
 
@@ -202,42 +197,126 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                     return RedirectToAction(nameof(Details), new { userId });
                 }
 
-                // update KORISNICI
-                postojeci.IME = apiUser.Ime;
-                postojeci.PREZIME = apiUser.Prezime;
-                postojeci.IME_OCA = apiUser.ImeOca;
-                postojeci.EMAIL = string.IsNullOrWhiteSpace(apiUser.Email) ? null : apiUser.Email.Trim();
-                postojeci.ACCESS_KEY = apiUser.AccessKey;
-                postojeci.KOMPANIJA = apiUser.Kompanija ?? "MAS";
-                postojeci.AKTIVAN = "Y";
+                var apiUser = await _internalUsersApiService.GetUserByHrmIdAsync(hrmId);
 
-                // update AspNetUsers
-                identityUser.FirstName = apiUser.Ime ?? string.Empty;
-                identityUser.LastName = apiUser.Prezime ?? string.Empty;
-                identityUser.Email = string.IsNullOrWhiteSpace(apiUser.Email) ? null : apiUser.Email.Trim();
-                identityUser.NormalizedEmail = string.IsNullOrWhiteSpace(apiUser.Email)
-                    ? null
-                    : apiUser.Email.Trim().ToUpperInvariant();
-
-                // samo ako želiš da username prati email
-                if (!string.IsNullOrWhiteSpace(apiUser.Email))
+                if (apiUser == null)
                 {
-                    identityUser.UserName = apiUser.Email.Trim();
-                    identityUser.NormalizedUserName = apiUser.Email.Trim().ToUpperInvariant();
-                }
+                    postojeci.AKTIVAN = "N";
 
-                var identityResult = await _userManager.UpdateAsync(identityUser);
+                    identityUser.IsActive = false;
+                    identityUser.LockoutEnabled = true;
+                    identityUser.LockoutEnd = DateTimeOffset.MaxValue;
 
-                if (!identityResult.Succeeded)
-                {
-                    TempData["ImportMessage"] = "Greška prilikom update-a Identity korisnika.";
-                    TempData["ImportErrors"] = string.Join("\n", identityResult.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                    var deactivateResult = await _userManager.UpdateAsync(identityUser);
+
+                    if (!deactivateResult.Succeeded)
+                    {
+                        TempData["ImportMessage"] = "Korisnik nije pronađen u HRM API-u, ali deaktivacija Identity korisnika nije uspjela.";
+                        TempData["ImportErrors"] = string.Join("\n", deactivateResult.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                        return RedirectToAction(nameof(Details), new { userId });
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+
+                    TempData["ImportMessage"] = "Korisnik nije pronađen u HRM API-u i deaktiviran je u LMS-u.";
+                    TempData["ImportErrors"] = $"HRM_ID={hrmId} ne postoji u API podacima.";
+
                     return RedirectToAction(nameof(Details), new { userId });
                 }
 
-                await _dbContext.SaveChangesAsync();
+                var novoIme = string.IsNullOrWhiteSpace(apiUser.Ime) ? null : apiUser.Ime.Trim();
+                var novoPrezime = string.IsNullOrWhiteSpace(apiUser.Prezime) ? null : apiUser.Prezime.Trim();
+                var novoImeOca = string.IsNullOrWhiteSpace(apiUser.ImeOca) ? null : apiUser.ImeOca.Trim();
+                var noviEmail = string.IsNullOrWhiteSpace(apiUser.Email) ? null : apiUser.Email.Trim();
+                var novaKompanija = string.IsNullOrWhiteSpace(apiUser.Kompanija) ? "MAS" : apiUser.Kompanija.Trim();
 
-                TempData["ImportMessage"] = $"Korisnik (HRM_ID={hrmId}) uspješno syncovan u obje tabele.";
+                bool hasChanges = false;
+
+                // update KORISNICI
+                if ((postojeci.IME ?? string.Empty).Trim() != (novoIme ?? string.Empty))
+                {
+                    postojeci.IME = novoIme;
+                    hasChanges = true;
+                }
+
+                if ((postojeci.PREZIME ?? string.Empty).Trim() != (novoPrezime ?? string.Empty))
+                {
+                    postojeci.PREZIME = novoPrezime;
+                    hasChanges = true;
+                }
+
+                if ((postojeci.IME_OCA ?? string.Empty).Trim() != (novoImeOca ?? string.Empty))
+                {
+                    postojeci.IME_OCA = novoImeOca;
+                    hasChanges = true;
+                }
+
+                if ((postojeci.EMAIL ?? string.Empty).Trim() != (noviEmail ?? string.Empty))
+                {
+                    postojeci.EMAIL = noviEmail;
+                    hasChanges = true;
+                }
+
+                if (postojeci.ACCESS_KEY != apiUser.AccessKey)
+                {
+                    postojeci.ACCESS_KEY = apiUser.AccessKey;
+                    hasChanges = true;
+                }
+
+                if ((postojeci.KOMPANIJA ?? string.Empty).Trim() != novaKompanija)
+                {
+                    postojeci.KOMPANIJA = novaKompanija;
+                    hasChanges = true;
+                }
+
+                // update AspNetUsers
+                bool identityChanged = false;
+
+                if ((identityUser.FirstName ?? string.Empty).Trim() != (novoIme ?? string.Empty))
+                {
+                    identityUser.FirstName = novoIme ?? string.Empty;
+                    identityChanged = true;
+                }
+
+                if ((identityUser.LastName ?? string.Empty).Trim() != (novoPrezime ?? string.Empty))
+                {
+                    identityUser.LastName = novoPrezime ?? string.Empty;
+                    identityChanged = true;
+                }
+
+                if ((identityUser.Email ?? string.Empty).Trim() != (noviEmail ?? string.Empty))
+                {
+                    identityUser.Email = noviEmail;
+                    identityUser.NormalizedEmail = string.IsNullOrWhiteSpace(noviEmail)
+                        ? null
+                        : noviEmail.ToUpperInvariant();
+
+                    identityChanged = true;
+                }
+
+                if (identityChanged)
+                {
+                    var identityResult = await _userManager.UpdateAsync(identityUser);
+
+                    if (!identityResult.Succeeded)
+                    {
+                        TempData["ImportMessage"] = "Greška prilikom update-a Identity korisnika.";
+                        TempData["ImportErrors"] = string.Join("\n", identityResult.Errors.Select(e => $"{e.Code}: {e.Description}"));
+                        return RedirectToAction(nameof(Details), new { userId });
+                    }
+
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
+                    await _dbContext.SaveChangesAsync();
+                    TempData["ImportMessage"] = $"Korisnik (HRM_ID={hrmId}) uspješno syncovan u obje tabele.";
+                }
+                else
+                {
+                    TempData["ImportMessage"] = $"Korisnik (HRM_ID={hrmId}) je već ažuran. Nema izmjena.";
+                }
             }
             catch (Exception ex)
             {
@@ -275,9 +354,9 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 
                 if (isCurrentlyActive)
                 {
-                    // deaktivacija
                     korisnik.AKTIVAN = "N";
 
+                    identityUser.IsActive = false;
                     identityUser.LockoutEnabled = true;
                     identityUser.LockoutEnd = DateTimeOffset.MaxValue;
 
@@ -285,9 +364,10 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                 }
                 else
                 {
-                    // aktivacija
                     korisnik.AKTIVAN = "Y";
 
+                    identityUser.IsActive = true;
+                    identityUser.LockoutEnabled = true;
                     identityUser.LockoutEnd = null;
 
                     TempData["ImportMessage"] = "Korisnik je aktiviran.";

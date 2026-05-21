@@ -1,0 +1,180 @@
+﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
+@using SIA.Sapio_LMS.Models.Shared
+@model List<SubjectQuestionVM>
+
+@{
+    ViewData["Title"] = "Baza pitanja";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var predmetId = (int)(ViewBag.PredmetId ?? 0);
+    var predmetNaziv = ViewBag.PredmetNaziv as string ?? "";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Baza pitanja",
+                 Subtitle = predmetNaziv
+             }' />
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Pitanja predmeta</h3>
+
+            <div class="action-buttons">
+                <a asp-area="Instructor"
+                   asp-controller="SubjectQuestions"
+                   asp-action="Create"
+                   asp-route-predmetId="@predmetId"
+                   class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-plus"></i> Novo pitanje
+                </a>
+
+                <a asp-area="Instructor"
+                   asp-controller="MySubjects"
+                   asp-action="Details"
+                   asp-route-id="@predmetId"
+                   class="btn-sapio btn-sapio-secondary">
+                    Nazad na predmet
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <div class="table-responsive">
+            <table id="questionsTable" class="table table-bordered table-striped w-100">
+                <thead>
+                    <tr>
+                        <th>Pitanje</th>
+                        <th>Tip</th>
+                        <th>Težina</th>
+                        <th>Bodovi</th>
+                        <th>Parcijalno</th>
+                        <th>Status</th>
+                        <th>Datum</th>
+                        <th style="width:160px;">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model ?? new List<SubjectQuestionVM>())
+                    {
+                        <tr class="@(item.Aktivno == "Y" ? "" : "table-secondary")">
+                            <td class="question-text-cell">
+                                <div class="question-preview" title="@item.TekstPitanja">
+                                    @item.TekstPitanja
+                                </div>
+                            </td>
+
+                            <td>
+                                @if (item.TipPitanja.Contains("Jedan"))
+                                {
+                                    <span class="badge bg-primary">
+                                        @item.TipPitanja
+                                    </span>
+                                }
+                                else if (item.TipPitanja.Contains("Više"))
+                                {
+                                    <span class="badge bg-info">
+                                        @item.TipPitanja
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-dark">
+                                        @item.TipPitanja
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (item.Tezina.Contains("Lako"))
+                                {
+                                    <span class="badge bg-success">
+                                        @item.Tezina
+                                    </span>
+                                }
+                                else if (item.Tezina.Contains("Srednje"))
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        @item.Tezina
+                                    </span>
+                                }
+                                else if (item.Tezina.Contains("Teško"))
+                                {
+                                    <span class="badge bg-danger">
+                                        @item.Tezina
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        @item.Tezina
+                                    </span>
+                                }
+                            </td>
+
+                            <td>@item.Bodovi.ToString("0.##")</td>
+
+                            <td>@(item.ParcijalnoBodovanje == "Y" ? "Da" : "Ne")</td>
+
+                            <td>
+                                @if (item.Aktivno == "Y")
+                                {
+                                    <span class="badge bg-success">Aktivno</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Neaktivno</span>
+                                }
+                            </td>
+
+                            <td>@item.DatumKreiranja.ToString("dd.MM.yyyy")</td>
+
+                            <td>
+                                <a asp-area="Instructor"
+                                   asp-controller="SubjectQuestions"
+                                   asp-action="Details"
+                                   asp-route-id="@item.ID"
+                                   class="btn-sapio btn-sapio-primary btn-sapio-sm">
+                                    <i class="fas fa-eye"></i> Detalji
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#questionsTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                ordering: true,
+                searching: true,
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih pitanja",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}

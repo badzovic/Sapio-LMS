@@ -1,0 +1,73 @@
+﻿@model SIA.Sapio_LMS.Models.UserTrainingMatrixVM
+
+<div class="card-custom training-matrix-card">
+    <div class="training-matrix-header">
+        <div>
+            <h5 class="mb-1">Matrica polaganja</h5>
+
+            @if (!string.IsNullOrWhiteSpace(Model?.NazivRadnogMjesta))
+            {
+                <small class="text-muted">
+                    Radno mjesto: @Model.NazivRadnogMjesta
+                </small>
+            }
+            else if (Model?.IdZanimanja != null)
+            {
+                <small class="text-muted">
+                    Radno mjesto: @Model.IdZanimanja
+                </small>
+            }
+        </div>
+
+        @if (Model?.Predmeti != null && Model.Predmeti.Any())
+        {
+            <span class="training-count">
+                @Model.Predmeti.Count predmet(a)
+            </span>
+        }
+    </div>
+
+    @if (Model == null)
+    {
+        <div class="training-empty warning">
+            Matrica polaganja nije učitana.
+        </div>
+    }
+    else if (Model.Predmeti == null || !Model.Predmeti.Any())
+    {
+        <div class="training-empty">
+            Za ovog korisnika trenutno nema pronađenih predmeta za polaganje.
+        </div>
+    }
+    else
+    {
+        <div class="training-list">
+            @{
+                int rb = 1;
+            }
+
+            @foreach (var item in Model.Predmeti)
+            {
+                <div class="training-row">
+                    <div class="training-index">
+                        @rb
+                    </div>
+
+                    <div class="training-content">
+                        <div class="training-title">
+                            @item.Naziv
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button type="button" class="btn-sapio btn-sapio-secondary btn-sm">
+                            Detalji
+                        </button>
+                    </div>
+                </div>
+
+                rb++;
+            }
+        </div>
+    }
+</div>

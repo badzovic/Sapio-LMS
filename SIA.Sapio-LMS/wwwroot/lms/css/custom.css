@@ -537,3 +537,130 @@ button.btn-sapio {
     background: #edf2f7;
     margin: 14px 0;
 }
+
+/*PARTIAL VIEW ZA matricu polaganja stil tabele*/
+
+.training-matrix-card {
+    overflow: hidden;
+}
+
+.training-matrix-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.training-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.training-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.training-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 110px;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: all 0.15s ease;
+}
+
+    .training-row:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+        transform: translateY(-1px);
+    }
+
+.training-index {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #3730a3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.training-content {
+    min-width: 0;
+}
+
+.training-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.45;
+    max-width: 60ch;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.training-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.training-empty {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 14px;
+}
+
+    .training-empty.warning {
+        background: #fff7ed;
+        color: #9a3412;
+    }
+
+@media (max-width: 768px) {
+    .training-matrix-header {
+        flex-direction: column;
+    }
+
+    .training-row {
+        grid-template-columns: 38px 1fr;
+    }
+
+    .training-actions {
+        grid-column: 2;
+        justify-content: flex-start;
+    }
+}
+
+/*za prikaz aktivnih i neaktivnih pitanja index view*/
+.question-text-cell {
+    max-width: 520px;
+}
+
+.question-preview {
+    max-width: 520px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.45;
+}
+
+#questionsTable td {
+    vertical-align: middle;
+}
