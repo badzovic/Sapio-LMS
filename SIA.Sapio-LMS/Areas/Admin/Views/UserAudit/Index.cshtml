@@ -1,0 +1,957 @@
+﻿@model SIA.Sapio_LMS.Areas.Admin.Models.UserAuditIndexVM
+@using SIA.Sapio_LMS.Models.Shared
+
+@{
+    ViewData["Title"] = "Audit internih korisnika";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var currentSection = (Model.Section ?? "import").ToLower();
+    var status = (ViewBag.Status?.ToString() ?? "all").ToLower();
+
+    string sectionText = currentSection switch
+    {
+        "sync" => "Sinhronizacija korisnika",
+        "deactivation" => "Deaktivacija korisnika",
+        _ => "Import korisnika"
+    };
+
+    string statusText = status switch
+    {
+        "unreviewed" => "Nepregledani",
+        "reviewed" => "Pregledani",
+        _ => "Svi"
+    };
+}
+
+<div class="container-fluid">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info">
+            @TempData["InfoMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Audit internih korisnika",
+                 Subtitle = "Pregled promjena nastalih importom, sinhronizacijom i deaktivacijom internih korisnika"
+             }' />
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-lg-4">
+            <a asp-area="Admin"
+               asp-controller="UserAudit"
+               asp-action="Index"
+               asp-route-section="import"
+               asp-route-status="all"
+               class="text-decoration-none">
+
+                <div class="card h-100 @(currentSection == "import" ? "border-primary shadow-sm" : "")">
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-start">
+
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    Import korisnika
+                                </h5>
+
+                                <p class="text-muted mb-0">
+                                    Konverzije eksternih i sezonskih korisnika u interne.
+                                </p>
+                            </div>
+
+                            <span class="badge @(Model.ImportUnreadCount > 0 ? "bg-danger" : "bg-secondary")">
+                                @Model.ImportUnreadCount
+                            </span>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <a asp-area="Admin"
+               asp-controller="UserAudit"
+               asp-action="Index"
+               asp-route-section="sync"
+               asp-route-status="all"
+               class="text-decoration-none">
+
+                <div class="card h-100 @(currentSection == "sync" ? "border-primary shadow-sm" : "")">
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-start">
+
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    Sinhronizacija korisnika
+                                </h5>
+
+                                <p class="text-muted mb-0">
+                                    Promjene podataka postojećih internih korisnika.
+                                </p>
+                            </div>
+
+                            <span class="badge @(Model.SyncUnreadCount > 0 ? "bg-danger" : "bg-secondary")">
+                                @Model.SyncUnreadCount
+                            </span>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <a asp-area="Admin"
+               asp-controller="UserAudit"
+               asp-action="Index"
+               asp-route-section="deactivation"
+               asp-route-status="all"
+               class="text-decoration-none">
+
+                <div class="card h-100 @(currentSection == "deactivation" ? "border-primary shadow-sm" : "")">
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between align-items-start">
+
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    Deaktivacije korisnika
+                                </h5>
+
+                                <p class="text-muted mb-0">
+                                    Korisnici deaktivirani jer više nisu aktivni u HRM-u.
+                                </p>
+                            </div>
+
+                            <span class="badge @(Model.DeactivationUnreadCount > 0 ? "bg-danger" : "bg-secondary")">
+                                @Model.DeactivationUnreadCount
+                            </span>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+    </div>
+
+    <div class="card-custom page-toolbar">
+
+        <div class="filter-summary">
+            <span class="filter-summary-label">
+                Aktivni filteri:
+            </span>
+
+            <span class="filter-pill">
+                @sectionText
+            </span>
+
+            <span class="filter-pill">
+                @statusText
+            </span>
+        </div>
+
+        <div class="page-toolbar-group">
+
+            <span class="page-toolbar-label">
+                Status zapisa
+            </span>
+
+            <div class="page-toolbar-row">
+
+                <a asp-area="Admin"
+                   asp-controller="UserAudit"
+                   asp-action="Index"
+                   asp-route-section="@currentSection"
+                   asp-route-status="all"
+                   class="btn-sapio @(status == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Svi
+                </a>
+
+                <a asp-area="Admin"
+                   asp-controller="UserAudit"
+                   asp-action="Index"
+                   asp-route-section="@currentSection"
+                   asp-route-status="unreviewed"
+                   class="btn-sapio @(status == "unreviewed" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+                    Nepregledani
+                </a>
+
+                <a asp-area="Admin"
+                   asp-controller="UserAudit"
+                   asp-action="Index"
+                   asp-route-section="@currentSection"
+                   asp-route-status="reviewed"
+                   class="btn-sapio @(status == "reviewed" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    Pregledani
+                </a>
+
+            </div>
+
+        </div>
+
+        @if (currentSection == "import" && Model.ImportUnreadCount > 0)
+        {
+            <div class="page-toolbar-divider"></div>
+
+            <div class="page-toolbar-group">
+
+                <span class="page-toolbar-label">
+                    Audit opcije
+                </span>
+
+                <div class="page-toolbar-row">
+
+                    <form asp-area="Admin"
+                          asp-controller="UserAudit"
+                          asp-action="MarkAllImportsAsReviewed"
+                          method="post"
+                          class="js-confirm-form m-0"
+                          data-confirm-title="Označiti sve kao pregledano?"
+                          data-confirm-text="Svi nepregledani import audit zapisi bit će označeni kao pregledani."
+                          data-confirm-icon="question"
+                          data-confirm-button="Da, označi">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="status"
+                               value="@status" />
+
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-success">
+
+                            <i class="fas fa-check-double"></i>
+                            Označi sve kao pregledano
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+    @if (currentSection == "import")
+    {
+        <div class="card-custom">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                    <h5 class="mb-1">
+                        Audit importa internih korisnika
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Evidencija postojećih eksternih ili sezonskih korisnika
+                        koji su konvertovani u interne korisnike.
+                    </p>
+                </div>
+
+                <div>
+                    <span class="badge bg-warning text-dark">
+                        Nepregledani: @Model.ImportUnreadCount
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table id="importAuditTable"
+                       class="table table-bordered table-striped w-100">
+
+                    <thead>
+                        <tr>
+                            <th>Korisnik</th>
+                            <th>HRM ID</th>
+                            <th>Stari tip</th>
+                            <th>Novi tip</th>
+                            <th>Datum promjene</th>
+                            <th>Status</th>
+                            <th>Pregledao</th>
+                            <th>Datum pregleda</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.ImportItems != null &&
+                             Model.ImportItems.Any())
+                        {
+                            foreach (var item in Model.ImportItems)
+                            {
+                                <tr>
+
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @(string.IsNullOrWhiteSpace(
+                                                $"{item.Ime} {item.Prezime}".Trim())
+                                                ? "-"
+                                                : $"{item.Ime} {item.Prezime}".Trim())
+                                        </div>
+
+                                        @if (item.KorisnikId.HasValue)
+                                        {
+                                            <small class="text-muted">
+                                                LMS ID: @item.KorisnikId
+                                            </small>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @(item.HrmId?.ToString() ?? "-")
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            @(string.IsNullOrWhiteSpace(
+                                                item.StariTipKorisnika)
+                                                ? "-"
+                                                : item.StariTipKorisnika)
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            @(string.IsNullOrWhiteSpace(
+                                                item.NoviTipKorisnika)
+                                                ? "-"
+                                                : item.NoviTipKorisnika)
+                                        </span>
+                                    </td>
+
+                                    <td data-order="@item.DatumPromjene.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")">
+                                        @item.DatumPromjene.ToString(
+                                            "dd.MM.yyyy. HH:mm")
+                                    </td>
+
+                                    <td>
+                                        @if (item.JePregledano)
+                                        {
+                                            <span class="badge bg-success">
+                                                Pregledano
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                Nepregledano
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(
+                                            item.Pregledao)
+                                            ? "-"
+                                            : item.Pregledao)
+                                    </td>
+
+                                    <td data-order="@(item.DatumPregleda.HasValue
+                                        ? item.DatumPregleda.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+                                        : "")">
+
+                                        @(item.DatumPregleda.HasValue
+                                            ? item.DatumPregleda.Value.ToString(
+                                                "dd.MM.yyyy. HH:mm")
+                                            : "-")
+                                    </td>
+
+                                    <td>
+                                        <div class="action-buttons">
+
+                                            @if (!item.JePregledano)
+                                            {
+                                                <form asp-area="Admin"
+                                                      asp-controller="UserAudit"
+                                                      asp-action="MarkImportAsReviewed"
+                                                      method="post"
+                                                      class="js-confirm-form d-inline"
+                                                      data-confirm-title="Označiti kao pregledano?"
+                                                      data-confirm-text="Audit zapis će biti označen kao pregledan."
+                                                      data-confirm-icon="question"
+                                                      data-confirm-button="Da, označi">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.Id" />
+
+                                                    <input type="hidden"
+                                                           name="status"
+                                                           value="@status" />
+
+                                                    <button type="submit"
+                                                            class="btn-sapio btn-sapio-success btn-sapio-sm">
+
+                                                        <i class="fas fa-check"></i>
+                                                        Pregledano
+
+                                                    </button>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">
+                                                    —
+                                                </span>
+                                            }
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+    else if (currentSection == "sync")
+    {
+        <div class="card-custom">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                    <h5 class="mb-1">
+                        Audit sinhronizacije internih korisnika
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Evidencija promjena podataka internih korisnika
+                        prilikom sinhronizacije sa HRM sistemom.
+                    </p>
+                </div>
+
+                <div>
+                    <span class="badge bg-warning text-dark">
+                        Nepregledani: @Model.SyncUnreadCount
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table id="syncAuditTable"
+                       class="table table-bordered table-striped w-100">
+
+                    <thead>
+                        <tr>
+                            <th>Korisnik</th>
+                            <th>HRM ID</th>
+                            <th>Promijenjena polja</th>
+                            <th>Datum promjene</th>
+                            <th>Status</th>
+                            <th>Pregledao</th>
+                            <th>Datum pregleda</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.SyncItems != null &&
+                                            Model.SyncItems.Any())
+                        {
+                            foreach (var item in Model.SyncItems)
+                            {
+                                var korisnikIme =
+                                $"{item.NovoIme} {item.NovoPrezime}".Trim();
+
+                                <tr>
+
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @(string.IsNullOrWhiteSpace(korisnikIme)
+                                                                            ? "-"
+                                                                            : korisnikIme)
+                                                                                      </div>
+
+                                        <small class="text-muted">
+                                            LMS ID: @item.KorisnikId
+                                        </small>
+                                    </td>
+
+                                    <td>
+                                        @item.HrmId
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            @(string.IsNullOrWhiteSpace(
+                                                                            item.PromijenjenaPolja)
+                                                                            ? "-"
+                                                                            : item.PromijenjenaPolja)
+                            </span>
+                        </td>
+
+                                                                <td data-order="@item.DatumPromjene.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")">
+
+                                                                    @item.DatumPromjene.ToString(
+                                                                    "dd.MM.yyyy. HH:mm")
+
+                        </td>
+
+                                    <td>
+                            @if (item.Pregledano)
+                                        {
+                                            <span class="badge bg-success">
+                                                Pregledano
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                Nepregledano
+                                            </span>
+                                        }
+                        </td>
+
+                        <td>
+                            @(string.IsNullOrWhiteSpace(
+                                                        item.Pregledao)
+                                                        ? "-"
+                                                        : item.Pregledao)
+                        </td>
+
+                                    <td data-order="@(item.DatumPregleda.HasValue
+                                                                ? item.DatumPregleda.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+                                                                : "")">
+
+                            @(item.DatumPregleda.HasValue
+                                                        ? item.DatumPregleda.Value.ToString(
+                                                        "dd.MM.yyyy. HH:mm")
+                                                        : "-")
+
+                        </td>
+
+                                    <td>
+                                        <div class="action-buttons">
+
+                                @if (!item.Pregledano)
+                                            {
+                                                <form asp-area="Admin"
+                                                      asp-controller="UserAudit"
+                                                      asp-action="MarkSyncAsReviewed"
+                                                      method="post"
+                                                      class="js-confirm-form d-inline"
+                                                      data-confirm-title="Označiti kao pregledano?"
+                                                      data-confirm-text="Audit zapis će biti označen kao pregledan."
+                                                      data-confirm-icon="question"
+                                                      data-confirm-button="Da, označi">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.Id" />
+
+                                                    <input type="hidden"
+                                                           name="status"
+                                                           value="@status" />
+
+                                                    <button type="submit"
+                                                            class="btn-sapio btn-sapio-success btn-sapio-sm">
+
+                                                        <i class="fas fa-check"></i>
+                                                        Pregledano
+
+                                                    </button>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">
+                                                    —
+                                                </span>
+                                            }
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+    else if (currentSection == "deactivation")
+    {
+        <div class="card-custom">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                    <h5 class="mb-1">
+                        Audit deaktivacije internih korisnika
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Evidencija internih korisnika koji su deaktivirani
+                        jer više nisu pronađeni među aktivnim radnicima u HRM sistemu.
+                    </p>
+                </div>
+
+                <div>
+                    <span class="badge bg-warning text-dark">
+                        Nepregledani: @Model.DeactivationUnreadCount
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table id="deactivationAuditTable"
+                       class="table table-bordered table-striped w-100">
+
+                    <thead>
+                        <tr>
+                            <th>Korisnik</th>
+                            <th>HRM ID</th>
+                            <th>Razlog deaktivacije</th>
+                            <th>Datum deaktivacije</th>
+                            <th>Status</th>
+                            <th>Pregledao</th>
+                            <th>Datum pregleda</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.DeactivationItems != null &&
+                                            Model.DeactivationItems.Any())
+                        {
+                            foreach (var item in Model.DeactivationItems)
+                            {
+                                var korisnikIme =
+                                $"{item.Ime} {item.Prezime}".Trim();
+
+                                <tr>
+
+                                    <td>
+                                        <div class="fw-semibold">
+                                            @(string.IsNullOrWhiteSpace(korisnikIme)
+                                                                            ? "-"
+                                                                            : korisnikIme)
+                                                                                      </div>
+
+                                        <small class="text-muted">
+                                            LMS ID: @item.KorisnikId
+                                        </small>
+                                    </td>
+
+                                    <td>
+                                        @(item.HrmId?.ToString() ?? "-")
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(
+                                                                    item.RazlogDeaktivacije)
+                                                                    ? "-"
+                                                                    : item.RazlogDeaktivacije)
+                        </td>
+
+                                                                <td data-order="@item.DatumKreiranja.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")">
+
+                                                                    @item.DatumKreiranja.ToString(
+                                                                    "dd.MM.yyyy. HH:mm")
+
+                        </td>
+
+                                    <td>
+                            @if (item.Pregledano)
+                                        {
+                                            <span class="badge bg-success">
+                                                Pregledano
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                Nepregledano
+                                            </span>
+                                        }
+                        </td>
+
+                        <td>
+                            @(string.IsNullOrWhiteSpace(
+                                                        item.Pregledao)
+                                                        ? "-"
+                                                        : item.Pregledao)
+                        </td>
+
+                                    <td data-order="@(item.DatumPregleda.HasValue
+                                                                ? item.DatumPregleda.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+                                                                : "")">
+
+                            @(item.DatumPregleda.HasValue
+                                                        ? item.DatumPregleda.Value.ToString(
+                                                        "dd.MM.yyyy. HH:mm")
+                                                        : "-")
+
+                        </td>
+
+                                    <td>
+                                        <div class="action-buttons">
+
+                                @if (!item.Pregledano)
+                                            {
+                                                <form asp-area="Admin"
+                                                      asp-controller="UserAudit"
+                                                      asp-action="MarkDeactivationAsReviewed"
+                                                      method="post"
+                                                      class="js-confirm-form d-inline"
+                                                      data-confirm-title="Označiti kao pregledano?"
+                                                      data-confirm-text="Audit zapis će biti označen kao pregledan."
+                                                      data-confirm-icon="question"
+                                                      data-confirm-button="Da, označi">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.Id" />
+
+                                                    <input type="hidden"
+                                                           name="status"
+                                                           value="@status" />
+
+                                                    <button type="submit"
+                                                            class="btn-sapio btn-sapio-success btn-sapio-sm">
+
+                                                        <i class="fas fa-check"></i>
+                                                        Pregledano
+
+                                                    </button>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">
+                                                    —
+                                                </span>
+                                            }
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+
+    @if (currentSection == "import")
+    {
+        <script>
+            $(document).ready(function () {
+
+                $('#importAuditTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+
+                    ordering: true,
+
+                    // Datum promjene je peta kolona.
+                    // Indeksiranje kreće od 0, zato je indeks 4.
+                    order: [[4, 'desc']],
+
+                    searching: true,
+                    responsive: false,
+                    scrollX: true,
+                    autoWidth: false,
+
+                    columnDefs: [
+                        {
+                            // Akcije se ne trebaju sortirati.
+                            targets: 8,
+                            orderable: false,
+                            searchable: false
+                        }
+                    ],
+
+                    language: {
+                        search: "Pretraga:",
+                        lengthMenu: "Prikaži _MENU_ zapisa",
+                        info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                        infoEmpty: "Nema zapisa",
+                        zeroRecords: "Nema pronađenih audit zapisa",
+                        emptyTable: "Nema audit zapisa za odabrani filter",
+
+                        paginate: {
+                            first: "Prva",
+                            last: "Zadnja",
+                            next: "Sljedeća",
+                            previous: "Prethodna"
+                        }
+                    }
+                });
+
+            });
+        </script>
+    }
+
+    @if (currentSection == "sync")
+    {
+        <script>
+            $(document).ready(function () {
+
+                $('#syncAuditTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+
+                    ordering: true,
+
+                    // Datum promjene je četvrta kolona.
+                    // Indeksiranje kreće od 0, zato je indeks 3.
+                    order: [[3, 'desc']],
+
+                    searching: true,
+                    responsive: false,
+                    scrollX: true,
+                    autoWidth: false,
+
+                    columnDefs: [
+                        {
+                            // Detalji i Akcije se ne sortiraju.
+                            targets: 7,
+                            orderable: false,
+                            searchable: false
+                        }
+                    ],
+
+                    language: {
+                        search: "Pretraga:",
+                        lengthMenu: "Prikaži _MENU_ zapisa",
+                        info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                        infoEmpty: "Nema zapisa",
+                        zeroRecords: "Nema pronađenih audit zapisa",
+                        emptyTable: "Nema audit zapisa za odabrani filter",
+
+                        paginate: {
+                            first: "Prva",
+                            last: "Zadnja",
+                            next: "Sljedeća",
+                            previous: "Prethodna"
+                        }
+                    }
+                });
+
+            });
+        </script>
+    }
+
+    @if (currentSection == "deactivation")
+    {
+        <script>
+            $(document).ready(function () {
+
+                $('#deactivationAuditTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+
+                    ordering: true,
+
+                    // Datum deaktivacije je četvrta kolona.
+                    // Indeksiranje kreće od 0, zato je indeks 3.
+                    order: [[3, 'desc']],
+
+                    searching: true,
+                    responsive: false,
+                    scrollX: true,
+                    autoWidth: false,
+
+                    columnDefs: [
+                        {
+                            // Akcije se ne trebaju sortirati.
+                            targets: 7,
+                            orderable: false,
+                            searchable: false
+                        }
+                    ],
+
+                    language: {
+                        search: "Pretraga:",
+                        lengthMenu: "Prikaži _MENU_ zapisa",
+                        info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                        infoEmpty: "Nema zapisa",
+                        zeroRecords: "Nema pronađenih audit zapisa",
+                        emptyTable: "Nema audit zapisa za odabrani filter",
+
+                        paginate: {
+                            first: "Prva",
+                            last: "Zadnja",
+                            next: "Sljedeća",
+                            previous: "Prethodna"
+                        }
+                    }
+                });
+
+            });
+        </script>
+    }
+
+}

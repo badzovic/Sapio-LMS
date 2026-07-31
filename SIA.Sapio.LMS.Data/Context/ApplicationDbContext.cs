@@ -34,6 +34,11 @@ namespace SIA.Sapio.LMS.Data.Context
         public DbSet<StudentOdgovor> STUDENT_ODGOVORI { get; set; }
         public DbSet<DodijeljeniTest> DODIJELJENI_TESTOVI { get; set; }
         public DbSet<TestKlasa> TEST_KLASE { get; set; }
+        public DbSet<AutoDodjelaTestovaRun> AUTO_DODJELA_TESTOVA_RUN { get; set; }
+        public DbSet<AutoDodjelaTestovaLog> AUTO_DODJELA_TESTOVA_LOG { get; set; }
+        public DbSet<EvidencijaPromjeneTipaKorisnika> EVIDENCIJA_PROMJENA_TIPA_KORISNIKA { get; set; }
+        public DbSet<EvidencijaSinhronizacijeKorisnika> EVIDENCIJA_SINHRONIZACIJE_KORISNIKA { get; set; }
+        public DbSet<EvidencijaDeaktivacijeKorisnika> EVIDENCIJA_DEAKTIVACIJE_KORISNIKA { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

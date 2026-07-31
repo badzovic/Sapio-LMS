@@ -19,6 +19,12 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Models
 
         public string ParcijalnoBodovanje { get; set; } = "N";
 
+        public IFormFile? Slika { get; set; }
+
+        public string? SlikaPutanja { get; set; }
+
+        public string? SlikaNaziv { get; set; }
+
         public List<CreateSubjectQuestionAnswerVM> Odgovori { get; set; } = new();
 
         public List<SelectListItem> TipoviPitanja { get; set; } = new();

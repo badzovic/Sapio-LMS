@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SIA.Sapio-LMS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c018999cfdb642924ae0d2632cfe063fd944bbde")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2378445916ff2e975ab1e08c9f3b5170310c72d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("SIA.Sapio-LMS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SIA.Sapio-LMS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

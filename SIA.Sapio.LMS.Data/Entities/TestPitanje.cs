@@ -55,5 +55,11 @@ namespace SIA.Sapio.LMS.Data.Entities
 
         [Column("IS_OBAVEZNO")]
         public string IS_OBAVEZNO { get; set; } = "N";
+
+        [Column("SLIKA_PUTANJA")]
+        public string? SLIKA_PUTANJA { get; set; }
+
+        [Column("SLIKA_NAZIV")]
+        public string? SLIKA_NAZIV { get; set; }
     }
 }

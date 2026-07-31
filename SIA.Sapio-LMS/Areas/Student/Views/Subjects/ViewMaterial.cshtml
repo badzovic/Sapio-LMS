@@ -1,0 +1,254 @@
+﻿@model SIA.Sapio_LMS.Areas.Student.Models.StudentMaterialViewerVM
+
+@{
+    ViewData["Title"] = "Pregled materijala";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="card-custom mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <h3 class="mb-1">@Model.NazivMaterijala</h3>
+
+                @if (!string.IsNullOrWhiteSpace(Model.NazivPredmeta))
+                {
+                    <p class="text-muted mb-0">
+                        Predmet: @Model.NazivPredmeta
+                    </p>
+                }
+            </div>
+
+            <a href="@Url.Action("Details", "Subjects", new { area = "Student", id = Model.PredmetId })"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na materijale
+            </a>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Opis))
+        {
+            <p class="text-muted mt-3 mb-0">
+                @Model.Opis
+            </p>
+        }
+    </div>
+
+    <div class="card-custom">
+        @if (Model.IsYoutube && !string.IsNullOrWhiteSpace(Model.EmbedUrl))
+        {
+            <div class="material-viewer-toolbar">
+                <button type="button"
+                        class="btn-sapio btn-sapio-secondary btn-sm"
+                        onclick="openMaterialFullscreen('youtubeViewerWrapper')">
+                    Full screen
+                </button>               
+            </div>
+
+            <div id="youtubeViewerWrapper" class="material-video-frame-wrap">
+                <iframe src="@Model.EmbedUrl"
+                        title="@Model.NazivMaterijala"
+                        allowfullscreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share">
+                </iframe>
+            </div>
+        }
+        else if (Model.IsLink)
+        {
+            <div class="training-empty warning">
+                Link je evidentiran, ali nije prepoznat kao YouTube video za ugradnju u stranicu.
+            </div>
+        }
+        else if (Model.IsFile)
+        {
+            if (Model.IsPdf && !string.IsNullOrWhiteSpace(Model.FileViewerUrl))
+            {
+                <div class="material-viewer-toolbar">
+                    <button type="button"
+                            class="btn-sapio btn-sapio-secondary btn-sm"
+                            onclick="openMaterialFullscreen('materialViewerWrapper')">
+                        Full screen
+                    </button>
+                   
+                </div>
+
+                <div id="materialViewerWrapper"
+                     class="material-viewer-frame-wrap">
+
+                    <div id="pdfLoadingMessage">
+                        Učitavanje dokumenta...
+                    </div>
+
+                    <div id="pdfViewerContainer"></div>
+                </div>
+            }
+            else if (Model.IsImage && !string.IsNullOrWhiteSpace(Model.FileViewerUrl))
+            {
+                <div class="material-viewer-toolbar">
+                    <button type="button"
+                            class="btn-sapio btn-sapio-secondary btn-sm"
+                            onclick="openMaterialFullscreen('imageViewerWrapper')">
+                        Full screen
+                    </button>
+                    
+                </div>
+
+                <div id="imageViewerWrapper" class="material-image-viewer-wrap">
+                    <img src="@Model.FileViewerUrl"
+                         alt="@Model.NazivMaterijala"
+                         class="material-image-viewer-img" />
+                </div>
+            }
+            else
+            {
+                <div class="training-empty warning">
+                    Ovaj tip fajla trenutno nije podržan za pregled u browseru.
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openMaterialFullscreen(elementId) {
+            const wrapper = document.getElementById(elementId);
+
+            if (!wrapper) return;
+
+            document.body.classList.add('material-fullscreen-active');
+
+            if (wrapper.requestFullscreen) {
+                wrapper.requestFullscreen();
+            } else if (wrapper.webkitRequestFullscreen) {
+                wrapper.webkitRequestFullscreen();
+            } else if (wrapper.msRequestFullscreen) {
+                wrapper.msRequestFullscreen();
+            }
+        }
+
+        function closeMaterialFullscreen() {
+            document.body.classList.remove('material-fullscreen-active');
+
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msFullscreenElement && document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeMaterialFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', handleFullscreenExit);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenExit);
+        document.addEventListener('mozfullscreenchange', handleFullscreenExit);
+        document.addEventListener('MSFullscreenChange', handleFullscreenExit);
+
+        function handleFullscreenExit() {
+            const isFullscreen =
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement;
+
+            if (!isFullscreen) {
+                document.body.classList.remove('material-fullscreen-active');
+            }
+        }
+
+                document.addEventListener('contextmenu', function (event) {
+            const viewer = event.target.closest('#materialViewerWrapper');
+
+            if (viewer) {
+                event.preventDefault();
+            }
+        });
+    </script>
+
+    <script type="module">
+        import * as pdfjsLib from '@Url.Content("~/lib/pdfjs/pdf.mjs")';
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            '@Url.Content("~/lib/pdfjs/pdf.worker.mjs")';
+
+        const pdfUrl = @Html.Raw(
+                    System.Text.Json.JsonSerializer.Serialize(Model.FileViewerUrl)
+            );
+
+    const container = document.getElementById('pdfViewerContainer');
+    const loadingMessage = document.getElementById('pdfLoadingMessage');
+
+        async function loadPdf() {
+            if (!container || !pdfUrl) {
+                return;
+            }
+
+            try {
+                console.log('PDF URL:', pdfUrl);
+
+                const loadingTask = pdfjsLib.getDocument({
+                    url: pdfUrl,
+                    withCredentials: true
+                });
+
+                const pdfDocument = await loadingTask.promise;
+
+                console.log('Broj PDF stranica:', pdfDocument.numPages);
+
+                for (
+                    let pageNumber = 1;
+                    pageNumber <= pdfDocument.numPages;
+                    pageNumber++
+                ) {
+                    const page = await pdfDocument.getPage(pageNumber);
+
+                    const scale = 1.4;
+                    const viewport = page.getViewport({ scale: scale });
+
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = 'pdf-page-wrapper';
+
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page-canvas';
+
+                    const outputScale = window.devicePixelRatio || 1;
+
+                    canvas.width = Math.floor(viewport.width * outputScale);
+                    canvas.height = Math.floor(viewport.height * outputScale);
+
+                    canvas.style.width = `${Math.floor(viewport.width)}px`;
+                    canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+                    pageWrapper.appendChild(canvas);
+                    container.appendChild(pageWrapper);
+
+                    await page.render({
+                        canvas: canvas,
+                        viewport: viewport,
+                        transform: outputScale !== 1
+                            ? [outputScale, 0, 0, outputScale, 0, 0]
+                            : null
+                    }).promise;
+                }
+
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+            } catch (error) {
+                console.error('Greška prilikom učitavanja PDF-a:', error);
+
+                if (loadingMessage) {
+                    loadingMessage.textContent =
+                        'Materijal nije moguće učitati.';
+                }
+            }
+        }
+
+        loadPdf();
+    </script>
+}

@@ -1,0 +1,116 @@
+﻿@model SIA.Sapio_LMS.Areas.Student.Models.StudentSubjectDetailsVM
+
+@{
+    ViewData["Title"] = "Detalji predmeta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="card-custom mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <h3 class="mb-1">@Model.Naziv</h3>
+
+                @if (!string.IsNullOrWhiteSpace(Model.NazivEng))
+                {
+                    <p class="text-muted mb-0">@Model.NazivEng</p>
+                }
+            </div>
+
+            <a href="@Url.Content("~/Student/Subjects")"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na moje predmete
+            </a>
+        </div>
+    </div>
+
+    <div class="card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h5 class="mb-1">Materijali predmeta</h5>
+                <small class="text-muted">
+                    Pregled dostupnih materijala za učenje.
+                </small>
+            </div>
+
+            <span class="badge bg-light text-dark">
+                @(Model.Materijali?.Count ?? 0) materijal(a)
+            </span>
+        </div>
+
+        @if (Model.Materijali == null || !Model.Materijali.Any())
+        {
+            <div class="training-empty">
+                Trenutno nema prikazanih materijala za ovaj predmet.
+            </div>
+        }
+        else
+        {
+            <div class="subject-material-list">
+                @foreach (var materijal in Model.Materijali)
+                {
+                    var tip = (materijal.TipMaterijala ?? "").Trim().ToUpper();
+
+                    var nazivFajla = !string.IsNullOrWhiteSpace(materijal.NazivOriginalnogFajla)
+                    ? materijal.NazivOriginalnogFajla
+                    : materijal.NazivFajla;
+
+                    var ekstenzija = System.IO.Path.GetExtension(nazivFajla ?? "").Trim().ToLower();
+
+                    var isLink = tip == "LINK";
+                    var isFile = tip == "FILE";
+
+                    var badgeText =
+                    isLink ? "Link / Video" :
+                    isFile && ekstenzija == ".pdf" ? "PDF" :
+                    isFile && (ekstenzija == ".doc" || ekstenzija == ".docx") ? "Word" :
+                    isFile && (ekstenzija == ".ppt" || ekstenzija == ".pptx") ? "PowerPoint" :
+                    isFile ? "Fajl" :
+                    string.IsNullOrWhiteSpace(materijal.TipMaterijala) ? "Materijal" : materijal.TipMaterijala;
+
+                    var iconClass =
+                    isLink ? "ni ni-button-play" :
+                    isFile && ekstenzija == ".pdf" ? "ni ni-book-bookmark" :
+                    isFile && (ekstenzija == ".doc" || ekstenzija == ".docx") ? "ni ni-single-copy-04" :
+                    isFile && (ekstenzija == ".ppt" || ekstenzija == ".pptx") ? "ni ni-tv-2" :
+                    isFile ? "ni ni-single-copy-04" :
+                    "ni ni-folder-17";
+
+                    <div class="subject-material-card">
+                        <div class="subject-material-main">
+                            <div class="subject-material-icon">
+                                <i class="@iconClass"></i>
+                            </div>
+
+                            <div class="subject-material-text">
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <h6 class="subject-material-title mb-0">
+                                        @materijal.Naziv
+                                    </h6>
+
+                                    <span class="subject-material-badge">
+                                        @badgeText
+                                    </span>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(materijal.Opis))
+                                {
+                                    <p class="subject-material-description mb-0">
+                                        @materijal.Opis
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="subject-material-actions">
+                            <a href="@Url.Action("ViewMaterial", "Subjects", new { area = "Student", id = materijal.Id })"
+                               class="btn-sapio btn-sapio-secondary btn-sm">
+                                Pregledaj
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

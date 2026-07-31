@@ -31,13 +31,31 @@ namespace SIA.Sapio_LMS.Services
             var baseUrl = GetBaseUrl().TrimEnd('/');
             var apiKey = GetApiKey();
 
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/InternalUsers");
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{baseUrl}/api/InternalUsers");
+
             request.Headers.Add("X-API-KEY", apiKey);
 
             using var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
 
-            var users = await response.Content.ReadFromJsonAsync<List<InternalUserDto>>();
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"HRM API greška. " +
+                    $"Status: {(int)response.StatusCode} {response.StatusCode}. " +
+                    $"Odgovor: {responseBody}");
+            }
+
+            var users = System.Text.Json.JsonSerializer.Deserialize<List<InternalUserDto>>(
+                responseBody,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
             return users ?? new List<InternalUserDto>();
         }
 
@@ -46,17 +64,35 @@ namespace SIA.Sapio_LMS.Services
             var baseUrl = GetBaseUrl().TrimEnd('/');
             var apiKey = GetApiKey();
 
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/InternalUsers/{hrmId}");
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"{baseUrl}/api/InternalUsers/{hrmId}");
+
             request.Headers.Add("X-API-KEY", apiKey);
 
             using var response = await _httpClient.SendAsync(request);
 
+            var responseBody = await response.Content.ReadAsStringAsync();
+
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
                 return null;
+            }
 
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"HRM API greška za HRM_ID={hrmId}. " +
+                    $"Status: {(int)response.StatusCode} {response.StatusCode}. " +
+                    $"Odgovor: {responseBody}");
+            }
 
-            return await response.Content.ReadFromJsonAsync<InternalUserDto>();
+            return System.Text.Json.JsonSerializer.Deserialize<InternalUserDto>(
+                responseBody,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
         }
     }
 }

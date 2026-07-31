@@ -44,6 +44,12 @@ namespace SIA.Sapio.LMS.Data.Entities
         [Column("DATUM_IZMJENE")]
         public DateTime? DATUM_IZMJENE { get; set; }
 
+        [Column("SLIKA_PUTANJA")]
+        public string? SLIKA_PUTANJA { get; set; }
+
+        [Column("SLIKA_NAZIV")]
+        public string? SLIKA_NAZIV { get; set; }
+
         // NAVIGATION
 
         [ForeignKey("PREDMET_ID")]

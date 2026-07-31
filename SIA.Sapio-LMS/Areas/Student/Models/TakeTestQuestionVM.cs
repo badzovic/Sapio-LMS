@@ -11,6 +11,9 @@
         public string TipPitanjaSifra { get; set; } = string.Empty;
 
         public int Redoslijed { get; set; }
+        public string? SlikaPutanja { get; set; }
+
+        public string? SlikaNaziv { get; set; }
 
         public List<TakeTestAnswerVM> Odgovori { get; set; } = new();
     }

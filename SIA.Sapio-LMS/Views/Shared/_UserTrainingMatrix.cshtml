@@ -1,5 +1,9 @@
 ﻿@model SIA.Sapio_LMS.Models.UserTrainingMatrixVM
 
+@{
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
+}
+
 <div class="card-custom training-matrix-card">
     <div class="training-matrix-header">
         <div>
@@ -60,9 +64,13 @@
                     </div>
 
                     <div class="training-actions">
-                        <button type="button" class="btn-sapio btn-sapio-secondary btn-sm">
+                        <a asp-area="@currentArea"
+                           asp-controller="Subjects"
+                           asp-action="Details"
+                           asp-route-id="@item.PredmetId"
+                           class="btn-sapio btn-sapio-secondary btn-sm">
                             Detalji
-                        </button>
+                        </a>
                     </div>
                 </div>
 

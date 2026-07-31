@@ -306,7 +306,10 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
 
                     IS_OBAVEZNO = model.ObaveznaPitanjaIds != null && model.ObaveznaPitanjaIds.Contains(question.ID) ? "Y" : "N",
 
-                    DATUM_KREIRANJA = now
+                    DATUM_KREIRANJA = now,
+
+                    SLIKA_PUTANJA = question.SLIKA_PUTANJA,
+                    SLIKA_NAZIV = question.SLIKA_NAZIV
                 };
 
                 _dbContext.TEST_PITANJA.Add(testQuestion);

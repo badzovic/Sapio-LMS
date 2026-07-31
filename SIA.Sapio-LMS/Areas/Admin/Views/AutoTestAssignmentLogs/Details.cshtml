@@ -1,0 +1,244 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+
+@model AutoTestAssignmentRunDetailsVM
+
+@{
+    ViewData["Title"] = "Detalji auto dodjele testova";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Detalji auto dodjele",
+                 Subtitle = "Run #" + Model.ID
+             }' />
+
+    <div class="card-custom mb-4">
+
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h5 class="mb-1">Sažetak izvršavanja</h5>
+                <small class="text-muted">
+                    @Model.DatumPokretanja.ToString("dd.MM.yyyy HH:mm")
+                    @if (Model.DatumZavrsetka.HasValue)
+                    {
+                        <span> - @Model.DatumZavrsetka.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                    }
+                </small>
+            </div>
+
+            <a asp-area="Admin"
+               asp-controller="AutoTestAssignmentLogs"
+               asp-action="Index"
+               class="btn-sapio btn-sapio-secondary">
+                Nazad na logove
+            </a>
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <div class="border rounded p-2 bg-light">
+                    @if (Model.Status == "USPJESNO")
+                    {
+                        <span class="badge bg-success">Uspješno</span>
+                    }
+                    else if (Model.Status == "DJELIMICNO")
+                    {
+                        <span class="badge bg-warning text-dark">Djelimično</span>
+                    }
+                    else if (Model.Status == "GRESKA")
+                    {
+                        <span class="badge bg-danger">Greška</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@Model.Status</span>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Tip pokretanja</label>
+                <div class="border rounded p-2 bg-light">@Model.TipPokretanja</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Predmet</label>
+                <div class="border rounded p-2 bg-light">
+                    @(string.IsNullOrWhiteSpace(Model.PredmetNaziv) ? "Svi predmeti" : Model.PredmetNaziv)
+                </div>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Predmeta</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoPredmeta</div>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Korisnika u matrici</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoKorisnikaUMatrici</div>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Dodijeljeno</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoDodijeljeno</div>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Sticanje</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoSticanje</div>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Obnova</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoObnova</div>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label fw-bold">Već dodijeljeno</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoVecDodijeljeno</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Nema validnog testa</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoNemaValidnogTesta</div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Greške</label>
+                <div class="border rounded p-2 bg-light">@Model.UkupnoGresaka</div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Napomena))
+            {
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold">Napomena</label>
+                    <div class="border rounded p-3 bg-light text-danger">
+                        @Model.Napomena
+                    </div>
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <div class="card-custom">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-1">Detaljni log</h5>
+                <small class="text-muted">
+                    Dodjele, greške i slučajevi gdje nije pronađen validan test.
+                </small>
+            </div>
+
+            <span class="badge bg-primary">
+                @Model.Logovi.Count zapis(a)
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table id="autoAssignmentLogTable" class="table table-striped table-bordered align-middle w-100">
+                <thead>
+                    <tr>
+                        <th>Vrijeme</th>
+                        <th>Događaj</th>
+                        <th>Razlog</th>
+                        <th>Predmet</th>
+                        <th>Korisnik</th>
+                        <th>Test</th>
+                        <th>Klasa</th>
+                        <th>Pogođeno</th>
+                        <th>Poruka</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var log in Model.Logovi)
+                    {
+                        <tr>
+                            <td>@log.DatumKreiranja.ToString("dd.MM.yyyy HH:mm")</td>
+
+                            <td>
+                                @if (log.TipDogadjaja == "DODIJELJENO")
+                                {
+                                    <span class="badge bg-success">Dodijeljeno</span>
+                                }
+                                else if (log.TipDogadjaja == "NEMA_VALIDNOG_TESTA")
+                                {
+                                    <span class="badge bg-warning text-dark">Nema validnog testa</span>
+                                }
+                                else if (log.TipDogadjaja == "GRESKA")
+                                {
+                                    <span class="badge bg-danger">Greška</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@log.TipDogadjaja</span>
+                                }
+                            </td>
+
+                            <td>@(string.IsNullOrWhiteSpace(log.Razlog) ? "-" : log.Razlog)</td>
+
+                            <td>@(string.IsNullOrWhiteSpace(log.PredmetNaziv) ? "-" : log.PredmetNaziv)</td>
+
+                            <td>@(string.IsNullOrWhiteSpace(log.KorisnikImePrezime) ? "-" : log.KorisnikImePrezime)</td>
+
+                            <td>@(string.IsNullOrWhiteSpace(log.TestNaziv) ? "-" : log.TestNaziv)</td>
+
+                            <td>@(string.IsNullOrWhiteSpace(log.TestKlasaNaziv) ? "-" : log.TestKlasaNaziv)</td>
+
+                            <td>@(log.PogodjenoKorisnika?.ToString() ?? "-")</td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(log.Poruka))
+                                {
+                                    <small>@log.Poruka</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#autoAssignmentLogTable').DataTable({
+                pageLength: 25,
+                order: [[0, 'desc']],
+                responsive: false,
+                scrollX: true,
+                language: {
+                    search: "Pretraga:",
+                    lengthMenu: "Prikaži _MENU_ zapisa",
+                    info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
+                    infoEmpty: "Nema zapisa",
+                    zeroRecords: "Nema pronađenih logova",
+                    paginate: {
+                        first: "Prva",
+                        last: "Zadnja",
+                        next: "Sljedeća",
+                        previous: "Prethodna"
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -120,6 +120,14 @@
             </form>
         </div>
 
+        <a asp-area="Admin"
+           asp-controller="PredmetMatrix"
+           asp-action="Index"
+           asp-route-predmetId="@Model.ID"
+           class="btn-sapio btn-sapio-secondary">
+            <i class="fas fa-users"></i> Korisnici po matrici
+        </a>
+
         <div class="mt-3">
             <small class="text-muted">
                 Zeleno znači da je predmet trenutno aktivan. Sivo znači da je predmet trenutno neaktivan.

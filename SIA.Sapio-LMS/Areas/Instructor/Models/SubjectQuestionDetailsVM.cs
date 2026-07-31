@@ -27,6 +27,9 @@
         public DateTime DatumKreiranja { get; set; }
 
         public DateTime? DatumIzmjene { get; set; }
+        public string? SlikaPutanja { get; set; }
+
+        public string? SlikaNaziv { get; set; }
 
         public List<SubjectQuestionAnswerDetailsVM> Odgovori { get; set; } = new();
     }

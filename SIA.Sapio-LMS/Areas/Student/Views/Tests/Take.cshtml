@@ -3,16 +3,25 @@
 
 @{
     Layout = null;
-    var remainingSeconds = Math.Max(0, (int)(Model.VrijemeIsteka - DateTime.Now).TotalSeconds);
+
+    var remainingSeconds = Math.Max(
+        0,
+        (int)(Model.VrijemeIsteka - DateTime.Now).TotalSeconds
+    );
 }
 
 <!DOCTYPE html>
 <html lang="bs">
 <head>
     <meta charset="utf-8" />
+
     <title>@Model.NazivTesta</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/custom.css" />
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/custom.css" />
 
     <style>
         body {
@@ -24,7 +33,7 @@
             background: #fff;
             border-radius: 18px;
             padding: 18px 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.06);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
             margin-bottom: 20px;
         }
 
@@ -33,7 +42,7 @@
             background: #fff;
             border-radius: 22px;
             padding: 32px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.07);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .07);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -59,7 +68,7 @@
         .question-title {
             max-width: 1100px;
             width: 100%;
-            margin-bottom: 38px;
+            margin-bottom: 30px;
         }
 
         .question-counter {
@@ -74,6 +83,28 @@
             line-height: 1.4;
             color: #172b4d;
             margin: 0;
+        }
+
+        .question-image-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            padding: 16px;
+            background: #f8f9fc;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+        }
+
+        .question-image {
+            display: block;
+            width: auto;
+            max-width: 100%;
+            max-height: 480px;
+            object-fit: contain;
+            border-radius: 12px;
         }
 
         .answers-wrap {
@@ -91,7 +122,7 @@
             transition: all .15s ease;
             font-size: 1.05rem;
             background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,.03);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .03);
         }
 
             .answer-option:hover {
@@ -115,7 +146,7 @@
         .start-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15,23,42,.94);
+            background: rgba(15, 23, 42, .94);
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -150,88 +181,168 @@
         }
 
         #nextBtn {
-            background: linear-gradient(135deg, #5e72e4, #825ee4);
+            background: linear-gradient( 135deg, #5e72e4, #825ee4 );
             border: none;
         }
 
         #submitTestBtn {
-            background: linear-gradient(135deg, #2dce89, #28b97d);
+            background: linear-gradient( 135deg, #2dce89, #28b97d );
             border: none;
         }
     </style>
 </head>
 
 <body>
-    <div id="startOverlay" class="start-overlay">
+
+    <div id="startOverlay"
+         class="start-overlay">
+
         <div>
-            <h1 class="mb-3">@Model.NazivTesta</h1>
-            <p class="mb-4">Test će se otvoriti u fullscreen načinu rada.</p>
-            <button type="button" id="startFullscreenBtn" class="btn btn-light btn-lg">
+            <h1 class="mb-3">
+                @Model.NazivTesta
+            </h1>
+
+            <p class="mb-4">
+                Test će se otvoriti u fullscreen načinu rada.
+            </p>
+
+            <button type="button"
+                    id="startFullscreenBtn"
+                    class="btn btn-light btn-lg">
                 Započni prikaz testa
             </button>
         </div>
+
     </div>
 
     <div class="container-fluid py-3">
+
         <div class="test-topbar d-flex justify-content-between align-items-center">
+
             <div>
-                <div class="text-muted small">Predmet</div>
-                <h4 class="mb-0">@Model.PredmetNaziv</h4>
-                <div class="text-muted">@Model.NazivTesta</div>
+                <div class="text-muted small">
+                    Predmet
+                </div>
+
+                <h4 class="mb-0">
+                    @Model.PredmetNaziv
+                </h4>
+
+                <div class="text-muted">
+                    @Model.NazivTesta
+                </div>
             </div>
 
             <div class="text-end">
-                <div class="text-danger fw-bold">Preostalo vrijeme</div>
-                <div id="testTimer" class="fs-3 fw-bold text-danger">00:00:00</div>
-                <div id="questionProgress" class="text-muted small"></div>
+                <div class="text-danger fw-bold">
+                    Preostalo vrijeme
+                </div>
+
+                <div id="testTimer"
+                     class="fs-3 fw-bold text-danger">
+                    00:00:00
+                </div>
+
+                <div id="questionProgress"
+                     class="text-muted small">
+                </div>
             </div>
+
         </div>
 
-        <form id="testForm" action="/Student/Tests/Submit/@Model.PolaganjeId" method="post">
+        <form id="testForm"
+              action="/Student/Tests/Submit/@Model.PolaganjeId"
+              method="post">
+
             @Html.AntiForgeryToken()
-            <input type="hidden" name="id" value="@Model.PolaganjeId" />
+
+            <input type="hidden"
+                   name="id"
+                   value="@Model.PolaganjeId" />
 
             <div class="question-card">
+
                 <div>
+
                     @for (int i = 0; i < Model.Pitanja.Count; i++)
                     {
                         var pitanje = Model.Pitanja[i];
-                        var tip = (pitanje.TipPitanjaSifra ?? "").Trim().ToUpper();
 
-                        <div class="question-pane @(i == 0 ? "active" : "")" data-index="@i">
+                        var tip = (
+                        pitanje.TipPitanjaSifra ?? ""
+                        )
+                        .Trim()
+                        .ToUpper();
+
+                        <div class="question-pane @(i == 0 ? "active" : "")"
+                             data-index="@i">
+
                             <div class="question-stage">
+
                                 <div class="question-title">
+
                                     <div class="question-counter">
                                         Pitanje @(i + 1) od @Model.Pitanja.Count
                                     </div>
 
-                                    <h3>@pitanje.TekstPitanja</h3>
+                                    <h3>
+                                        @pitanje.TekstPitanja
+                                    </h3>
+
                                 </div>
 
+                                @if (!string.IsNullOrWhiteSpace(
+                                                            pitanje.SlikaPutanja))
+                                {
+                                    <div class="question-image-wrapper">
+
+                                        <img src="@Url.Content(pitanje.SlikaPutanja)"
+                                             alt="@(string.IsNullOrWhiteSpace(pitanje.SlikaNaziv)
+                                                ? "Slika pitanja"
+                                                : pitanje.SlikaNaziv)"
+                                     class="question-image" />
+
+                                    </div>
+                                                        }
+
                                 <div class="answers-wrap">
-                                    @if (tip == "SINGLE_CHOICE" || tip == "SINGLE")
+
+                                    @if (tip == "SINGLE_CHOICE" ||
+                                                                    tip == "SINGLE")
                                     {
-                                        foreach (var odgovor in pitanje.Odgovori.OrderBy(x => x.Redoslijed))
+                                        foreach (
+                                        var odgovor in pitanje.Odgovori
+                                        .OrderBy(x => x.Redoslijed))
                                         {
                                             <label class="answer-option d-block">
+
                                                 <input class="form-check-input"
                                                        type="radio"
                                                        name="answers[@pitanje.PolaganjePitanjeId]"
                                                        value="@odgovor.TestPitanjeOdgovorId" />
+
                                                 @odgovor.TekstOdgovora
+
                                             </label>
                                         }
                                     }
-                                    else if (tip == "MULTIPLE_CHOICE" || tip == "MULTIPLE")
+                                    else if (
+                                    tip == "MULTIPLE_CHOICE" ||
+                                    tip == "MULTIPLE")
                                     {
-                                        foreach (var odgovor in pitanje.Odgovori.OrderBy(x => x.Redoslijed))
+                                        foreach (
+                                        var odgovor in pitanje.Odgovori
+                                        .OrderBy(x => x.Redoslijed))
                                         {
                                             <label class="answer-option d-block">
+
                                                 <input class="form-check-input"
                                                        type="checkbox"
                                                        name="answers[@pitanje.PolaganjePitanjeId]"
                                                        value="@odgovor.TestPitanjeOdgovorId" />
+
                                                 @odgovor.TekstOdgovora
+
                                             </label>
                                         }
                                     }
@@ -248,38 +359,64 @@
                                             Tip pitanja nije prepoznat: @tip
                                         </div>
                                     }
+
                                 </div>
+
                             </div>
+
                         </div>
                     }
+
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center test-nav-actions">
+
                     <button type="button"
                             id="prevBtn"
                             class="btn btn-light px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2 border-0">
-                        <span style="font-size:18px;">←</span>
-                        <span>Nazad</span>
+
+                        <span style="font-size:18px;">
+                            ←
+                        </span>
+
+                        <span>
+                            Nazad
+                        </span>
+
                     </button>
 
                     <button type="button"
                             id="nextBtn"
                             class="btn btn-primary px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2">
-                        <span>Naprijed</span>
-                        <span style="font-size:18px;">→</span>
+
+                        <span>
+                            Naprijed
+                        </span>
+
+                        <span style="font-size:18px;">
+                            →
+                        </span>
+
                     </button>
 
                     <button type="button"
                             id="submitTestBtn"
                             class="btn btn-success px-5 py-2 rounded-pill shadow-sm d-none fw-bold">
+
                         ✓ Završi test
+
                     </button>
+
                 </div>
+
             </div>
+
         </form>
+
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -290,28 +427,58 @@
 
         function requestFullscreenMode() {
             const el = document.documentElement;
-            if (el.requestFullscreen) el.requestFullscreen();
+
+            if (el.requestFullscreen) {
+                el.requestFullscreen();
+            }
         }
 
         function showQuestion(index) {
             $('.question-pane').removeClass('active');
-            $('.question-pane[data-index="' + index + '"]').addClass('active');
 
-            $('#prevBtn').toggleClass('d-none', index === 0);
-            $('#nextBtn').toggleClass('d-none', index === totalQuestions - 1);
-            $('#submitTestBtn').toggleClass('d-none', index !== totalQuestions - 1);
+            $('.question-pane[data-index="' + index + '"]')
+                .addClass('active');
 
-            $('#questionProgress').text('Pitanje ' + (index + 1) + ' / ' + totalQuestions);
+            $('#prevBtn').toggleClass(
+                'd-none',
+                index === 0
+            );
+
+            $('#nextBtn').toggleClass(
+                'd-none',
+                index === totalQuestions - 1
+            );
+
+            $('#submitTestBtn').toggleClass(
+                'd-none',
+                index !== totalQuestions - 1
+            );
+
+            $('#questionProgress').text(
+                'Pitanje ' +
+                (index + 1) +
+                ' / ' +
+                totalQuestions
+            );
         }
 
         function updateTimer() {
-            let hours = Math.floor(remainingSeconds / 3600);
-            let minutes = Math.floor((remainingSeconds % 3600) / 60);
-            let seconds = remainingSeconds % 60;
+            let hours =
+                Math.floor(remainingSeconds / 3600);
+
+            let minutes =
+                Math.floor(
+                    (remainingSeconds % 3600) / 60
+                );
+
+            let seconds =
+                remainingSeconds % 60;
 
             $('#testTimer').text(
-                String(hours).padStart(2, '0') + ':' +
-                String(minutes).padStart(2, '0') + ':' +
+                String(hours).padStart(2, '0') +
+                ':' +
+                String(minutes).padStart(2, '0') +
+                ':' +
                 String(seconds).padStart(2, '0')
             );
 
@@ -324,59 +491,88 @@
             remainingSeconds--;
         }
 
-        $('#startFullscreenBtn').on('click', function () {
-            requestFullscreenMode();
-            $('#startOverlay').fadeOut(200);
-        });
+        $('#startFullscreenBtn').on(
+            'click',
+            function () {
+                requestFullscreenMode();
 
-        $('#nextBtn').on('click', function () {
-            if (currentIndex < totalQuestions - 1) {
-                currentIndex++;
-                showQuestion(currentIndex);
+                $('#startOverlay').fadeOut(200);
             }
-        });
+        );
 
-        $('#prevBtn').on('click', function () {
-            if (currentIndex > 0) {
-                currentIndex--;
-                showQuestion(currentIndex);
-            }
-        });
-
-        $('#submitTestBtn').on('click', function () {
-            Swal.fire({
-                title: 'Završiti test?',
-                text: 'Nakon potvrde više nećete moći mijenjati odgovore.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Završi test',
-                cancelButtonText: 'Odustani'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    testSubmitted = true;
-                    $('#testForm').submit();
+        $('#nextBtn').on(
+            'click',
+            function () {
+                if (currentIndex < totalQuestions - 1) {
+                    currentIndex++;
+                    showQuestion(currentIndex);
                 }
-            });
-        });
-
-        document.addEventListener('fullscreenchange', function () {
-            if (!document.fullscreenElement && !testSubmitted) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Fullscreen je napušten',
-                    text: 'Za nastavak testa morate se vratiti u fullscreen.',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    confirmButtonText: 'Vrati fullscreen'
-                }).then(() => requestFullscreenMode());
             }
-        });
+        );
 
-        document.addEventListener('contextmenu', e => e.preventDefault());
+        $('#prevBtn').on(
+            'click',
+            function () {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    showQuestion(currentIndex);
+                }
+            }
+        );
+
+        $('#submitTestBtn').on(
+            'click',
+            function () {
+                Swal.fire({
+                    title: 'Završiti test?',
+                    text: 'Nakon potvrde više nećete moći mijenjati odgovore.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Završi test',
+                    cancelButtonText: 'Odustani'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        testSubmitted = true;
+
+                        $('#testForm').submit();
+                    }
+                });
+            }
+        );
+
+        document.addEventListener(
+            'fullscreenchange',
+            function () {
+                if (!document.fullscreenElement &&
+                    !testSubmitted) {
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Fullscreen je napušten',
+                        text: 'Za nastavak testa morate se vratiti u fullscreen.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        confirmButtonText: 'Vrati fullscreen'
+                    }).then(() =>
+                        requestFullscreenMode()
+                    );
+                }
+            }
+        );
+
+        document.addEventListener(
+            'contextmenu',
+            e => e.preventDefault()
+        );
 
         showQuestion(0);
         updateTimer();
-        setInterval(updateTimer, 1000);
+
+        setInterval(
+            updateTimer,
+            1000
+        );
     </script>
+
 </body>
 </html>

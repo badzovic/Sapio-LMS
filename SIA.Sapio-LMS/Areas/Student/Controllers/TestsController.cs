@@ -30,25 +30,25 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
             }
 
             var dodijeljeniTestovi = await _dbContext.DODIJELJENI_TESTOVI
-                .Include(x => x.Test)
+                .Include(x => x.TEST)
                     .ThenInclude(x => x.Predmet)
                 .Where(x =>
                     x.KORISNIK_ID == korisnik.ID &&
                     x.AKTIVNO == "Y" &&
-                    x.Test.AKTIVNO == "Y" &&
-                    x.Test.STATUS == "ACTIVE" &&
-                    x.Test.DATUM_OD <= now &&
-                    x.Test.DATUM_DO >= now)
+                    x.TEST.AKTIVNO == "Y" &&
+                    x.TEST.STATUS == "ACTIVE" &&
+                    x.TEST.DATUM_OD <= now &&
+                    x.TEST.DATUM_DO >= now)
                 .Select(x => new StudentAssignedTestVM
                 {
                     TestId = x.TEST_ID,
-                    NazivTesta = x.Test.NAZIV,
-                    Opis = x.Test.OPIS,
-                    Predmet = x.Test.Predmet != null ? x.Test.Predmet.NAZIV : null,
-                    DatumOd = x.Test.DATUM_OD,
-                    DatumDo = x.Test.DATUM_DO,
-                    VrijemeTrajanjaMin = x.Test.VRIJEME_TRAJANJA_MIN,
-                    BrojPokusajaDozvoljeno = x.Test.BROJ_POKUSAJA,
+                    NazivTesta = x.TEST.NAZIV,
+                    Opis = x.TEST.OPIS,
+                    Predmet = x.TEST.Predmet != null ? x.TEST.Predmet.NAZIV : null,
+                    DatumOd = x.TEST.DATUM_OD,
+                    DatumDo = x.TEST.DATUM_DO,
+                    VrijemeTrajanjaMin = x.TEST.VRIJEME_TRAJANJA_MIN,
+                    BrojPokusajaDozvoljeno = x.TEST.BROJ_POKUSAJA,
 
                     BrojPokusajaIskoristeno = _dbContext.POLAGANJE_TESTA
                         .Count(p =>
@@ -80,19 +80,19 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
             }
 
             var dodjela = await _dbContext.DODIJELJENI_TESTOVI
-                .Include(x => x.Test)
+                .Include(x => x.TEST)
                 .FirstOrDefaultAsync(x =>
                     x.TEST_ID == id &&
                     x.KORISNIK_ID == korisnik.ID &&
                     x.AKTIVNO == "Y");
 
-            if (dodjela == null || dodjela.Test == null)
+            if (dodjela == null || dodjela.TEST == null)
             {
                 //TempData["ErrorMessage"] = "Test nije dodijeljen trenutnom korisniku.";
                 return RedirectToAction(nameof(Index));
             }
 
-            var test = dodjela.Test;
+            var test = dodjela.TEST;
 
             if (test.AKTIVNO != "Y" || test.STATUS != "ACTIVE")
             {
@@ -240,9 +240,13 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
                     PolaganjePitanjeId = pp.ID,
                     TestPitanjeId = pp.TEST_PITANJE_ID,
                     TekstPitanja = testPitanje?.TEKST_PITANJA ?? "",
+
+                    SlikaPutanja = testPitanje?.SLIKA_PUTANJA,
+                    SlikaNaziv = testPitanje?.SLIKA_NAZIV,
+
                     TipPitanjaSifra = testPitanje?.TipPitanja?.SIFRA ?? "",
                     Redoslijed = pp.REDOSLIJED,
-                    Odgovori = new List<TakeTestAnswerVM>(),
+                    Odgovori = new List<TakeTestAnswerVM>()
                 };
 
                 var odgovoriZaPitanje = polaganjeOdgovori

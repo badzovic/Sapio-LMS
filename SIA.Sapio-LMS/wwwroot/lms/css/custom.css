@@ -664,3 +664,260 @@ button.btn-sapio {
 #questionsTable td {
     vertical-align: middle;
 }
+
+/* =========================
+   STUDENT / SUBJECT MATERIALS
+   ========================= */
+
+.subject-material-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.subject-material-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 18px;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.subject-material-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
+    flex: 1;
+}
+
+.subject-material-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #f6f7fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    color: #5e72e4;
+    font-size: 18px;
+}
+
+.subject-material-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.subject-material-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #344767;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.subject-material-description {
+    font-size: 13px;
+    color: #67748e;
+    line-height: 1.5;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.subject-material-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #eef2ff;
+    color: #344767;
+    white-space: nowrap;
+}
+
+.subject-material-actions {
+    flex: 0 0 auto;
+}
+
+/* =========================
+   MATERIAL VIEWER
+   ========================= */
+
+.material-viewer-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.material-viewer-frame-wrap {
+    width: 100%;
+    height: 80vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+    .material-viewer-frame-wrap iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+.material-video-frame-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+
+    .material-video-frame-wrap iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+.material-image-viewer-wrap {
+    width: 100%;
+    min-height: 70vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: auto;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.material-image-viewer-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.material-office-preview-wrap {
+    width: 100%;
+    min-height: 80vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: auto;
+    background: #f8fafc;
+    padding: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.material-office-preview-page {
+    display: none;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.14);
+    background: #fff;
+}
+
+    .material-office-preview-page.active {
+        display: block;
+    }
+
+.material-preview-counter {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+}
+body.material-fullscreen-active {
+    overflow: hidden !important;
+}
+
+    body.material-fullscreen-active .material-viewer-frame-wrap {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 999999 !important;
+        background: #000 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+        body.material-fullscreen-active .material-viewer-frame-wrap iframe {
+            width: 100vw !important;
+            height: 100vh !important;
+            border: 0 !important;
+            display: block !important;
+        }
+
+
+
+
+
+#pdfViewerContainer {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    background: #e5e7eb;
+}
+
+#pdfLoadingMessage {
+    padding: 30px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.pdf-page-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.pdf-page-canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+}
+
+
+
+
+
+/*///////////////////*/
+
+
+
+
+
+
+@media (max-width: 768px) {
+    .subject-material-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .subject-material-actions {
+        width: 100%;
+    }
+
+        .subject-material-actions .btn-sapio {
+            width: 100%;
+            text-align: center;
+        }
+}

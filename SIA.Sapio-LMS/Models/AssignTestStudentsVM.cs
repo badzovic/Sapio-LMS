@@ -13,5 +13,6 @@ namespace SIA.Sapio_LMS.Areas.Models
         public List<AssignTestStudentItemVM> Studenti { get; set; } = new();
 
         public List<int> SelectedStudentIds { get; set; } = new();
+        public int PredmetId { get; set; }
     }
 }

@@ -14,6 +14,16 @@
 </li>
 
 <li class="nav-item">
+    <a class="nav-link @(currentArea == "Student" && currentController == "Subjects" ? "active" : "")"
+       href="/Student/Subjects">
+        <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">
+            <i class="ni ni-books text-success text-sm opacity-10"></i>
+        </div>
+        <span class="nav-link-text ms-1">Moji predmeti</span>
+    </a>
+</li>
+
+<li class="nav-item">
     <a class="nav-link @(currentArea == "Student" && currentController == "Tests" ? "active" : "")"
        href="/Student/Tests">
         <div class="icon icon-shape icon-sm text-center d-flex align-items-center justify-content-center">

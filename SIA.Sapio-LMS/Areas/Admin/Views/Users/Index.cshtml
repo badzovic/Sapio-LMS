@@ -36,6 +36,23 @@
 
 <div class="container-fluid">
 
+    @if (TempData["ImportMessage"] != null)
+    {
+        <div class="alert alert-info">
+            @TempData["ImportMessage"]
+        </div>
+    }
+
+    @if (TempData["ImportErrors"] != null)
+    {
+        <div class="alert alert-danger">
+            <strong>Detalji greške:</strong>
+            <div class="mt-2">
+                @TempData["ImportErrors"]
+            </div>
+        </div>
+    }
+
     <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
              model='new PageHeaderVM
              {
@@ -164,6 +181,40 @@
 
                         <button type="submit" class="btn-sapio btn-sapio-warning">
                             <i class="fas fa-sync-alt"></i> Sync korisnika
+                        </button>
+                    </form>
+
+                    <form asp-area="Admin"
+                          asp-controller="InternalUsers"
+                          asp-action="DeactivateMissingInternalUsers"
+                          method="post"
+                          class="js-confirm-form m-0"
+                          data-confirm-title="Provjera neaktivnih korisnika?"
+                          data-confirm-text="Provjeriti da li postoje interni korisnici koji više nisu aktivni u HRM-u i deaktivirati ih?"
+                          data-confirm-icon="warning"
+                          data-confirm-button="Da, deaktiviraj">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn-sapio btn-sapio-danger">
+                            <i class="fas fa-user-slash"></i> Deaktiviraj neaktivne
+                        </button>
+                    </form>
+
+                    <form asp-area="Admin"
+                          asp-controller="InternalUsers"
+                          asp-action="ImportAll"
+                          method="post"
+                          class="js-confirm-form m-0"
+                          data-confirm-title="Import internih korisnika?"
+                          data-confirm-text="Pokrenuti import internih korisnika iz HRM-a? Novi korisnici će biti kreirani, a odgovarajući eksterni ili sezonski korisnici mogu biti konvertovani u interne."
+                          data-confirm-icon="question"
+                          data-confirm-button="Da, importuj">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn-sapio btn-sapio-success">
+                            <i class="fas fa-user-plus"></i> Import internih korisnika
                         </button>
                     </form>
                 </div>
