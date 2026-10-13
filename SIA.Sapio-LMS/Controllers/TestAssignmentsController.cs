@@ -148,18 +148,29 @@ namespace SIA.Sapio_LMS.Controllers
                 .Select(x => x.KORISNIK_ID)
                 .ToListAsync();
 
-            var korisniciRaw = await _dbContext.KORISNICI
-                .Where(x => x.AKTIVAN == "Y")
-                .OrderBy(x => x.PREZIME)
-                .ThenBy(x => x.IME)
-                .Select(x => new
+            var korisniciRaw = await (
+                from k in _dbContext.KORISNICI
+
+                join u in _dbContext.Users
+                    on k.USER_ID equals u.Id into identityUsers
+
+                from u in identityUsers.DefaultIfEmpty()
+
+                where k.AKTIVAN == "Y"
+
+                orderby k.PREZIME, k.IME
+
+                select new
                 {
-                    x.ID,
-                    x.IME,
-                    x.PREZIME,
-                    x.EMAIL,
-                    x.KOMPANIJA,
-                    x.ACCESS_KEY
+                    k.ID,
+                    k.IME,
+                    k.PREZIME,
+
+                    // Email za UI uvijek dolazi iz AspNetUsers
+                    EMAIL = u != null ? u.Email : null,
+
+                    k.KOMPANIJA,
+                    k.ACCESS_KEY
                 })
                 .ToListAsync();
 

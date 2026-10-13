@@ -92,6 +92,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         })
                         .ToList();
 
+                    /*
+                     * ============================================================
+                     * POSTOJEĆI EKSTERNI / SEZONSKI KORISNIK
+                     * ============================================================
+                     */
+
                     if (kandidati.Count == 1)
                     {
                         var postojeciKorisnik = kandidati.Single();
@@ -216,6 +222,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         continue;
                     }
 
+                    /*
+                     * ============================================================
+                     * VIŠE MOGUĆIH KANDIDATA
+                     * ============================================================
+                     */
+
                     if (kandidati.Count > 1)
                     {
                         result.Ambiguous++;
@@ -233,6 +245,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
                         continue;
                     }
+
+                    /*
+                     * ============================================================
+                     * POTPUNO NOVI KORISNIK
+                     * ============================================================
+                     */
 
                     var cleanEmail =
                         NormalizeValue(apiUser.Email);
@@ -272,6 +290,10 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             LockoutEnd = null
                         };
 
+                        /*
+                         * CreateAsync odmah upisuje korisnika u AspNetUsers.
+                         * Nakon uspješnog CreateAsync identityUser.Id je dostupan.
+                         */
                         var createResult =
                             await _userManager.CreateAsync(
                                 identityUser,
@@ -287,7 +309,46 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             throw new Exception(
                                 $"CREATE USER FAILED: {createErrors}");
                         }
+
+                        /*
+                         * ========================================================
+                         * STUDENT ROLA
+                         * ========================================================
+                         *
+                         * Svaki potpuno novi LMS korisnik koji se kreira
+                         * kroz HRM import automatski dobija Student rolu.
+                         *
+                         * UserManager će napraviti zapis u AspNetUserRoles.
+                         */
+
+                        var addRoleResult =
+                            await _userManager.AddToRoleAsync(
+                                identityUser,
+                                "Student");
+
+                        if (!addRoleResult.Succeeded)
+                        {
+                            var roleErrors = string.Join(
+                                " | ",
+                                addRoleResult.Errors.Select(
+                                    e => $"{e.Code}: {e.Description}"));
+
+                            throw new Exception(
+                                $"ADD STUDENT ROLE FAILED: {roleErrors}");
+                        }
+
+                        _logger.LogInformation(
+                            "Korisniku USER_ID={UserId}, HRM_ID={HrmId} " +
+                            "dodijeljena Student rola.",
+                            identityUser.Id,
+                            apiUser.HrmId);
                     }
+
+                    /*
+                     * ============================================================
+                     * KORISNICI
+                     * ============================================================
+                     */
 
                     var noviKorisnik = new Korisnik
                     {
@@ -344,6 +405,7 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
             try
             {
+                // API vraća samo trenutno aktivne i neobrisane HRM korisnike.
                 var apiUsers =
                     await _internalUsersApiService.GetUsersAsync();
 
@@ -379,6 +441,7 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         var noviEmail =
                             NormalizeValue(apiUser.Email);
 
+                        // Čuvamo staro stanje za audit.
                         var staroIme = postojeci.IME;
                         var staroPrezime = postojeci.PREZIME;
                         var staroImeOca = postojeci.IME_OCA;
@@ -390,6 +453,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
                         bool korisnikChanged = false;
                         bool identityChanged = false;
+
+                        /*
+                         * ============================================================
+                         * KORISNICI
+                         * ============================================================
+                         */
 
                         if (!AreEqual(postojeci.IME, novoIme))
                         {
@@ -439,6 +508,29 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             korisnikChanged = true;
                         }
 
+                        /*
+                         * API GetUsersAsync() vraća samo aktivne i neobrisane
+                         * HRM korisnike.
+                         *
+                         * Zato svaki korisnik koji se nalazi u ovom API odgovoru
+                         * mora biti aktivan i u LMS tabeli KORISNICI.
+                         *
+                         * Ovo također automatski reaktivira korisnika ako je
+                         * ranije iz bilo kojeg razloga ostao AKTIVAN = "N".
+                         */
+                        if (postojeci.AKTIVAN != "Y")
+                        {
+                            postojeci.AKTIVAN = "Y";
+
+                            promijenjenaPolja.Add("AKTIVAN");
+                            korisnikChanged = true;
+                        }
+
+                        /*
+                         * ============================================================
+                         * ASP.NET IDENTITY
+                         * ============================================================
+                         */
 
                         if (!string.IsNullOrWhiteSpace(postojeci.USER_ID))
                         {
@@ -482,6 +574,39 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                                 identityChanged = true;
                             }
 
+                            /*
+                             * Ako je korisnik vraćen iz HRM API-ja,
+                             * HRM ga smatra aktivnim.
+                             *
+                             * Osiguravamo da je aktivan i u AspNetUsers.
+                             */
+                            if (!identityUser.IsActive)
+                            {
+                                identityUser.IsActive = true;
+                                identityChanged = true;
+                            }
+
+                            /*
+                             * LockoutEnabled ostavljamo uključen jer Identity
+                             * koristi ovaj mehanizam i za standardni lockout.
+                             */
+                            if (!identityUser.LockoutEnabled)
+                            {
+                                identityUser.LockoutEnabled = true;
+                                identityChanged = true;
+                            }
+
+                            /*
+                             * Deaktivacija korisnika postavlja LockoutEnd na MaxValue.
+                             * Ako je korisnik ponovo aktivan u HRM-u,
+                             * uklanjamo taj lockout.
+                             */
+                            if (identityUser.LockoutEnd != null)
+                            {
+                                identityUser.LockoutEnd = null;
+                                identityChanged = true;
+                            }
+
                             if (identityChanged)
                             {
                                 var updateResult =
@@ -520,6 +645,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                                     ", ",
                                     promijenjenaPolja)
                                 : "IDENTITY_PODACI";
+
+                        /*
+                         * ============================================================
+                         * AUDIT
+                         * ============================================================
+                         */
 
                         var auditZapis =
                             new EvidencijaSinhronizacijeKorisnika

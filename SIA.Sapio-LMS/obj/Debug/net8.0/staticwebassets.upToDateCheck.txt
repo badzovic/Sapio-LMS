@@ -388,6 +388,7 @@ wwwroot\uploads\subject-material-pdf-cache\8.pdf
 wwwroot\uploads\subject-materials\1\1eef5084-e815-48b1-b6a9-55d2686a8a11.png
 wwwroot\uploads\subject-materials\1\75f910d6-7f83-4cf3-967b-73b9c28c7e9d.docx
 wwwroot\uploads\subject-materials\1\9f199c2c-ab1d-408a-bd39-08323e287afe.pptx
+wwwroot\uploads\subject-materials\83\c6407f05-f8c7-42f7-ae7d-8f1ffd56085e.docx
 wwwroot\uploads\subject-materials\8\3f4fb10e-3cf8-4eaa-8e3f-2e2d7e846fb6.docx
 wwwroot\uploads\subject-materials\8\b6fcf5d5-565c-4ea6-93c0-9729d3caa411.pptx
 wwwroot\uploads\subject-materials\8\b7704223-85cd-40be-83a8-a4d8ed698067.docx

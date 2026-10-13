@@ -1,0 +1,15 @@
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Release\net8.0\SIA.Sapio.LMS.Data.deps.json
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Release\net8.0\SIA.Sapio.LMS.Data.runtimeconfig.json
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Release\net8.0\SIA.Sapio.LMS.Data.dll
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\bin\Release\net8.0\SIA.Sapio.LMS.Data.pdb
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.csproj.AssemblyReference.cache
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.AssemblyInfoInputs.cache
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.AssemblyInfo.cs
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.csproj.CoreCompileInputs.cache
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.sourcelink.json
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.dll
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\refint\SIA.Sapio.LMS.Data.dll
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.pdb
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\SIA.Sapio.LMS.Data.genruntimeconfig.cache
+D:\GitHub\Sapio-LMS\SIA.Sapio.LMS.Data\obj\Release\net8.0\ref\SIA.Sapio.LMS.Data.dll

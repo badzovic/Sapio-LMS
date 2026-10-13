@@ -3,52 +3,36 @@
   "WorkspaceRootPath": "D:\\GitHub\\Sapio-LMS\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\controllers\\registrationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\controllers\\registrationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\services\\internaluserssync\\internaluserssyncservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\services\\internaluserssync\\internaluserssyncservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\services\\autotestassignmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\services\\autotestassignmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\controllers\\seasonalusersmanagementcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\controllers\\seasonalusersmanagementcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\services\\internaluserssync\\iinternaluserssyncservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\services\\internaluserssync\\iinternaluserssyncservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\controllers\\externalusersmanagementcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\controllers\\externalusersmanagementcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\services\\internaluserssync\\internaluserssyncresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\services\\internaluserssync\\internaluserssyncresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\controllers\\testassignmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\controllers\\testassignmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\controllers\\userauditcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\controllers\\userauditcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\controllers\\predmetmatrixcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\controllers\\predmetmatrixcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\controllers\\internaluserscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\controllers\\internaluserscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\services\\internaluserssync\\internalusersimportresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\services\\internaluserssync\\internalusersimportresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\services\\internaluserssync\\internalusersdeactivationresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\services\\internaluserssync\\internalusersdeactivationresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\models\\deactivationaudititemvm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\models\\deactivationaudititemvm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|d:\\github\\sapio-lms\\sia.sapio-lms\\areas\\admin\\models\\syncaudititemvm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0A3019B0-06CA-4787-9372-A5C2E702B8AA}|SIA.Sapio-LMS\\SIA.Sapio-LMS.csproj|solutionrelative:sia.sapio-lms\\areas\\admin\\models\\syncaudititemvm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C1694DC9-9EBB-4B32-9407-D6303014C652}|SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj|d:\\github\\sapio-lms\\sia.sapio.lms.data\\entities\\evidencijasinhronizacijekorisnika.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C1694DC9-9EBB-4B32-9407-D6303014C652}|SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj|solutionrelative:sia.sapio.lms.data\\entities\\evidencijasinhronizacijekorisnika.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C1694DC9-9EBB-4B32-9407-D6303014C652}|SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj|d:\\github\\sapio-lms\\sia.sapio.lms.data\\entities\\dodijeljenitest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C1694DC9-9EBB-4B32-9407-D6303014C652}|SIA.Sapio.LMS.Data\\SIA.Sapio.LMS.Data.csproj|solutionrelative:sia.sapio.lms.data\\entities\\dodijeljenitest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -58,158 +42,110 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "AutotestAssignmentService.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\AutotestAssignmentService.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Services\\AutotestAssignmentService.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\AutotestAssignmentService.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Services\\AutotestAssignmentService.cs",
-              "ViewState": "AgIAAHMAAAAAAAAAAAAowCIBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T10:31:54.127Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "InternalUsersDeactivationResult.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersDeactivationResult.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersDeactivationResult.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersDeactivationResult.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersDeactivationResult.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T08:08:34.148Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "InternalUsersImportResult.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersImportResult.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersImportResult.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersImportResult.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersImportResult.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAAkAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T07:52:10.456Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "InternalUsersSyncResult.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncResult.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncResult.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncResult.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncResult.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T07:39:12.831Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Program.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Program.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Program.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Program.cs",
-              "ViewState": "AgIAAFoAAAAAAAAAAAAkwG4AAAAFAAAAAAAAAA==",
+              "Title": "RegistrationController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Controllers\\RegistrationController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Controllers\\RegistrationController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Controllers\\RegistrationController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Controllers\\RegistrationController.cs",
+              "ViewState": "AgIAAKwAAAAAAAAAAAAmwMEAAABPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T07:32:53.692Z",
+              "WhenOpened": "2026-10-01T14:40:02.85Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "InternalUsersSyncService.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncService.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncService.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncService.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\InternalUsersSyncService.cs",
-              "ViewState": "AgIAAIEDAAAAAAAAAAAowKEDAAAJAAAAAAAAAA==",
+              "Title": "UsersController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UsersController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UsersController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UsersController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UsersController.cs",
+              "ViewState": "AgIAAGQBAAAAAAAAAAAIwIcBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T07:32:40.509Z",
+              "WhenOpened": "2026-10-01T14:38:34.627Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "SeasonalUsersManagementController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\SeasonalUsersManagementController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\SeasonalUsersManagementController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\SeasonalUsersManagementController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\SeasonalUsersManagementController.cs",
+              "ViewState": "AgIAAAgBAAAAAAAAAAAIwCsBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-01T14:37:05.115Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "IInternalUsersSyncService.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\IInternalUsersSyncService.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\IInternalUsersSyncService.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Services\\InternalUsersSync\\IInternalUsersSyncService.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Services\\InternalUsersSync\\IInternalUsersSyncService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAYAAAAdAAAAAAAAAA==",
+              "Title": "ExternalUsersManagementController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\ExternalUsersManagementController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\ExternalUsersManagementController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\ExternalUsersManagementController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\ExternalUsersManagementController.cs",
+              "ViewState": "AgIAAM8BAAAAAAAAAAAwwPIBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T07:31:05.631Z",
+              "WhenOpened": "2026-10-01T14:34:31.371Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "DeactivationAuditItemVM.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Models\\DeactivationAuditItemVM.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Models\\DeactivationAuditItemVM.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Models\\DeactivationAuditItemVM.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Models\\DeactivationAuditItemVM.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAABAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "TestAssignmentsController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Controllers\\TestAssignmentsController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Controllers\\TestAssignmentsController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Controllers\\TestAssignmentsController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Controllers\\TestAssignmentsController.cs",
+              "ViewState": "AgIAAJQAAAAAAAAAAAAIwKcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-23T14:35:56.632Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "SyncAuditItemVM.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Models\\SyncAuditItemVM.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Models\\SyncAuditItemVM.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Models\\SyncAuditItemVM.cs",
-              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Models\\SyncAuditItemVM.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAA7wCEAAAAiAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-23T11:37:16.071Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "EvidencijaSinhronizacijeKorisnika.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\Entities\\EvidencijaSinhronizacijeKorisnika.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio.LMS.Data\\Entities\\EvidencijaSinhronizacijeKorisnika.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\Entities\\EvidencijaSinhronizacijeKorisnika.cs",
-              "RelativeToolTip": "SIA.Sapio.LMS.Data\\Entities\\EvidencijaSinhronizacijeKorisnika.cs",
-              "ViewState": "AgIAACMAAAAAAAAAAAA9wDIAAAAxAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-23T10:47:07.356Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "DodijeljeniTest.cs",
-              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\Entities\\DodijeljeniTest.cs",
-              "RelativeDocumentMoniker": "SIA.Sapio.LMS.Data\\Entities\\DodijeljeniTest.cs",
-              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio.LMS.Data\\Entities\\DodijeljeniTest.cs",
-              "RelativeToolTip": "SIA.Sapio.LMS.Data\\Entities\\DodijeljeniTest.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAkwDoAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-23T10:45:52.515Z"
+              "WhenOpened": "2026-10-01T14:32:04.608Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
+              "Title": "UserAuditController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UserAuditController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UserAuditController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UserAuditController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\UserAuditController.cs",
+              "ViewState": "AgIAAKwBAAAAAAAAAAAowM4BAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-01T14:28:50.093Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PredmetMatrixController.cs",
+              "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\PredmetMatrixController.cs",
+              "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\PredmetMatrixController.cs",
+              "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\PredmetMatrixController.cs",
+              "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\PredmetMatrixController.cs",
+              "ViewState": "AgIAAHcAAAAAAAAAAAAIwMAAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-01T14:27:45.328Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "InternalUsersController.cs",
               "DocumentMoniker": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\InternalUsersController.cs",
               "RelativeDocumentMoniker": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\InternalUsersController.cs",
               "ToolTip": "D:\\GitHub\\Sapio-LMS\\SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\InternalUsersController.cs",
               "RelativeToolTip": "SIA.Sapio-LMS\\Areas\\Admin\\Controllers\\InternalUsersController.cs",
-              "ViewState": "AgIAAFUAAAAAAAAAAAAmwGMAAAA2AAAAAAAAAA==",
+              "ViewState": "AgIAAEAAAAAAAAAAAAAIwE4AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-22T11:40:41.458Z",
+              "WhenOpened": "2026-10-01T14:22:25.847Z",
               "EditorCaption": ""
             }
           ]

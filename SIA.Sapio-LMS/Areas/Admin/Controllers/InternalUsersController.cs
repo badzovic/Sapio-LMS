@@ -41,20 +41,35 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var users = await _dbContext.KORISNICI
-                .Include(x => x.Kompanija)
-                .Where(x => x.TIP_KORISNIKA_ID == 1 && x.AKTIVAN == "Y")
-                .Select(x => new SIA.Sapio_LMS.Areas.Admin.Models.InternalUserDto                
+            var users = await (
+                from k in _dbContext.KORISNICI
+
+                join u in _userManager.Users
+                    on k.USER_ID equals u.Id into identityUsers
+
+                from u in identityUsers.DefaultIfEmpty()
+
+                where k.TIP_KORISNIKA_ID == 1
+                      && k.AKTIVAN == "Y"
+
+                select new SIA.Sapio_LMS.Areas.Admin.Models.InternalUserDto
                 {
-                    HrmId = x.HRM_ID ?? 0,
-                    Ime = x.IME,
-                    Prezime = x.PREZIME,
-                    ImeOca = x.IME_OCA,
+                    HrmId = k.HRM_ID ?? 0,
+                    Ime = k.IME,
+                    Prezime = k.PREZIME,
+                    ImeOca = k.IME_OCA,
                     Jmb = null,
-                    Email = x.EMAIL,
-                    Kompanija = x.Kompanija != null ? x.Kompanija.NAZIV : x.KOMPANIJA,
-                    AccessKey = x.ACCESS_KEY,
-                    UserId = x.USER_ID
+
+                    // Jedini izvor emaila za UI:
+                    // AspNetUsers.Email
+                    Email = u != null ? u.Email : null,
+
+                    Kompanija = k.Kompanija != null
+                        ? k.Kompanija.NAZIV
+                        : k.KOMPANIJA,
+
+                    AccessKey = k.ACCESS_KEY,
+                    UserId = k.USER_ID
                 })
                 .OrderBy(x => x.Prezime)
                 .ThenBy(x => x.Ime)
