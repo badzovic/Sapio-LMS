@@ -27,6 +27,17 @@
         overflow: hidden;
     }
 
+    .other-training-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid #e6eaf0;
+    background: #fff;
+}
+
     .other-training-body {
         padding: 18px;
     }
@@ -212,19 +223,30 @@
                             {
                                 <div class="other-training-footer">
 
+                                    
                                     @if (isStudent)
                                     {
-                                        <a asp-area="Student"
-                                           asp-controller="Subjects"
-                                           asp-action="TrainingHistory"
-                                           asp-route-predmetId="@item.PredmetId"
-                                           class="btn-sapio btn-sapio-secondary">
+                                        <a href="@Url.Action("Details", "Subjects", new {
+                                                area = "Student",
+                                                id = item.PredmetId
+                                            })"
+                                            class="btn-sapio btn-sapio-primary btn-sm">
 
-                                            <i class="fas fa-history"></i>
+                                            <i class="fas fa-book-open me-1"></i>
+                                            Materijali za učenje
+                                        </a>
+
+                                        <a href="@Url.Action("TrainingHistory", "Subjects", new {
+                                                area = "Student",
+                                                predmetId = item.PredmetId
+                                            })"
+                                            class="btn-sapio btn-sapio-secondary btn-sm">
+
+                                            <i class="fas fa-history me-1"></i>
                                             Historija polaganja
-
                                         </a>
                                     }
+
                                     else
                                     {
                                         <a asp-area="Admin"

@@ -24,6 +24,14 @@
         margin-bottom: 20px;
     }
 
+    .training-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
     .training-count {
         background: #edf2f7;
         color: #526477;
@@ -396,15 +404,24 @@
 
                         @if (isStudent)
                         {
-                            <a asp-area="Student"
-                               asp-controller="Subjects"
-                               asp-action="TrainingHistory"
-                               asp-route-predmetId="@item.PredmetId"
+                            <a href="@Url.Action("Details", "Subjects", new {
+                                   area = "Student",
+                                   id = item.PredmetId
+                               })"
+                               class="btn-sapio btn-sapio-primary btn-sm">
+
+                                <i class="fas fa-book-open me-1"></i>
+                                Materijali za učenje
+                            </a>
+
+                            <a href="@Url.Action("TrainingHistory", "Subjects", new {
+                                   area = "Student",
+                                   predmetId = item.PredmetId
+                               })"
                                class="btn-sapio btn-sapio-secondary btn-sm">
 
                                 <i class="fas fa-history me-1"></i>
                                 Historija polaganja
-
                             </a>
                         }
                         else if (isAdmin && !string.IsNullOrWhiteSpace(userId))
