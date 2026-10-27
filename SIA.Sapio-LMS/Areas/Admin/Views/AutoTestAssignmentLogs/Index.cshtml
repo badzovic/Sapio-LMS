@@ -1,6 +1,26 @@
 ﻿@using SIA.Sapio_LMS.Areas.Admin.Models
 @using SIA.Sapio_LMS.Models.Shared
 
+<style>
+
+    #runsTable {
+        width: 100% !important;
+    }
+
+        #runsTable thead th {
+            white-space: normal !important;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 1.3;
+            padding: 10px 12px;
+        }
+
+        #runsTable tbody td {
+            vertical-align: middle;
+        }
+
+</style>
+
 @model List<AutoTestAssignmentRunVM>
 
 @{
@@ -61,18 +81,17 @@
         <div class="table-responsive">
 
             <table id="runsTable" class="table table-striped table-bordered align-middle w-100">
-
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Datum pokretanja</th>
+                        <th>Datum<br />pokretanja</th>
                         <th>Predmet</th>
                         <th>Status</th>
                         <th>Dodijeljeno</th>
                         <th>Sticanje</th>
                         <th>Obnova</th>
-                        <th>Nema validnog testa</th>
-                        <th>Već dodijeljeno</th>
+                        <th>Nema <br />validnog<br />testa</th>
+                        <th>Već<br />dodijeljeno</th>
                         <th>Greške</th>
                         <th>Akcije</th>
                     </tr>
@@ -84,7 +103,7 @@
                     {
                         <tr>
 
-                            <td>
+                            <td data-order="@item.ID">
                                 <strong>#@item.ID</strong>
                             </td>
 
@@ -150,7 +169,6 @@
                             </td>
 
                             <td>
-
                                 <a asp-area="Admin"
                                    asp-controller="AutoTestAssignmentLogs"
                                    asp-action="Details"
@@ -158,7 +176,6 @@
                                    class="btn-sapio btn-sapio-primary btn-sapio-sm">
                                     Detalji
                                 </a>
-
                             </td>
 
                         </tr>
@@ -182,8 +199,24 @@
 
             $('#runsTable').DataTable({
                 pageLength: 25,
+
+                // Sortiranje po ID-u, najveći ID prvi
                 order: [[0, 'desc']],
+
+                // ID kolona koristi numeričko sortiranje
+                columnDefs: [
+                    {
+                        targets: 0,
+                        type: 'num'
+                    },
+                    {
+                        targets: 10,
+                        orderable: false
+                    }
+                ],
+
                 responsive: true,
+
                 language: {
                     search: "Pretraga:",
                     lengthMenu: "Prikaži _MENU_ zapisa",

@@ -30,6 +30,18 @@ build_property._RazorSourceGeneratorDebug =
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/AssignedTests/Answers.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXNzaWduZWRUZXN0c1xBbnN3ZXJzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/AssignedTests/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXNzaWduZWRUZXN0c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/AssignedTests/Polaganja.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXNzaWduZWRUZXN0c1xQb2xhZ2FuamEuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/AutoTestAssignmentLogs/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXV0b1Rlc3RBc3NpZ25tZW50TG9nc1xEZXRhaWxzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -48,6 +60,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/Companies/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQ29tcGFuaWVzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/CustomTrainingMatrix/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQ3VzdG9tVHJhaW5pbmdNYXRyaXhcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Areas/Admin/Views/Dashboard/Index.cshtml]
@@ -274,12 +290,28 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFRlc3RBc3NpZ25tZW50XEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/TestAssignment/Preview.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFRlc3RBc3NpZ25tZW50XFByZXZpZXcuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/TrainingHistory.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFRyYWluaW5nSGlzdG9yeS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/_AuthLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9BdXRoTGF5b3V0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/_LoginPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Mb2dpblBhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/_UserCustomTrainingMatrix.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Vc2VyQ3VzdG9tVHJhaW5pbmdNYXRyaXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/_UserOtherTrainings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Vc2VyT3RoZXJUcmFpbmluZ3MuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/GitHub/Sapio-LMS/SIA.Sapio-LMS/Views/Shared/_UserTrainingMatrix.cshtml]

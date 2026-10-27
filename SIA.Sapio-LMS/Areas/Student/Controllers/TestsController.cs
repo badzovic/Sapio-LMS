@@ -16,6 +16,9 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
             _dbContext = dbContext;
         }
 
+
+
+
         public async Task<IActionResult> Index()
         {
             var now = DateTime.Now;
@@ -25,45 +28,165 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
 
             if (korisnik == null)
             {
-                //TempData["ErrorMessage"] = "Nije pronađen LMS korisnik za trenutno prijavljenog studenta.";
                 return View(new List<StudentAssignedTestVM>());
             }
 
+            // Dohvat svih aktivnih dodjela korisnika.
+            // Ne filtriramo istekle rokove jer ih želimo prikazati studentu.
             var dodijeljeniTestovi = await _dbContext.DODIJELJENI_TESTOVI
-                .Include(x => x.TEST)
-                    .ThenInclude(x => x.Predmet)
+                .AsNoTracking()
                 .Where(x =>
                     x.KORISNIK_ID == korisnik.ID &&
-                    x.AKTIVNO == "Y" &&
-                    x.TEST.AKTIVNO == "Y" &&
-                    x.TEST.STATUS == "ACTIVE" &&
-                    x.TEST.DATUM_OD <= now &&
-                    x.TEST.DATUM_DO >= now)
+                    x.AKTIVNO == "Y")
                 .Select(x => new StudentAssignedTestVM
                 {
+                    // ID konkretne dodjele
+                    DodjelaId = x.ID,
+
                     TestId = x.TEST_ID,
                     NazivTesta = x.TEST.NAZIV,
                     Opis = x.TEST.OPIS,
-                    Predmet = x.TEST.Predmet != null ? x.TEST.Predmet.NAZIV : null,
+
+                    Predmet = x.TEST.Predmet != null
+                        ? x.TEST.Predmet.NAZIV
+                        : null,
+
                     DatumOd = x.TEST.DATUM_OD,
                     DatumDo = x.TEST.DATUM_DO,
+
+                    RokZaPolaganje = x.ROK_ZA_POLAGANJE,
+
                     VrijemeTrajanjaMin = x.TEST.VRIJEME_TRAJANJA_MIN,
                     BrojPokusajaDozvoljeno = x.TEST.BROJ_POKUSAJA,
 
+                    // Brojimo pokušaje samo ove dodjele
                     BrojPokusajaIskoristeno = _dbContext.POLAGANJE_TESTA
                         .Count(p =>
-                            p.TEST_ID == x.TEST_ID &&
+                            p.DODIJELJENI_TEST_ID == x.ID &&
                             p.KORISNIK_ID == korisnik.ID &&
                             p.STATUS != "CANCELLED"),
 
-                    MozePolagati = true
+                    MozePolagati = false
                 })
-                .OrderBy(x => x.DatumDo)
                 .ToListAsync();
 
-            return View(dodijeljeniTestovi);
+            // Dohvat svih polaganja za ovog korisnika.
+            var polaganja = await _dbContext.POLAGANJE_TESTA
+                .AsNoTracking()
+                .Where(x =>
+                    x.KORISNIK_ID == korisnik.ID)
+                .Select(x => new
+                {
+                    x.DODIJELJENI_TEST_ID,
+                    x.TEST_ID,
+                    x.STATUS,
+                    x.IS_PASSED,
+                    x.VRIJEME_ISTEKA
+                })
+                .ToListAsync();
+
+            foreach (var test in dodijeljeniTestovi)
+            {
+                // Pokušaji koji pripadaju konkretnoj dodjeli
+                var polaganjaDodjele = polaganja
+                    .Where(x => x.DODIJELJENI_TEST_ID == test.DodjelaId)
+                    .ToList();
+
+                var imaAktivnoPolaganje = polaganjaDodjele.Any(x =>
+                    x.STATUS == "IN_PROGRESS" &&
+                    x.VRIJEME_ISTEKA >= now);
+
+                var vecPolozio = polaganjaDodjele.Any(x =>
+                    x.IS_PASSED == "Y");
+
+                var naOcjenjivanju = polaganjaDodjele.Any(x =>
+                    x.STATUS == "PENDING_REVIEW");
+
+                var individualniRokIstekao =
+                    test.RokZaPolaganje.HasValue &&
+                    test.RokZaPolaganje.Value < now;
+
+                var periodTestaIstekao =
+                    test.DatumDo.HasValue &&
+                    test.DatumDo.Value < now;
+
+                var testJosNijeDostupan =
+                    test.DatumOd.HasValue &&
+                    test.DatumOd.Value > now;
+
+                var nemaPokusaja =
+                    test.BrojPokusajaPreostalo <= 0;
+
+                // Uspješno završena dodjela
+                if (vecPolozio)
+                {
+                    test.MozePolagati = false;
+                    test.StatusDostupnosti = "Položen";
+                    test.RazlogNedostupnosti =
+                        "Test je već uspješno položen.";
+                }
+                // Polaganje koje je već započeto
+                else if (imaAktivnoPolaganje)
+                {
+                    test.MozePolagati = true;
+                    test.StatusDostupnosti = "U toku";
+                    test.RazlogNedostupnosti = null;
+                }
+                // Čekanje ocjenjivanja eseja
+                else if (naOcjenjivanju)
+                {
+                    test.MozePolagati = false;
+                    test.StatusDostupnosti = "Na ocjenjivanju";
+                    test.RazlogNedostupnosti =
+                        "Rezultat testa još nije konačan.";
+                }
+                else if (individualniRokIstekao)
+                {
+                    test.MozePolagati = false;
+                    test.StatusDostupnosti = "Rok istekao";
+                    test.RazlogNedostupnosti =
+                        "Istekao je individualni rok za polaganje testa.";
+                }
+                else if (periodTestaIstekao)
+                {
+                    test.MozePolagati = false;
+                    test.StatusDostupnosti = "Test nije dostupan";
+                    test.RazlogNedostupnosti =
+                        "Period dostupnosti ovog testa je završen.";
+                }
+                else if (testJosNijeDostupan)
+                {
+                    test.MozePolagati = false;
+                    test.StatusDostupnosti = "Test nije dostupan";
+                    test.RazlogNedostupnosti =
+                        "Test trenutno nije dostupan za polaganje.";
+                }
+                else if (nemaPokusaja)
+                {
+                    test.MozePolagati = false;
+                    test.StatusDostupnosti = "Nema pokušaja";
+                    test.RazlogNedostupnosti =
+                        "Iskorišteni su svi dozvoljeni pokušaji.";
+                }
+                else
+                {
+                    test.MozePolagati = true;
+                    test.StatusDostupnosti = "Dostupno";
+                    test.RazlogNedostupnosti = null;
+                }
+            }
+
+            return View(dodijeljeniTestovi
+                .OrderBy(x => x.RokZaPolaganje ?? DateTime.MaxValue)
+                .ThenBy(x => x.NazivTesta)
+                .ToList());
         }
-       
+
+
+
+
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Start(int id)
@@ -75,47 +198,95 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
 
             if (korisnik == null)
             {
-                //TempData["ErrorMessage"] = "Nije pronađen LMS korisnik za trenutno prijavljenog studenta.";
+                TempData["ErrorMessage"] =
+                    "Nije pronađen LMS korisnik za trenutno prijavljenog studenta.";
+
                 return RedirectToAction(nameof(Index));
             }
 
+            // Parametar id predstavlja DODIJELJENI_TESTOVI.ID.
+            // Pronalazimo samo aktivnu dodjelu trenutnog korisnika.
             var dodjela = await _dbContext.DODIJELJENI_TESTOVI
                 .Include(x => x.TEST)
                 .FirstOrDefaultAsync(x =>
-                    x.TEST_ID == id &&
+                    x.ID == id &&
                     x.KORISNIK_ID == korisnik.ID &&
                     x.AKTIVNO == "Y");
 
             if (dodjela == null || dodjela.TEST == null)
             {
-                //TempData["ErrorMessage"] = "Test nije dodijeljen trenutnom korisniku.";
+                TempData["ErrorMessage"] =
+                    "Dodjela testa nije pronađena ili više nije aktivna.";
+
                 return RedirectToAction(nameof(Index));
             }
 
             var test = dodjela.TEST;
 
+            // Provjera da li je test aktivan.
             if (test.AKTIVNO != "Y" || test.STATUS != "ACTIVE")
             {
-                //TempData["ErrorMessage"] = "Test trenutno nije aktivan.";
+                TempData["ErrorMessage"] =
+                    "Test trenutno nije aktivan.";
+
                 return RedirectToAction(nameof(Index));
             }
 
-            if (test.DATUM_OD > now || test.DATUM_DO < now)
+            // Sva polaganja koja pripadaju ovoj konkretnoj dodjeli.
+            var polaganjaDodjele = await _dbContext.POLAGANJE_TESTA
+                .Where(x =>
+                    x.DODIJELJENI_TEST_ID == dodjela.ID &&
+                    x.KORISNIK_ID == korisnik.ID)
+                .OrderByDescending(x => x.DATUM_POCETKA)
+                .ToListAsync();
+
+            // Ako je test položen, ne dozvoljavamo novo polaganje
+            // u okviru iste dodjele.
+            if (polaganjaDodjele.Any(x => x.IS_PASSED == "Y"))
             {
-                //TempData["ErrorMessage"] = "Test nije u aktivnom periodu za polaganje.";
+                TempData["ErrorMessage"] =
+                    "Ovaj test ste već uspješno položili.";
+
                 return RedirectToAction(nameof(Index));
             }
 
-            var aktivnoPolaganje = await _dbContext.POLAGANJE_TESTA
-                .FirstOrDefaultAsync(x =>
-                    x.TEST_ID == test.ID &&
-                    x.KORISNIK_ID == korisnik.ID &&
-                    x.STATUS == "IN_PROGRESS");
+            // Ako se čeka ocjenjivanje eseja, novi pokušaj nije dozvoljen.
+            if (polaganjaDodjele.Any(x => x.STATUS == "PENDING_REVIEW"))
+            {
+                TempData["ErrorMessage"] =
+                    "Vaš prethodni pokušaj još čeka ocjenjivanje.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Provjera postojećeg započetog polaganja ove dodjele.
+            var aktivnoPolaganje = polaganjaDodjele
+                .FirstOrDefault(x => x.STATUS == "IN_PROGRESS");
 
             if (aktivnoPolaganje != null)
             {
+                // Ako je vrijeme pokušaja isteklo, završavamo ga.
+                if (now > aktivnoPolaganje.VRIJEME_ISTEKA)
+                {
+                    aktivnoPolaganje.STATUS = "TIME_EXPIRED";
+                    aktivnoPolaganje.DATUM_ZAVRSETKA = now;
+                    aktivnoPolaganje.AUTO_SUBMITTED = "Y";
+                    aktivnoPolaganje.DATUM_IZMJENE = now;
+
+                    await _dbContext.SaveChangesAsync();
+
+                    TempData["ErrorMessage"] =
+                        "Vrijeme za prethodno započeto polaganje je isteklo.";
+
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Nastavak prethodno započetog pokušaja.
+                // Individualni rok dodjele ne prekida pokušaj
+                // koji je započet prije isteka tog roka.
                 var imaPitanja = await _dbContext.POLAGANJE_PITANJA
-                    .AnyAsync(x => x.POLAGANJE_TESTA_ID == aktivnoPolaganje.ID);
+                    .AnyAsync(x =>
+                        x.POLAGANJE_TESTA_ID == aktivnoPolaganje.ID);
 
                 if (!imaPitanja)
                 {
@@ -127,39 +298,78 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
                     );
                 }
 
-                return RedirectToAction(nameof(Take), new { id = aktivnoPolaganje.ID });
+                return RedirectToAction(
+                    nameof(Take),
+                    new { id = aktivnoPolaganje.ID });
             }
 
-            var brojPokusaja = await _dbContext.POLAGANJE_TESTA
-                .CountAsync(x =>
-                    x.TEST_ID == test.ID &&
-                    x.KORISNIK_ID == korisnik.ID &&
-                    x.STATUS != "CANCELLED");
-
-            if (brojPokusaja >= test.BROJ_POKUSAJA)
+            // Provjera individualnog roka dodjele.
+            if (dodjela.ROK_ZA_POLAGANJE.HasValue &&
+                now > dodjela.ROK_ZA_POLAGANJE.Value)
             {
-                //TempData["ErrorMessage"] = "Iskoristili ste maksimalan broj pokušaja za ovaj test.";
+                TempData["ErrorMessage"] =
+                    "Rok za polaganje ovog testa istekao je " +
+                    dodjela.ROK_ZA_POLAGANJE.Value.ToString("dd.MM.yyyy HH:mm") +
+                    ".";
+
                 return RedirectToAction(nameof(Index));
             }
 
+            // Provjera perioda dostupnosti testa.
+            if (test.DATUM_OD > now || test.DATUM_DO < now)
+            {
+                TempData["ErrorMessage"] =
+                    "Test nije u aktivnom periodu za polaganje.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Broj pokušaja računamo isključivo za ovu dodjelu.
+            var brojPokusaja = polaganjaDodjele
+                .Count(x => x.STATUS != "CANCELLED");
+
+            if (brojPokusaja >= test.BROJ_POKUSAJA)
+            {
+                TempData["ErrorMessage"] =
+                    "Iskoristili ste maksimalan broj pokušaja za ovu dodjelu testa.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Kreiranje novog pokušaja povezanog s dodjelom.
             var polaganje = new PolaganjeTesta
             {
+                DODIJELJENI_TEST_ID = dodjela.ID,
                 TEST_ID = test.ID,
                 KORISNIK_ID = korisnik.ID,
+
                 DATUM_POCETKA = now,
                 VRIJEME_ISTEKA = now.AddMinutes(test.VRIJEME_TRAJANJA_MIN),
+
                 STATUS = "IN_PROGRESS",
                 REDNI_BROJ_POKUSAJA = brojPokusaja + 1,
+
                 DATUM_KREIRANJA = now
             };
 
             _dbContext.POLAGANJE_TESTA.Add(polaganje);
+
             await _dbContext.SaveChangesAsync();
 
-            await GeneratePolaganjeQuestionsAsync(polaganje.ID, test.ID, test.RANDOM_PITANJA, test.RANDOM_ODGOVORI);
+            // Generisanje pitanja za novi pokušaj.
+            await GeneratePolaganjeQuestionsAsync(
+                polaganje.ID,
+                test.ID,
+                test.RANDOM_PITANJA,
+                test.RANDOM_ODGOVORI
+            );
 
-            return RedirectToAction(nameof(Take), new { id = polaganje.ID });
+            return RedirectToAction(
+                nameof(Take),
+                new { id = polaganje.ID });
         }
+
+
 
         public async Task<IActionResult> Take(int id)
         {
@@ -375,6 +585,13 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
                 .OrderBy(x => x.REDOSLIJED)
                 .ToListAsync();
 
+            var imaEsejskaPitanja = pitanja.Any(x =>
+                x.TestPitanje != null &&
+                x.TestPitanje.TipPitanja != null &&
+                (x.TestPitanje.TipPitanja.SIFRA ?? "")
+                    .Trim()
+                    .ToUpper() == "ESSAY");
+
             var polaganjeOdgovori = await (
                 from pp in _dbContext.POLAGANJE_PITANJA
                 join po in _dbContext.POLAGANJE_ODGOVORI
@@ -549,12 +766,30 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
                 : 0;
 
             polaganje.DATUM_ZAVRSETKA = now;
-            polaganje.STATUS = autoSubmitted ? "TIME_EXPIRED" : "SUBMITTED";
             polaganje.OSTVARENI_BODOVI = ostvareniBodovi;
             polaganje.MAX_BODOVI = maxBodovi;
-            polaganje.PROCENAT = procenat;
-            polaganje.IS_PASSED = procenat >= polaganje.Test.MIN_PROCENAT_PROLAZA ? "Y" : "N";
             polaganje.AUTO_SUBMITTED = autoSubmitted ? "Y" : "N";
+
+            if (imaEsejskaPitanja)
+            {
+                polaganje.STATUS = "PENDING_REVIEW";
+
+                polaganje.PROCENAT = null;
+                polaganje.IS_PASSED = null;
+            }
+            else
+            {
+                polaganje.STATUS = autoSubmitted
+                    ? "TIME_EXPIRED"
+                    : "SUBMITTED";
+
+                polaganje.PROCENAT = procenat;
+
+                polaganje.IS_PASSED =
+                    procenat >= polaganje.Test.MIN_PROCENAT_PROLAZA
+                        ? "Y"
+                        : "N";
+            }
 
             await _dbContext.SaveChangesAsync();
 

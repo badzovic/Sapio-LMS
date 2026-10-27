@@ -1,10 +1,193 @@
 ﻿@model SIA.Sapio_LMS.Models.UserTrainingMatrixVM
 
 @{
-    var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+
+    var isStudent = currentArea.Equals(
+        "Student",
+        StringComparison.OrdinalIgnoreCase);
+
+    var isAdmin = currentArea.Equals(
+        "Admin",
+        StringComparison.OrdinalIgnoreCase);
+
+    var userId = Context.Request.Query["userId"].ToString();
 }
 
+<style>
+    .training-matrix-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .training-count {
+        background: #edf2f7;
+        color: #526477;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .training-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .training-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid #e5e9ee;
+        border-left: 5px solid #aeb8c2;
+        border-radius: 10px;
+        background: #fff;
+    }
+
+        /* Boja cijele kartice zavisi isključivo od V3 statusa */
+
+        .training-row.v3-valid {
+            border-left-color: #28a745;
+            background: #f1fbf4;
+        }
+
+        .training-row.v3-soon {
+            border-left-color: #0d6efd;
+            background: #f0f6ff;
+        }
+
+        .training-row.v3-expired {
+            border-left-color: #dc3545;
+            background: #fff3f3;
+        }
+
+        .training-row.v3-unknown {
+            border-left-color: #aeb8c2;
+            background: #f8f9fa;
+        }
+
+    .training-index {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        background: rgba(0, 0, 0, .05);
+        color: #495562;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .training-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .training-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #26323d;
+        margin-bottom: 12px;
+    }
+
+    .training-status-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .training-status-label {
+        color: #667585;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .training-status-badge {
+        display: inline-block;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .training-badge-green {
+        background: #d9f3e2;
+        color: #176939;
+    }
+
+    .training-badge-blue {
+        background: #dceaff;
+        color: #1759ad;
+    }
+
+    .training-badge-red {
+        background: #f9dada;
+        color: #a82929;
+    }
+
+    .training-badge-gray {
+        background: #e7e9ec;
+        color: #596471;
+    }
+
+    .training-badge-orange {
+        background: #fff0d2;
+        color: #916000;
+    }
+
+    .training-status-meta {
+        color: #667585;
+        font-size: 12px;
+        margin: -4px 0 12px;
+    }
+
+    .training-actions {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .training-empty {
+        padding: 18px;
+        background: #f5f7fa;
+        border-radius: 8px;
+        color: #6b7785;
+    }
+
+        .training-empty.warning {
+            background: #fff3df;
+            color: #9c6500;
+        }
+
+    @@media (max-width: 767px) {
+        .training-row {
+            flex-wrap: wrap;
+            padding: 16px;
+        }
+
+        .training-content {
+            flex-basis: calc(100% - 52px);
+        }
+
+        .training-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+</style>
+
 <div class="card-custom training-matrix-card">
+
     <div class="training-matrix-header">
         <div>
             <h5 class="mb-1">Matrica polaganja</h5>
@@ -46,36 +229,206 @@
     else
     {
         <div class="training-list">
+
             @{
                 int rb = 1;
             }
 
             @foreach (var item in Model.Predmeti)
             {
-                <div class="training-row">
+                // V3 određuje boju kartice.
+                var v3RowClass = item.V3Status switch
+                {
+                    "Važeća obuka" => "v3-valid",
+                    "Uskoro ističe" => "v3-soon",
+                    "Obuka istekla" => "v3-expired",
+                    "Nema evidencije" => "v3-expired",
+                    _ => "v3-unknown"
+                };
+
+                var v3BadgeClass = item.V3Status switch
+                {
+                    "Važeća obuka" => "training-badge-green",
+                    "Uskoro ističe" => "training-badge-blue",
+                    "Obuka istekla" => "training-badge-red",
+                    "Nema evidencije" => "training-badge-red",
+                    _ => "training-badge-gray"
+                };
+
+                // LMS status ima svoju boju, nezavisno od V3 kartice.
+                var lmsBadgeClass = item.LmsStatus switch
+                {
+                    "Položen u LMS-u" => "training-badge-green",
+                    "Test dodijeljen" => "training-badge-blue",
+                    "Polaganje u toku" => "training-badge-blue",
+                    "Na ocjenjivanju" => "training-badge-orange",
+                    "Nije položen u LMS-u" => "training-badge-red",
+                    "Rok testa istekao" => "training-badge-red",
+                    _ => "training-badge-gray"
+                };
+
+                <div class="training-row @v3RowClass">
+
                     <div class="training-index">
                         @rb
                     </div>
 
                     <div class="training-content">
+
                         <div class="training-title">
                             @item.Naziv
                         </div>
+
+                        <!-- V3 STATUS -->
+                        <div class="training-status-line">
+
+                            <span class="training-status-label">
+                                Status obuke korisnika iz V3:
+                            </span>
+
+                            <span class="training-status-badge @v3BadgeClass">
+                                @item.V3Status
+                            </span>
+
+                        </div>
+
+                        @if (item.V3DatumVaziDo.HasValue)
+                        {
+                            <div class="training-status-meta">
+                                <i class="far fa-calendar-alt me-1"></i>
+
+                                Važi do:
+                                <strong>
+                                    @item.V3DatumVaziDo.Value.ToString("dd.MM.yyyy.")
+                                </strong>
+
+                                @if (item.V3DanaDoIsteka.HasValue)
+                                {
+                                    <span class="ms-2">
+                                        @if (item.V3DanaDoIsteka.Value >= 0)
+                                        {
+                                            <span>
+                                                (Preostalo @item.V3DanaDoIsteka.Value dana)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>
+                                                (Isteklo prije @Math.Abs(item.V3DanaDoIsteka.Value) dana)
+                                            </span>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        }
+                        else if (item.V3Status == "Nema evidencije")
+                        {
+                            <div class="training-status-meta">
+                                U V3 sistemu nije evidentirano važenje ove obuke.
+                            </div>
+                        }
+                        else if (item.V3Status == "Nepoznato")
+                        {
+                            <div class="training-status-meta">
+                                Nije moguće utvrditi važenje obuke iz dostupnih V3 podataka.
+                            </div>
+                        }
+
+                        <!-- LMS STATUS -->
+                        <div class="training-status-line">
+
+                            <span class="training-status-label">
+                                Status testiranja u LMS Sapio:
+                            </span>
+
+                            <span class="training-status-badge @lmsBadgeClass">
+                                @item.LmsStatus
+                            </span>
+
+                        </div>
+
+                        @if (item.LmsDatumDodjele.HasValue)
+                        {
+                            <div class="training-status-meta">
+                                <i class="far fa-calendar-check me-1"></i>
+
+                                Dodijeljeno:
+                                <strong>
+                                    @item.LmsDatumDodjele.Value.ToString("dd.MM.yyyy.")
+                                </strong>
+
+                                @if (item.LmsRokZaPolaganje.HasValue)
+                                {
+                                    <span class="ms-2">
+                                        Rok:
+                                        <strong>
+                                            @item.LmsRokZaPolaganje.Value.ToString("dd.MM.yyyy. HH:mm")
+                                        </strong>
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        @if (item.LmsBrojPokusaja > 0)
+                        {
+                            <div class="training-status-meta">
+                                <i class="fas fa-clipboard-check me-1"></i>
+
+                                Broj pokušaja:
+                                <strong>@item.LmsBrojPokusaja</strong>
+
+                                @if (item.LmsNajboljiProcenat.HasValue)
+                                {
+                                    <span class="ms-2">
+                                        Najbolji rezultat:
+                                        <strong>
+                                            @item.LmsNajboljiProcenat.Value.ToString("0.##")%
+                                        </strong>
+                                    </span>
+                                }
+                            </div>
+                        }
+
                     </div>
 
+                    <!-- AKCIJE -->
                     <div class="training-actions">
-                        <a asp-area="@currentArea"
-                           asp-controller="Subjects"
-                           asp-action="Details"
-                           asp-route-id="@item.PredmetId"
-                           class="btn-sapio btn-sapio-secondary btn-sm">
-                            Detalji
-                        </a>
+
+                        @if (isStudent)
+                        {
+                            <a asp-area="Student"
+                               asp-controller="Subjects"
+                               asp-action="TrainingHistory"
+                               asp-route-predmetId="@item.PredmetId"
+                               class="btn-sapio btn-sapio-secondary btn-sm">
+
+                                <i class="fas fa-history me-1"></i>
+                                Historija polaganja
+
+                            </a>
+                        }
+                        else if (isAdmin && !string.IsNullOrWhiteSpace(userId))
+                        {
+                            <a asp-area="Admin"
+                               asp-controller="InternalUsersManagement"
+                               asp-action="TrainingHistory"
+                               asp-route-userId="@userId"
+                               asp-route-predmetId="@item.PredmetId"
+                               class="btn-sapio btn-sapio-secondary btn-sm">
+
+                                <i class="fas fa-history me-1"></i>
+                                Historija polaganja
+
+                            </a>
+                        }
+
                     </div>
+
                 </div>
 
                 rb++;
             }
+
         </div>
     }
 </div>

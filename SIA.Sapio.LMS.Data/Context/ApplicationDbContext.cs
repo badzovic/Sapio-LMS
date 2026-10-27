@@ -39,6 +39,8 @@ namespace SIA.Sapio.LMS.Data.Context
         public DbSet<EvidencijaPromjeneTipaKorisnika> EVIDENCIJA_PROMJENA_TIPA_KORISNIKA { get; set; }
         public DbSet<EvidencijaSinhronizacijeKorisnika> EVIDENCIJA_SINHRONIZACIJE_KORISNIKA { get; set; }
         public DbSet<EvidencijaDeaktivacijeKorisnika> EVIDENCIJA_DEAKTIVACIJE_KORISNIKA { get; set; }
+        public DbSet<KorisnikPredmet> KORISNIK_PREDMETI { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

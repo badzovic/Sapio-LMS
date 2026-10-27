@@ -16,20 +16,76 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly InternalUsersApiService _internalUsersApiService;
         private readonly UserTrainingMatrixService _userTrainingMatrixService;
+        private readonly UserCustomTrainingMatrixService _userCustomTrainingMatrixService;
+        private readonly UserOtherTrainingsService _userOtherTrainingsService;
+        private readonly UserTrainingHistoryService _userTrainingHistoryService;
+
 
         public InternalUsersManagementController(
-        ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
-        InternalUsersApiService internalUsersApiService,
-        UserTrainingMatrixService userTrainingMatrixService)
+            ApplicationDbContext dbContext,
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            InternalUsersApiService internalUsersApiService,
+            UserTrainingMatrixService userTrainingMatrixService,
+            UserCustomTrainingMatrixService userCustomTrainingMatrixService,
+            UserOtherTrainingsService userOtherTrainingsService,
+            UserTrainingHistoryService userTrainingHistoryService)
         {
             _dbContext = dbContext;
             _userManager = userManager;
             _roleManager = roleManager;
             _internalUsersApiService = internalUsersApiService;
             _userTrainingMatrixService = userTrainingMatrixService;
+            _userCustomTrainingMatrixService = userCustomTrainingMatrixService;
+            _userOtherTrainingsService = userOtherTrainingsService;
+            _userTrainingHistoryService = userTrainingHistoryService;
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> TrainingHistory(
+    string userId,
+    int predmetId)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || predmetId <= 0)
+                return BadRequest();
+
+            // Provjera Identity korisnika
+            var identityUser = await _userManager.FindByIdAsync(userId);
+
+            if (identityUser == null)
+                return NotFound();
+
+            // Pronalazimo lokalnog LMS korisnika
+            var korisnik = await _dbContext.KORISNICI
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.USER_ID == userId);
+
+            if (korisnik == null)
+                return NotFound();
+
+            var imePrezime = string.Join(" ",
+                new[] { identityUser.FirstName, identityUser.LastName }
+                    .Where(x => !string.IsNullOrWhiteSpace(x)));
+
+            // Učitavanje kompletne historije predmeta
+            var model = await _userTrainingHistoryService
+                .GetForKorisnikAndPredmetAsync(
+                    korisnik.ID,
+                    predmetId,
+                    imePrezime);
+
+            if (model == null)
+                return NotFound();
+
+            // Podatak potreban za povratak na profil korisnika
+            ViewBag.UserId = userId;
+
+            return View(
+                "~/Views/Shared/TrainingHistory.cshtml",
+                model);
+        }
+
 
         public async Task<IActionResult> Details(string userId, string? returnUrl = null)
         {
@@ -37,6 +93,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                 return NotFound();
 
             var identityUser = await _userManager.FindByIdAsync(userId);
+
             if (identityUser == null)
                 return NotFound();
 
@@ -54,21 +111,61 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                 Email = identityUser.Email,
                 HrmId = localUser?.HRM_ID ?? 0,
                 ImeOca = localUser?.IME_OCA,
-                Kompanija = localUser?.Kompanija != null ? localUser.Kompanija.NAZIV : localUser?.KOMPANIJA,
+                Kompanija = localUser?.Kompanija != null
+                    ? localUser.Kompanija.NAZIV
+                    : localUser?.KOMPANIJA,
                 AccessKey = localUser?.ACCESS_KEY
             };
 
             ViewBag.UserRoles = userRoles;
-            ViewBag.AllRoles = new List<string> { "Admin", "Student", "Instruktor" };
+
+            ViewBag.AllRoles = new List<string>
+    {
+        "Admin",
+        "Student",
+        "Instruktor"
+    };
+
             ViewBag.IsActive = localUser?.AKTIVAN == "Y";
-            ViewBag.TrainingMatrix = await _userTrainingMatrixService.GetForRadnikAsync(localUser?.ACCESS_KEY);
+
+            // 1. Primarna matrica - V3
+            var v3Matrix = await _userTrainingMatrixService
+                .GetForRadnikAsync(localUser?.ACCESS_KEY);
+
+            ViewBag.TrainingMatrix = v3Matrix;
+
+            // 2. Sekundarna matrica - Custom LMS
+            if (localUser != null)
+            {
+                ViewBag.CustomTrainingMatrix = await _userCustomTrainingMatrixService
+                    .GetForKorisnikAsync(localUser.ID, v3Matrix);
+
+                // 3. Ostala polaganja - LMS historija izvan obje matrice
+                ViewBag.OtherTrainings = await _userOtherTrainingsService
+                    .GetForKorisnikAsync(localUser.ID, v3Matrix);
+            }
+            else
+            {
+                ViewBag.CustomTrainingMatrix = null;
+                ViewBag.OtherTrainings = null;
+            }
 
             ViewBag.ReturnUrl = string.IsNullOrWhiteSpace(returnUrl)
-            ? Url.Action("Index", "Users", new { area = "Admin", status = "all", type = "all" })
-            : returnUrl;
+                ? Url.Action(
+                    "Index",
+                    "Users",
+                    new
+                    {
+                        area = "Admin",
+                        status = "all",
+                        type = "all"
+                    })
+                : returnUrl;
 
             return View(model);
         }
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

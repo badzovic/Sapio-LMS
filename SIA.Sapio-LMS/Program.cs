@@ -41,6 +41,11 @@ builder.Services.AddScoped<MaterialPreviewService>();
 builder.Services.AddScoped<MaterialPdfService>();
 builder.Services.AddScoped<IInternalUsersSyncService,InternalUsersSyncService>();
 builder.Services.AddScoped<InternalUsersSyncService>();
+builder.Services.AddScoped<UserCustomTrainingMatrixService>();
+builder.Services.AddScoped<UserOtherTrainingsService>();
+builder.Services.AddScoped<UserTrainingHistoryService>();
+
+
 
 builder.Services.AddHangfire(config =>
 {

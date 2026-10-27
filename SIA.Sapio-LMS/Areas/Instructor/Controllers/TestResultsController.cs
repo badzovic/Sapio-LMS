@@ -145,7 +145,7 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
                         .ToList();
 
                     var essayOdgovor = odgovoriStudentaZaPitanje
-                        .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.ESSAY_ODGOVOR));
+                        .FirstOrDefault(x => x.TEST_PITANJE_ODGOVOR_ID == null);
 
                     var odgovoriZaPitanje = ponudjeniOdgovori
                         .Where(x => x.TEST_PITANJE_ID == pitanje.ID)
@@ -305,6 +305,30 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
                     pp.TEST_PITANJE_ID == o.TEST_PITANJE_ID))
                 .ToListAsync();
 
+            // Provjera da li još postoji esejsko pitanje koje nije ocijenjeno.
+            var imaNeocijenjenihEseja = pitanja.Any(p =>
+            {
+                var testPitanje = p.TestPitanje;
+
+                if (testPitanje == null)
+                    return false;
+
+                var tip = testPitanje.TipPitanja?.SIFRA?
+                    .Trim()
+                    .ToUpper() ?? "";
+
+                if (tip != "ESSAY")
+                    return false;
+
+                var essayOdgovor = studentOdgovori
+                    .FirstOrDefault(x =>
+                        x.POLAGANJE_PITANJE_ID == p.ID &&
+                        x.TEST_PITANJE_ODGOVOR_ID == null);
+
+                return essayOdgovor == null ||
+                       !essayOdgovor.OSTVARENI_BODOVI.HasValue;
+            });
+
             decimal ostvareniBodovi = 0;
             decimal maxBodovi = 0;
 
@@ -317,11 +341,19 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
 
                 maxBodovi += testPitanje.BODOVI;
 
-                var tip = testPitanje.TipPitanja?.SIFRA?.Trim().ToUpper() ?? "";
-                var parcijalnoBodovanje = (testPitanje.PARCIJALNO_BODOVANJE ?? "N").Trim().ToUpper() == "Y";
+                var tip = testPitanje.TipPitanja?.SIFRA?
+                    .Trim()
+                    .ToUpper() ?? "";
+
+                var parcijalnoBodovanje =
+                    (testPitanje.PARCIJALNO_BODOVANJE ?? "N")
+                    .Trim()
+                    .ToUpper() == "Y";
 
                 var odgovoriStudentaZaPitanje = studentOdgovori
-                    .Where(x => x.POLAGANJE_PITANJE_ID == pitanjePolaganja.ID)
+                    .Where(x =>
+                        x.POLAGANJE_PITANJE_ID ==
+                        pitanjePolaganja.ID)
                     .ToList();
 
                 decimal bodoviZaPitanje = 0;
@@ -329,7 +361,8 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
                 if (tip == "ESSAY")
                 {
                     bodoviZaPitanje = odgovoriStudentaZaPitanje
-                        .Where(x => x.TEST_PITANJE_ODGOVOR_ID == null)
+                        .Where(x =>
+                            x.TEST_PITANJE_ODGOVOR_ID == null)
                         .Select(x => x.OSTVARENI_BODOVI ?? 0)
                         .FirstOrDefault();
 
@@ -340,17 +373,21 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
                         bodoviZaPitanje = testPitanje.BODOVI;
 
                     ostvareniBodovi += bodoviZaPitanje;
+
                     continue;
                 }
 
                 var odabraniOdgovori = odgovoriStudentaZaPitanje
-                    .Where(x => x.TEST_PITANJE_ODGOVOR_ID.HasValue)
-                    .Select(x => x.TEST_PITANJE_ODGOVOR_ID!.Value)
+                    .Where(x =>
+                        x.TEST_PITANJE_ODGOVOR_ID.HasValue)
+                    .Select(x =>
+                        x.TEST_PITANJE_ODGOVOR_ID!.Value)
                     .Distinct()
                     .ToList();
 
                 var odgovoriZaPitanje = testOdgovori
-                    .Where(x => x.TEST_PITANJE_ID == testPitanje.ID)
+                    .Where(x =>
+                        x.TEST_PITANJE_ID == testPitanje.ID)
                     .ToList();
 
                 var tacniOdgovori = odgovoriZaPitanje
@@ -358,62 +395,110 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
                     .Select(x => x.ID)
                     .ToList();
 
-                if (tip == "SINGLE_CHOICE" || tip == "SINGLE")
+                if (tip == "SINGLE_CHOICE" ||
+                    tip == "SINGLE")
                 {
                     var isCorrect =
                         odabraniOdgovori.Count == 1 &&
                         tacniOdgovori.Count == 1 &&
-                        odabraniOdgovori.First() == tacniOdgovori.First();
+                        odabraniOdgovori.First() ==
+                        tacniOdgovori.First();
 
                     if (isCorrect)
-                        bodoviZaPitanje = testPitanje.BODOVI;
+                        bodoviZaPitanje =
+                            testPitanje.BODOVI;
                 }
-                else if (tip == "MULTIPLE_CHOICE" || tip == "MULTIPLE")
+                else if (
+                    tip == "MULTIPLE_CHOICE" ||
+                    tip == "MULTIPLE")
                 {
                     if (!parcijalnoBodovanje)
                     {
                         var sveTacno = odabraniOdgovori
                             .OrderBy(x => x)
-                            .SequenceEqual(tacniOdgovori.OrderBy(x => x));
+                            .SequenceEqual(
+                                tacniOdgovori.OrderBy(x => x));
 
                         if (sveTacno)
-                            bodoviZaPitanje = testPitanje.BODOVI;
+                        {
+                            bodoviZaPitanje =
+                                testPitanje.BODOVI;
+                        }
                     }
                     else
                     {
                         foreach (var odgovorId in odabraniOdgovori)
                         {
-                            var odgovor = odgovoriZaPitanje.FirstOrDefault(x => x.ID == odgovorId);
+                            var odgovor = odgovoriZaPitanje
+                                .FirstOrDefault(x =>
+                                    x.ID == odgovorId);
 
                             if (odgovor == null)
                                 continue;
 
                             if (odgovor.IS_TACAN == "Y")
-                                bodoviZaPitanje += odgovor.BODOVI ?? 0;
+                            {
+                                bodoviZaPitanje +=
+                                    odgovor.BODOVI ?? 0;
+                            }
                             else
-                                bodoviZaPitanje -= odgovor.NEGATIVNI_BODOVI ?? 0;
+                            {
+                                bodoviZaPitanje -=
+                                    odgovor.NEGATIVNI_BODOVI ?? 0;
+                            }
                         }
 
                         if (bodoviZaPitanje < 0)
                             bodoviZaPitanje = 0;
 
-                        if (bodoviZaPitanje > testPitanje.BODOVI)
-                            bodoviZaPitanje = testPitanje.BODOVI;
+                        if (bodoviZaPitanje >
+                            testPitanje.BODOVI)
+                        {
+                            bodoviZaPitanje =
+                                testPitanje.BODOVI;
+                        }
                     }
                 }
 
                 ostvareniBodovi += bodoviZaPitanje;
             }
 
-            var procenat = maxBodovi > 0
-                ? Math.Round((ostvareniBodovi / maxBodovi) * 100, 2)
-                : 0;
+            polaganje.OSTVARENI_BODOVI =
+                ostvareniBodovi;
 
-            polaganje.OSTVARENI_BODOVI = ostvareniBodovi;
-            polaganje.MAX_BODOVI = maxBodovi;
-            polaganje.PROCENAT = procenat;
-            polaganje.IS_PASSED = procenat >= polaganje.Test.MIN_PROCENAT_PROLAZA ? "Y" : "N";
-            polaganje.DATUM_IZMJENE = DateTime.Now;
+            polaganje.MAX_BODOVI =
+                maxBodovi;
+
+            polaganje.DATUM_IZMJENE =
+                DateTime.Now;
+
+            // Ako još postoji neocijenjeni esej,
+            // rezultat nije konačan.
+            if (imaNeocijenjenihEseja)
+            {
+                polaganje.STATUS = "PENDING_REVIEW";
+                polaganje.PROCENAT = null;
+                polaganje.IS_PASSED = null;
+            }
+            else
+            {
+                var procenat = maxBodovi > 0
+                    ? Math.Round(
+                        (ostvareniBodovi / maxBodovi) * 100,
+                        2)
+                    : 0;
+
+                polaganje.PROCENAT = procenat;
+
+                polaganje.IS_PASSED =
+                    procenat >=
+                    polaganje.Test.MIN_PROCENAT_PROLAZA
+                        ? "Y"
+                        : "N";
+
+                // Sva esejska pitanja su ocijenjena.
+                polaganje.STATUS = "SUBMITTED";
+            }
 
             await _dbContext.SaveChangesAsync();
         }

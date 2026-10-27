@@ -1,0 +1,759 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+
+@model AssignedTestAttemptsIndexVM
+
+@{
+    ViewData["Title"] = "Evidencija polaganja";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var danas = DateTime.Today;
+    var jucer = danas.AddDays(-1);
+
+    var rezultatOptions = new[]
+    {
+        new { Value = "", Text = "Svi rezultati" },
+        new { Value = "passed", Text = "Položen" },
+        new { Value = "failed", Text = "Nije položen" },
+        new { Value = "pending_review", Text = "Na ocjenjivanju" },
+        new { Value = "in_progress", Text = "U toku" }
+    };
+
+    var polaganjaUrl = Url.Action(
+        "Polaganja", "AssignedTests", new { area = "Admin" });
+
+    var dodjeleUrl = Url.Action(
+        "Index", "AssignedTests", new { area = "Admin" });
+}
+
+<style>
+    .attempts-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-bottom: 24px;
+    }
+
+    .attempts-filters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .attempts-filter-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #53606c;
+        margin-bottom: 6px;
+    }
+
+    .attempts-filter-group .form-control,
+    .attempts-filter-group .form-select {
+        width: 100%;
+        min-height: 40px;
+        border-radius: 7px;
+    }
+
+    .attempts-filter-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+        margin-top: 18px;
+    }
+
+    .attempts-quick-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e6eaf0;
+    }
+
+    .attempts-table-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .attempts-table {
+        width: 100% !important;
+        max-width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        margin-bottom: 0;
+    }
+
+        .attempts-table th {
+            padding: 10px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+        }
+
+        .attempts-table td {
+            padding: 10px 6px;
+            font-size: 12px;
+            line-height: 1.4;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+        }
+
+        .attempts-table th:nth-child(1) {
+            width: 14%;
+        }
+
+        .attempts-table th:nth-child(2) {
+            width: 24%;
+        }
+
+        .attempts-table th:nth-child(3) {
+            width: 12%;
+        }
+
+        .attempts-table th:nth-child(4) {
+            width: 12%;
+        }
+
+        .attempts-table th:nth-child(5) {
+            width: 7%;
+        }
+
+        .attempts-table th:nth-child(6) {
+            width: 9%;
+        }
+
+        .attempts-table th:nth-child(7) {
+            width: 11%;
+        }
+
+        .attempts-table th:nth-child(8) {
+            width: 11%;
+        }
+
+    .attempts-person,
+    .attempts-test-name {
+        font-weight: 600;
+        color: #263238;
+    }
+
+    .attempts-subtitle {
+        color: #7a8793;
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+    .attempts-date {
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .attempts-time {
+        color: #8a949e;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+
+    .attempts-status {
+        display: inline-block;
+        max-width: 100%;
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.4;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    .attempts-status-passed {
+        background: #e7f5ec;
+        color: #21834a;
+    }
+
+    .attempts-status-failed {
+        background: #fdecec;
+        color: #b83c3c;
+    }
+
+    .attempts-status-review {
+        background: #fff3d9;
+        color: #946900;
+    }
+
+    .attempts-status-progress {
+        background: #e7f0ff;
+        color: #2865b1;
+    }
+
+    .attempts-status-other {
+        background: #edf0f3;
+        color: #687480;
+    }
+
+    .attempts-table td:last-child .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 3px;
+        max-width: 100%;
+        padding: 6px 7px;
+        font-size: 11px;
+        white-space: normal;
+    }
+
+    .attempts-empty {
+        padding: 35px 20px;
+        text-align: center;
+        color: #85909b;
+    }
+
+    .attempts-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .attempts-page-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .attempts-page-link {
+        display: inline-block;
+        padding: 7px 12px;
+        border: 1px solid #dce2e8;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4e5c6a;
+        font-size: 13px;
+    }
+
+        .attempts-page-link:hover {
+            background: #f0f4f8;
+        }
+
+        .attempts-page-link.current {
+            background: #306ac4;
+            border-color: #306ac4;
+            color: #fff;
+        }
+
+    @@media (max-width: 991px) {
+        .attempts-table {
+            min-width: 850px;
+        }
+
+        .attempts-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        .attempts-filters {
+            grid-template-columns: 1fr;
+        }
+
+        .attempts-pagination {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Evidencija testova",
+                 Subtitle = "Pregled ručnih i automatskih dodjela i rezultata polaganja"
+             }' />
+
+    <!-- TABOVI -->
+    <div class="attempts-tabs">
+
+        <a href="@dodjeleUrl"
+           class="btn-sapio btn-sapio-secondary">
+
+            <i class="fas fa-clipboard-list me-1"></i>
+            Sve dodjele
+        </a>
+
+        <a href="@polaganjaUrl"
+           class="btn-sapio btn-sapio-primary">
+
+            <i class="fas fa-clipboard-check me-1"></i>
+            Sva polaganja
+        </a>
+
+    </div>
+
+    <!-- FILTERI -->
+    <div class="card-custom">
+
+        <h4 class="mb-3">
+            <i class="fas fa-filter me-2"></i>
+            Filteri polaganja
+        </h4>
+
+        <form action="@polaganjaUrl" method="get">
+
+            <input type="hidden" name="page" value="1" />
+
+            <div class="attempts-filters">
+
+                <div class="attempts-filter-group">
+                    <label for="search">
+                        Pretraga
+                    </label>
+
+                    <input type="text"
+                           id="search"
+                           name="search"
+                           value="@Model.Search"
+                           class="form-control"
+                           placeholder="Korisnik, predmet ili test..." />
+                </div>
+
+                <div class="attempts-filter-group">
+                    <label for="rezultat">
+                        Rezultat polaganja
+                    </label>
+
+                    <select id="rezultat"
+                            name="rezultat"
+                            class="form-select">
+
+                        @foreach (var option in rezultatOptions)
+                        {
+                            <option value="@option.Value"
+                                    selected="@(Model.Rezultat == option.Value)">
+                                @option.Text
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+                <div class="attempts-filter-group">
+                    <label for="datumOd">
+                        Datum završetka od
+                    </label>
+
+                    <input type="date"
+                           id="datumOd"
+                           name="datumOd"
+                           value="@(Model.DatumOd?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+                </div>
+
+                <div class="attempts-filter-group">
+                    <label for="datumDo">
+                        Datum završetka do
+                    </label>
+
+                    <input type="date"
+                           id="datumDo"
+                           name="datumDo"
+                           value="@(Model.DatumDo?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+                </div>
+
+                <div class="attempts-filter-group">
+                    <label for="pageSize">
+                        Broj zapisa po stranici
+                    </label>
+
+                    <select id="pageSize"
+                            name="pageSize"
+                            class="form-select">
+
+                        @foreach (var size in new[] { 10, 25, 50, 100 })
+                        {
+                            <option value="@size"
+                                    selected="@(Model.PageSize == size)">
+                                @size
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="attempts-filter-actions">
+
+                <button type="submit"
+                        class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-search me-1"></i>
+                    Primijeni filtere
+                </button>
+
+                <a href="@polaganjaUrl"
+                   class="btn-sapio btn-sapio-secondary">
+                    <i class="fas fa-undo me-1"></i>
+                    Resetuj
+                </a>
+
+            </div>
+        </form>
+
+        <!-- BRZI FILTERI -->
+        <div class="attempts-quick-filters">
+
+            <a href="@Url.Action("Polaganja", "AssignedTests", new
+               {
+                   area = "Admin",
+                   datumOd = danas.ToString("yyyy-MM-dd"),
+                   datumDo = danas.ToString("yyyy-MM-dd"),
+                   rezultat = "passed",
+                   pageSize = Model.PageSize
+               })"
+               class="btn-sapio btn-sapio-secondary">
+
+                <i class="fas fa-calendar-day me-1"></i>
+                Položeni danas
+            </a>
+
+            <a href="@Url.Action("Polaganja", "AssignedTests", new
+               {
+                   area = "Admin",
+                   datumOd = jucer.ToString("yyyy-MM-dd"),
+                   datumDo = jucer.ToString("yyyy-MM-dd"),
+                   rezultat = "passed",
+                   pageSize = Model.PageSize
+               })"
+               class="btn-sapio btn-sapio-secondary">
+
+                <i class="fas fa-calendar-check me-1"></i>
+                Položeni jučer
+            </a>
+
+            <a href="@Url.Action("Polaganja", "AssignedTests", new
+               {
+                   area = "Admin",
+                   datumOd = danas.AddDays(-6).ToString("yyyy-MM-dd"),
+                   datumDo = danas.ToString("yyyy-MM-dd"),
+                   pageSize = Model.PageSize
+               })"
+               class="btn-sapio btn-sapio-secondary">
+
+                <i class="fas fa-calendar-week me-1"></i>
+                Posljednjih 7 dana
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- TABELA -->
+    <div class="card-custom">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+
+            <h4 class="mb-0">
+                <i class="fas fa-clipboard-check me-2"></i>
+                Evidencija polaganja
+            </h4>
+
+            <span class="text-muted small">
+                Pronađeno: @Model.TotalCount
+            </span>
+
+        </div>
+
+        <div class="table-responsive attempts-table-container">
+
+            <table class="table table-bordered table-striped align-middle attempts-table">
+
+                <thead>
+                    <tr>
+                        <th>Korisnik</th>
+                        <th>Predmet / Test</th>
+                        <th>Početak</th>
+                        <th>Završetak</th>
+                        <th>Pokušaj</th>
+                        <th>Rezultat</th>
+                        <th>Status</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.Polaganja)
+                    {
+                        var statusText = item.Status;
+                        var statusClass = "attempts-status-other";
+
+                        if (item.Status == "PENDING_REVIEW")
+                        {
+                            statusText = "Na ocjenjivanju";
+                            statusClass = "attempts-status-review";
+                        }
+                        else if (item.Status == "IN_PROGRESS")
+                        {
+                            statusText = "U toku";
+                            statusClass = "attempts-status-progress";
+                        }
+                        else if (item.IsPassed == "Y")
+                        {
+                            statusText = "Položen";
+                            statusClass = "attempts-status-passed";
+                        }
+                        else if (item.IsPassed == "N")
+                        {
+                            statusText = "Nije položen";
+                            statusClass = "attempts-status-failed";
+                        }
+                        else if (item.Status == "TIME_EXPIRED")
+                        {
+                            statusText = "Vrijeme isteklo";
+                            statusClass = "attempts-status-failed";
+                        }
+                        else if (item.Status == "CANCELLED")
+                        {
+                            statusText = "Otkazan";
+                        }
+
+                        <tr>
+                            <!-- KORISNIK -->
+                            <td>
+                                <div class="attempts-person">
+                                    @item.ImePrezime
+                                </div>
+
+                                <div class="attempts-subtitle">
+                                    ID: @item.KorisnikId
+                                </div>
+                            </td>
+
+                            <!-- TEST / PREDMET -->
+                            <td>
+                                <div class="attempts-test-name">
+                                    @item.TestNaziv
+                                </div>
+
+                                <div class="attempts-subtitle">
+                                    @item.PredmetNaziv
+                                </div>
+                            </td>
+
+                            <!-- POČETAK -->
+                            <td class="attempts-date">
+                                @item.DatumPocetka.ToString("dd.MM.yyyy")
+
+                                <div class="attempts-time">
+                                    @item.DatumPocetka.ToString("HH:mm")
+                                </div>
+                            </td>
+
+                            <!-- ZAVRŠETAK -->
+                            <td class="attempts-date">
+                                @if (item.DatumZavrsetka.HasValue)
+                                {
+                                    @item.DatumZavrsetka.Value.ToString("dd.MM.yyyy")
+
+                                    <div class="attempts-time">
+                                        @item.DatumZavrsetka.Value.ToString("HH:mm")
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+
+                            <!-- POKUŠAJ -->
+                            <td class="text-center">
+                                @item.RedniBrojPokusaja
+                            </td>
+
+                            <!-- REZULTAT -->
+                            <td class="text-center">
+                                @if (item.Procenat.HasValue)
+                                {
+                                    <strong>
+                                        @item.Procenat.Value.ToString("0.##")%
+                                    </strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+
+                            <!-- STATUS -->
+                            <td class="text-center">
+
+                                <span class="attempts-status @statusClass">
+                                    @statusText
+                                </span>
+
+                                @if (item.AutoSubmitted)
+                                {
+                                    <div class="attempts-time">
+                                        Automatska predaja
+                                    </div>
+                                }
+
+                            </td>
+
+                            <!-- AKCIJE -->
+                            <td class="text-center">
+
+                                @if (item.DodjelaId.HasValue)
+                                {
+                                    <a href="@Url.Action("Answers", "AssignedTests", new
+                                       {
+                                           area = "Admin",
+                                           id = item.DodjelaId.Value,
+                                           polaganjeId = item.PolaganjeId
+                                       })"
+                               class="btn btn-sm btn-outline-primary"
+                               title="Pregled odgovora konkretnog pokušaja">
+
+                                        <i class="fas fa-eye me-1"></i>
+                                        Pregled odgovora
+                                    </a>
+                                                        }
+                                else
+                                {
+                                    <span class="text-muted small"
+                                          title="Polaganje nema povezanu dodjelu testa.">
+                                        Bez dodjele
+                                    </span>
+                                }
+
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        @if (!Model.Polaganja.Any())
+        {
+            <div class="attempts-empty">
+                <i class="fas fa-search fa-2x mb-3"></i>
+
+                <div>
+                    Nema pronađenih polaganja za odabrane kriterije.
+                </div>
+            </div>
+        }
+
+        <!-- PAGINACIJA -->
+        @if (Model.TotalPages > 1)
+        {
+            var startPage = Math.Max(1, Model.Page - 2);
+            var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
+
+            <div class="attempts-pagination">
+
+                <span class="text-muted small">
+                    Stranica @Model.Page od @Model.TotalPages
+                </span>
+
+                <div class="attempts-page-links">
+
+                    @if (Model.Page > 1)
+                    {
+                        <a href="@Url.Action("Polaganja", "AssignedTests", new
+                           {
+                               area = "Admin",
+                               page = 1,
+                               pageSize = Model.PageSize,
+                               search = Model.Search,
+                               rezultat = Model.Rezultat,
+                               datumOd = Model.DatumOd?.ToString("yyyy-MM-dd"),
+                               datumDo = Model.DatumDo?.ToString("yyyy-MM-dd")
+                           })"
+                   class="attempts-page-link">
+                    Prva
+                </a>
+
+                        <a href="@Url.Action("Polaganja", "AssignedTests", new
+                   {
+                       area = "Admin",
+                       page = Model.Page - 1,
+                       pageSize = Model.PageSize,
+                       search = Model.Search,
+                       rezultat = Model.Rezultat,
+                       datumOd = Model.DatumOd?.ToString("yyyy-MM-dd"),
+                       datumDo = Model.DatumDo?.ToString("yyyy-MM-dd")
+                   })"
+                   class="attempts-page-link">
+                    Prethodna
+                </a>
+                                }
+
+                    @for (var p = startPage; p <= endPage; p++)
+                    {
+                        <a href="@Url.Action("Polaganja", "AssignedTests", new
+                           {
+                               area = "Admin",
+                               page = p,
+                               pageSize = Model.PageSize,
+                               search = Model.Search,
+                               rezultat = Model.Rezultat,
+                               datumOd = Model.DatumOd?.ToString("yyyy-MM-dd"),
+                               datumDo = Model.DatumDo?.ToString("yyyy-MM-dd")
+                           })"
+                   class="attempts-page-link @(p == Model.Page ? "current" : "")">
+
+                            @p
+                        </a>
+                                }
+
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="@Url.Action("Polaganja", "AssignedTests", new
+                           {
+                               area = "Admin",
+                               page = Model.Page + 1,
+                               pageSize = Model.PageSize,
+                               search = Model.Search,
+                               rezultat = Model.Rezultat,
+                               datumOd = Model.DatumOd?.ToString("yyyy-MM-dd"),
+                               datumDo = Model.DatumDo?.ToString("yyyy-MM-dd")
+                           })"
+                   class="attempts-page-link">
+                    Sljedeća
+                </a>
+
+                        <a href="@Url.Action("Polaganja", "AssignedTests", new
+                   {
+                       area = "Admin",
+                       page = Model.TotalPages,
+                       pageSize = Model.PageSize,
+                       search = Model.Search,
+                       rezultat = Model.Rezultat,
+                       datumOd = Model.DatumOd?.ToString("yyyy-MM-dd"),
+                       datumDo = Model.DatumDo?.ToString("yyyy-MM-dd")
+                   })"
+                   class="attempts-page-link">
+                    Zadnja
+                </a>
+                                }
+
+                </div>
+            </div>
+        }
+
+    </div>
+
+</div>

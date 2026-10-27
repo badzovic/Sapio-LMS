@@ -1,0 +1,695 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+
+@model CustomTrainingMatrixIndexVM
+
+@{
+    ViewData["Title"] = "Custom matrica obuka";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var korisnici = ViewBag.Korisnici as List<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    var predmeti = ViewBag.Predmeti as List<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    var aktivniPredmeti = Model.Predmeti
+        .Where(x => x.Aktivno)
+        .ToList();
+
+    var neaktivniPredmeti = Model.Predmeti
+        .Where(x => !x.Aktivno)
+        .ToList();
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+          rel="stylesheet" />
+}
+
+<style>
+    .custom-matrix-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .custom-matrix-subtitle {
+        color: #7b8794;
+        font-size: 13px;
+    }
+
+    .custom-matrix-user-select {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 12px;
+    }
+
+    .custom-matrix-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #586674;
+        margin-bottom: 7px;
+        display: block;
+    }
+
+    .custom-matrix-user-info {
+        background: #f5f8fc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 20px;
+    }
+
+    .custom-matrix-user-name {
+        color: #26323d;
+        font-size: 19px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .custom-matrix-user-subtitle {
+        color: #7a8793;
+        font-size: 13px;
+    }
+
+    .custom-matrix-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px;
+        margin-bottom: 20px;
+    }
+
+    .custom-matrix-stat {
+        background: #fff;
+        border: 1px solid #e5e9ee;
+        border-radius: 10px;
+        padding: 17px;
+    }
+
+    .custom-matrix-stat-label {
+        color: #788492;
+        font-size: 12px;
+        margin-bottom: 7px;
+    }
+
+    .custom-matrix-stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2e3a46;
+    }
+
+    .custom-matrix-section-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #303b47;
+        margin-bottom: 15px;
+    }
+
+    .custom-matrix-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+        .custom-matrix-table thead th {
+            font-size: 13px;
+            white-space: nowrap;
+            vertical-align: middle;
+            padding: 12px;
+        }
+
+        .custom-matrix-table tbody td {
+            font-size: 13px;
+            vertical-align: middle;
+            padding: 12px;
+        }
+
+    .custom-matrix-subject {
+        font-weight: 600;
+        color: #303c48;
+    }
+
+    .custom-matrix-date {
+        white-space: nowrap;
+    }
+
+    .custom-matrix-empty {
+        text-align: center;
+        padding: 32px 16px;
+        color: #7c8997;
+    }
+
+    .custom-matrix-note {
+        background: #f5f8fc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 13px 15px;
+        color: #637487;
+        font-size: 13px;
+    }
+
+    .custom-matrix-divider {
+        border-top: 1px solid #e6ebf0;
+        margin: 23px 0;
+    }
+
+    /* Select2 */
+
+    .custom-matrix-user-select .select2-container {
+        width: 100% !important;
+    }
+
+    .custom-matrix-user-select .select2-container--default
+    .select2-selection--single {
+        min-height: 42px;
+        border: 1px solid #d2d6da;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+    }
+
+        .custom-matrix-user-select .select2-container--default
+        .select2-selection--single .select2-selection__rendered {
+            padding-left: 12px;
+            padding-right: 30px;
+            line-height: 40px;
+            color: #344767;
+        }
+
+        .custom-matrix-user-select .select2-container--default
+        .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+            right: 7px;
+        }
+
+        .custom-matrix-user-select .select2-container--default
+        .select2-selection--single .select2-selection__clear {
+            margin-right: 20px;
+        }
+
+    .select2-dropdown {
+        border-color: #d2d6da;
+    }
+
+    .select2-results__option {
+        font-size: 13px;
+        padding: 9px 12px;
+    }
+
+    @@media (max-width: 767px) {
+        .custom-matrix-user-select {
+            grid-template-columns: 1fr;
+        }
+
+        .custom-matrix-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+
+    <!-- ZAGLAVLJE -->
+    <div class="card-custom">
+
+        <div class="custom-matrix-header">
+
+            <div>
+                <h3 class="mb-1">
+                    <i class="fas fa-tasks me-2"></i>
+                    Custom matrica obuka
+                </h3>
+
+                <div class="custom-matrix-subtitle">
+                    Upravljanje dodatnim obavezama korisnika
+                    nezavisno od njihove V3 matrice.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="custom-matrix-note">
+            <i class="fas fa-info-circle me-1"></i>
+
+            Predmeti u ovoj matrici predstavljaju dodatne obaveze
+            korisnika. Njihovo dodavanje ili deaktivacija ne briše
+            postojeću historiju testiranja.
+        </div>
+
+    </div>
+
+    <!-- PRETRAGA I ODABIR KORISNIKA -->
+    <div class="card-custom">
+
+        <h5 class="custom-matrix-section-title">
+            <i class="fas fa-search me-2"></i>
+            Pronađi korisnika
+        </h5>
+
+        <form asp-area="Admin"
+              asp-controller="CustomTrainingMatrix"
+              asp-action="Index"
+              method="get">
+
+            <div class="custom-matrix-user-select">
+
+                <div>
+                    <label for="korisnikId"
+                           class="custom-matrix-label">
+                        Odaberi korisnika
+                    </label>
+
+                    <select id="korisnikId"
+                            name="korisnikId"
+                            class="form-select sapio-select2"
+                            required>
+
+                        <option value=""></option>
+
+                        @foreach (var korisnik in korisnici)
+                        {
+                            <option value="@korisnik.Value"
+                                    selected="@(korisnik.Value == Model.KorisnikId?.ToString())">
+                                @korisnik.Text
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="btn-sapio btn-sapio-primary">
+
+                        <i class="fas fa-user-check me-1"></i>
+                        Otvori matricu
+
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+
+        <div class="text-muted small mt-3">
+            Prikazani su svi aktivni korisnici LMS Sapio sistema,
+            bez obzira na tip korisnika.
+        </div>
+
+    </div>
+
+    @if (Model.KorisnikId.HasValue)
+    {
+        <!-- PODACI O ODABRANOM KORISNIKU -->
+        <div class="custom-matrix-user-info">
+
+            <div class="custom-matrix-user-name">
+                <i class="fas fa-user me-2"></i>
+                @Model.ImePrezime
+            </div>
+
+            <div class="custom-matrix-user-subtitle">
+                Sekundarna matrica korisnika
+                (ID: @Model.KorisnikId)
+            </div>
+
+        </div>
+
+        <!-- STATISTIKA -->
+        <div class="custom-matrix-stats">
+
+            <div class="custom-matrix-stat">
+                <div class="custom-matrix-stat-label">
+                    Ukupno dodijeljenih predmeta
+                </div>
+
+                <div class="custom-matrix-stat-value">
+                    @Model.Predmeti.Count
+                </div>
+            </div>
+
+            <div class="custom-matrix-stat">
+                <div class="custom-matrix-stat-label">
+                    Aktivni predmeti
+                </div>
+
+                <div class="custom-matrix-stat-value">
+                    @aktivniPredmeti.Count
+                </div>
+            </div>
+
+            <div class="custom-matrix-stat">
+                <div class="custom-matrix-stat-label">
+                    Deaktivirani predmeti
+                </div>
+
+                <div class="custom-matrix-stat-value">
+                    @neaktivniPredmeti.Count
+                </div>
+            </div>
+
+        </div>
+
+        <!-- DODAVANJE PREDMETA -->
+        <!-- DODAVANJE PREDMETA -->
+        <div class="card-custom">
+
+            <h5 class="custom-matrix-section-title">
+                <i class="fas fa-plus-circle me-2"></i>
+                Dodaj predmet u sekundarnu matricu
+            </h5>
+
+            <form asp-area="Admin"
+                  asp-controller="CustomTrainingMatrix"
+                  asp-action="AddSubject"
+                  method="post"
+                  class="js-confirm-form"
+                  data-confirm-title="Dodavanje predmeta"
+                  data-confirm-text="Da li želite dodati odabrani predmet u Custom matricu korisnika?"
+                  data-confirm-icon="question"
+                  data-confirm-button="Da, dodaj">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="korisnikId"
+                       value="@Model.KorisnikId" />
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-8">
+
+                        <label for="predmetId"
+                               class="custom-matrix-label">
+                            Odaberi predmet
+                        </label>
+
+                        <select id="predmetId"
+                                name="predmetId"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                -- Odaberi predmet --
+                            </option>
+
+                            @foreach (var predmet in predmeti)
+                            {
+                                <option value="@predmet.Value">
+                                    @predmet.Text
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-primary">
+
+                            <i class="fas fa-plus me-1"></i>
+                            Dodaj predmet
+
+                        </button>
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label for="napomena"
+                               class="custom-matrix-label">
+                            Napomena (opcionalno)
+                        </label>
+
+                        <textarea id="napomena"
+                              name="napomena"
+                              class="form-control"
+                              rows="2"
+                              maxlength="1000"
+                              placeholder="Razlog dodavanja predmeta..."></textarea>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+            <div class="text-muted small mt-3">
+                Dodavanjem predmeta korisnik dobija dodatnu obavezu
+                u LMS Sapio sistemu, nezavisno od svoje V3 matrice.
+            </div>
+
+        </div>
+
+
+        <!-- AKTIVNI PREDMETI -->
+        <div class="card-custom">
+
+            <h5 class="custom-matrix-section-title">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Aktivni predmeti
+            </h5>
+
+            @if (aktivniPredmeti.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-bordered table-striped custom-matrix-table">
+
+                        <thead>
+                            <tr>
+                                <th>Predmet</th>
+                                <th>Datum dodjele</th>
+                                <th>Dodijelio</th>
+                                <th>Napomena</th>
+                                <th>Status</th>
+                                <th>Akcije</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var item in aktivniPredmeti)
+                            {
+                                <tr>
+
+                                    <td>
+                                        <div class="custom-matrix-subject">
+                                            @item.NazivPredmeta
+                                        </div>
+                                    </td>
+
+                                    <td class="custom-matrix-date">
+                                        @item.DatumDodjele.ToString("dd.MM.yyyy. HH:mm")
+                                    </td>
+
+
+                                    <td>
+                                        @item.DodijelioImePrezime
+                                    </td>
+
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(item.Napomena)
+                                                                    ? "-"
+                                                                    : item.Napomena)
+                        </td>
+
+                                    <td>
+                                        <span class="badge bg-success">
+                                            Aktivno
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+
+
+                                        <form asp-area="Admin"
+                                              asp-controller="CustomTrainingMatrix"
+                                              asp-action="Deactivate"
+                                              method="post"
+                                              class="js-confirm-form d-inline"
+                                              data-confirm-title="Deaktivacija predmeta"
+                                              data-confirm-text="Da li želite deaktivirati predmet '@item.NazivPredmeta' za odabranog korisnika?"
+                                              data-confirm-icon="warning"
+                                              data-confirm-button="Da, deaktiviraj">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden" name="id" value="@item.ID" />
+                                            <input type="hidden" name="korisnikId" value="@Model.KorisnikId" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+
+                                                <i class="fas fa-ban me-1"></i>
+                                                Deaktiviraj
+
+                                            </button>
+
+                                        </form>
+
+
+                                    </td>
+
+                                </tr>
+                                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <div class="custom-matrix-empty">
+                    <i class="fas fa-clipboard-list fa-2x mb-3"></i>
+
+                    <div>
+                        Korisnik trenutno nema aktivnih predmeta
+                        u sekundarnoj matrici.
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <!-- DEAKTIVIRANI PREDMETI -->
+        <div class="card-custom">
+
+            <h5 class="custom-matrix-section-title">
+                <i class="fas fa-history me-2"></i>
+                Prethodno deaktivirani predmeti
+            </h5>
+
+            @if (neaktivniPredmeti.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-bordered table-striped custom-matrix-table">
+
+                        <thead>
+                            <tr>
+                                <th>Predmet</th>
+                                <th>Datum dodjele</th>
+                                <th>Datum deaktivacije</th>
+                                <th>Deaktivirao</th>
+                                <th>Napomena</th>
+                                <th>Status</th>
+                                <th>Akcije</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var item in neaktivniPredmeti)
+                            {
+                                <tr>
+
+                                    <td>
+                                        <div class="custom-matrix-subject">
+                                            @item.NazivPredmeta
+                                        </div>
+                                    </td>
+
+                                    <td class="custom-matrix-date">
+                                        @item.DatumDodjele.ToString("dd.MM.yyyy. HH:mm")
+                                    </td>
+
+                                    <td class="custom-matrix-date">
+                                        @(item.DatumDeaktivacije?.ToString("dd.MM.yyyy. HH:mm")
+                                                                    ?? "-")
+                                    </td>
+
+
+                                    <td>
+                                        @item.DeaktiviraoImePrezime
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(item.Napomena)
+                                                                    ? "-"
+                                                                    : item.Napomena)
+                        </td>
+
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            Deaktivirano
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+
+
+                                        <form asp-area="Admin"
+                                              asp-controller="CustomTrainingMatrix"
+                                              asp-action="Reactivate"
+                                              method="post"
+                                              class="js-confirm-form d-inline"
+                                              data-confirm-title="Reaktivacija predmeta"
+                                              data-confirm-text="Da li želite ponovo aktivirati predmet '@item.NazivPredmeta' za odabranog korisnika?"
+                                              data-confirm-icon="question"
+                                              data-confirm-button="Da, reaktiviraj">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden" name="id" value="@item.ID" />
+                                            <input type="hidden" name="korisnikId" value="@Model.KorisnikId" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-success">
+
+                                                <i class="fas fa-redo me-1"></i>
+                                                Reaktiviraj
+
+                                            </button>
+
+                                        </form>
+
+
+                                    </td>
+
+                                </tr>
+                                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <div class="custom-matrix-empty">
+                    Nema prethodno deaktiviranih predmeta.
+                </div>
+            }
+
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            $('#korisnikId').select2({
+                placeholder: 'Pretraži korisnika...',
+                allowClear: true,
+                width: '100%'
+            });
+
+        });
+    </script>
+}

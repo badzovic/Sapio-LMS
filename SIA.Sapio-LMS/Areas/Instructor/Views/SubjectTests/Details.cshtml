@@ -1,11 +1,257 @@
 ﻿@using SIA.Sapio_LMS.Areas.Instructor.Models
 @using SIA.Sapio_LMS.Models.Shared
+
 @model SubjectTestDetailsVM
 
 @{
     ViewData["Title"] = "Detalji testa";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var now = DateTime.Now;
+
+    var statusPrikaza =
+        Model.Aktivno != "Y"
+            ? "Neaktivan"
+            : Model.Status == "DRAFT"
+                ? "Draft"
+                : Model.Status != "ACTIVE"
+                    ? "Arhiviran"
+                    : Model.DatumDo < now
+                        ? "Istekao"
+                        : Model.DatumOd > now
+                            ? "Zakazan"
+                            : "Aktivan";
+
+    var statusClass = statusPrikaza switch
+    {
+        "Aktivan" => "bg-success",
+        "Istekao" => "bg-danger",
+        "Zakazan" => "bg-warning text-dark",
+        "Draft" => "bg-secondary",
+        _ => "bg-dark"
+    };
 }
+
+<style>
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .preview-title {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        overflow-wrap: anywhere;
+    }
+
+    .preview-subtitle {
+        color: #75808b;
+        font-size: 14px;
+    }
+
+    .preview-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+        .preview-header-actions form {
+            margin: 0;
+        }
+
+    .preview-info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .preview-info-box {
+        padding: 15px;
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        background: #f8f9fb;
+    }
+
+    .preview-info-label {
+        display: block;
+        color: #75808b;
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+
+    .preview-info-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #263238;
+        overflow-wrap: anywhere;
+    }
+
+    .preview-section-title {
+        font-size: 19px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .preview-question {
+        padding: 22px;
+        border: 1px solid #e5e9ee;
+        border-radius: 10px;
+        margin-bottom: 17px;
+        background: #fff;
+    }
+
+        .preview-question:last-child {
+            margin-bottom: 0;
+        }
+
+    .preview-question-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .preview-question-text {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-question-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .preview-question-image {
+        margin: 16px 0;
+    }
+
+        .preview-question-image img {
+            max-width: 100%;
+            max-height: 480px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+    .preview-answer-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .preview-answer {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 15px;
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        background: #fafbfc;
+    }
+
+        .preview-answer.correct {
+            background: #eef9f1;
+            border-color: #a8dcb9;
+        }
+
+    .preview-answer-icon {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #9aa4ae;
+    }
+
+    .preview-answer.correct .preview-answer-icon {
+        color: #26864d;
+    }
+
+    .preview-answer-text {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .preview-answer-meta {
+        font-size: 12px;
+        color: #75808b;
+        margin-top: 5px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px 14px;
+    }
+
+    .preview-description {
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        background: #f8f9fb;
+        padding: 15px;
+        color: #46515d;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+    .preview-empty {
+        border: 1px dashed #dce2e8;
+        border-radius: 8px;
+        padding: 25px;
+        text-align: center;
+        color: #75808b;
+        background: #fafbfc;
+    }
+
+    @@media (max-width: 991px) {
+        .preview-info-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 575px) {
+        .preview-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .preview-question {
+            padding: 15px;
+        }
+
+        .preview-header {
+            flex-direction: column;
+        }
+
+        .preview-header-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+            .preview-header-actions a,
+            .preview-header-actions button,
+            .preview-header-actions form {
+                width: 100%;
+            }
+
+            .preview-header-actions a,
+            .preview-header-actions button {
+                text-align: center;
+            }
+    }
+</style>
 
 <div class="container-fluid">
 
@@ -16,42 +262,79 @@
                  Subtitle = Model.Naziv
              }' />
 
+    <!-- OSNOVNE INFORMACIJE O TESTU -->
     <div class="card-custom">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div class="preview-header">
+
             <div>
-                <h3 class="mb-1">@Model.Naziv</h3>
-                <small class="text-muted">@Model.PredmetNaziv</small>
+                <div class="preview-title">
+                    @Model.Naziv
+                </div>
+
+                <div class="preview-subtitle">
+                    <i class="fas fa-book-open"></i>
+                    @Model.PredmetNaziv
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap gap-2">
+
+                    <span class="badge bg-primary">
+                        <i class="fas fa-layer-group"></i>
+                        @(string.IsNullOrWhiteSpace(Model.TestKlasaNaziv)
+                                                ? "-"
+                                                : Model.TestKlasaNaziv)
+                    </span>
+
+                    <span class="badge @statusClass">
+                        @statusPrikaza
+                    </span>
+
+                </div>
             </div>
 
-            <div class="action-buttons">
+            <!-- POSTOJEĆE AKCIJE OSTAJU ISTE -->
+            <div class="preview-header-actions">
 
                 @if (Model.Status == "DRAFT")
-                {
-                    <a asp-area="Instructor"
-                       asp-controller="SubjectTests"
-                       asp-action="Edit"
-                       asp-route-id="@Model.ID"
-                       class="btn-sapio btn-sapio-primary">
-                        <i class="fas fa-edit"></i> Uredi test
-                    </a>
+                                {
+                <a asp-area="Instructor"
+                   asp-controller="SubjectTests"
+                   asp-action="Edit"
+                   asp-route-id="@Model.ID"
+                   class="btn-sapio btn-sapio-primary">
 
-                    <form asp-area="Instructor"
-                          asp-controller="SubjectTests"
-                          asp-action="Activate"
-                          method="post"
-                          class="d-inline js-confirm-form"
-                          data-confirm-title="Aktivacija testa"
-                          data-confirm-text="Da li ste sigurni da želite aktivirati ovaj test?"
-                          data-confirm-icon="question"
-                          data-confirm-button="Da, aktiviraj">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.ID" />
+                    <i class="fas fa-edit"></i>
+                    Uredi test
 
-                        <button type="submit" class="btn-sapio btn-sapio-success">
-                            <i class="fas fa-check"></i> Aktiviraj
-                        </button>
-                    </form>
-                }
+                </a>
+
+                <form asp-area="Instructor"
+                      asp-controller="SubjectTests"
+                      asp-action="Activate"
+                      method="post"
+                      class="d-inline js-confirm-form"
+                      data-confirm-title="Aktivacija testa"
+                      data-confirm-text="Da li ste sigurni da želite aktivirati ovaj test?"
+                      data-confirm-icon="question"
+                      data-confirm-button="Da, aktiviraj">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="id"
+                           value="@Model.ID" />
+
+                    <button type="submit"
+                            class="btn-sapio btn-sapio-success">
+
+                        <i class="fas fa-check"></i>
+                        Aktiviraj
+
+                    </button>
+
+                </form>
+                                }
 
                 @if (Model.Status == "ACTIVE")
                 {
@@ -64,12 +347,21 @@
                           data-confirm-text="Da li ste sigurni da želite arhivirati ovaj test?"
                           data-confirm-icon="warning"
                           data-confirm-button="Da, arhiviraj">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.ID" />
 
-                        <button type="submit" class="btn-sapio btn-sapio-danger">
-                            <i class="fas fa-archive"></i> Arhiviraj
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="id"
+                               value="@Model.ID" />
+
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-danger">
+
+                            <i class="fas fa-archive"></i>
+                            Arhiviraj
+
                         </button>
+
                     </form>
                 }
 
@@ -78,193 +370,288 @@
                    asp-action="Index"
                    asp-route-predmetId="@Model.PredmetId"
                    class="btn-sapio btn-sapio-secondary">
+
+                    <i class="fas fa-arrow-left"></i>
                     Nazad na testove
+
                 </a>
+
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-8 mb-3">
-                <label class="form-label fw-bold">Opis</label>
-                <div class="border rounded p-3 bg-light">
-                    @(string.IsNullOrWhiteSpace(Model.Opis) ? "-" : Model.Opis)
-                </div>
-            </div>
+        <!-- OPIS TESTA -->
+        <div class="mb-4">
+            <strong>Opis testa</strong>
 
-            <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Status</label>
-                <div class="border rounded p-3 bg-light">
-                    @if (Model.Status == "DRAFT")
-                    {
-                        <span class="badge bg-secondary">Draft</span>
-                    }
-                    else if (Model.Status == "ACTIVE")
-                    {
-                        <span class="badge bg-success">Aktivan</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-dark">Arhiviran</span>
-                    }
-                </div>
-            </div>
-
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Datum od</label>
-                <div class="border rounded p-2 bg-light">@Model.DatumOd.ToString("dd.MM.yyyy HH:mm")</div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Datum do</label>
-                <div class="border rounded p-2 bg-light">@Model.DatumDo.ToString("dd.MM.yyyy HH:mm")</div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Trajanje</label>
-                <div class="border rounded p-2 bg-light">@Model.VrijemeTrajanjaMin min</div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Minimalni prolaz</label>
-                <div class="border rounded p-2 bg-light">@Model.MinProcenatProlaza.ToString("0.##")%</div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Ukupno pitanja</label>
-                <div class="border rounded p-2 bg-light">@Model.BrojPitanja</div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">L / S / T</label>
-                <div class="border rounded p-2 bg-light">
-                    @Model.BrojLakih / @Model.BrojSrednjih / @Model.BrojTeskih
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Random pitanja</label>
-                <div class="border rounded p-2 bg-light">@(Model.RandomPitanja == "Y" ? "Da" : "Ne")</div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <label class="form-label fw-bold">Random odgovori</label>
-                <div class="border rounded p-2 bg-light">@(Model.RandomOdgovori == "Y" ? "Da" : "Ne")</div>
-            </div>
+            <div class="preview-description mt-2">@(string.IsNullOrWhiteSpace(Model.Opis) ? "-" : Model.Opis)</div>
         </div>
+
+        <!-- KARTICE SA INFORMACIJAMA -->
+        <div class="preview-info-grid">
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Datum od
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.DatumOd.ToString("dd.MM.yyyy HH:mm")
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Datum do
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.DatumDo.ToString("dd.MM.yyyy HH:mm")
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Trajanje
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.VrijemeTrajanjaMin minuta
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Minimalni prolaz
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.MinProcenatProlaza.ToString("0.##")%
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Ukupno pitanja
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.BrojPitanja
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Broj pokušaja
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.BrojPokusaja
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Težina L / S / T
+                </span>
+
+                <div class="preview-info-value">
+                    @Model.BrojLakih /
+                    @Model.BrojSrednjih /
+                    @Model.BrojTeskih
+                </div>
+            </div>
+
+            <div class="preview-info-box">
+                <span class="preview-info-label">
+                    Randomizacija
+                </span>
+
+                <div class="preview-info-value">
+                    Pitanja:
+                    @(Model.RandomPitanja == "Y" ? "Da" : "Ne")
+                    /
+                    Odgovori:
+                    @(Model.RandomOdgovori == "Y" ? "Da" : "Ne")
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
+    <!-- PITANJA I ODGOVORI -->
     <div class="card-custom">
-        <h4 class="mb-3">Pitanja u testu</h4>
 
-        @foreach (var pitanje in Model.Pitanja)
+        <h4 class="preview-section-title">
+            <i class="fas fa-list-ol me-2"></i>
+            Pitanja u testu (@Model.Pitanja.Count)
+        </h4>
+
+        @if (!Model.Pitanja.Any())
         {
-            <div class="border rounded p-3 mb-3 bg-light">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <strong>@pitanje.Redoslijed. @pitanje.TekstPitanja</strong>
+            <div class="preview-empty">
+                <i class="fas fa-info-circle me-2"></i>
+                Za ovaj test trenutno nema evidentiranih pitanja.
+            </div>
+        }
+        else
+        {
+            @foreach (var pitanje in Model.Pitanja)
+            {
+                var tipPitanja = pitanje.TipPitanja ?? "";
+                var tezina = pitanje.Tezina ?? "";
 
-                        @if (pitanje.IsObavezno == "Y")
-                        {
-                            <span class="badge bg-primary ms-2">Obavezno</span>
-                        }
-                    </div>
+                var tipClass =
+                tipPitanja.Contains("Jedan") ? "bg-primary" :
+                tipPitanja.Contains("Više") ? "bg-info text-dark" :
+                "bg-dark";
 
-                    <div class="d-flex flex-wrap gap-2">
+                var tezinaClass =
+                tezina.Contains("Lako") ? "bg-success" :
+                tezina.Contains("Srednje") ? "bg-warning text-dark" :
+                tezina.Contains("Teško") ? "bg-danger" :
+                "bg-secondary";
 
-                        @* TIP PITANJA *@
-                        @if (pitanje.TipPitanja.Contains("Jedan"))
-                        {
-                            <span class="badge bg-primary">
+                <div class="preview-question">
+
+                    <!-- ZAGLAVLJE PITANJA -->
+                    <div class="preview-question-header">
+
+                        <div class="preview-question-text">
+
+                            @pitanje.Redoslijed.
+                            @pitanje.TekstPitanja
+
+                            @if (pitanje.IsObavezno == "Y")
+                            {
+                                <span class="badge bg-primary ms-2">
+                                    Obavezno
+                                </span>
+                            }
+
+                        </div>
+
+                        <div class="preview-question-badges">
+
+                            <span class="badge @tipClass">
                                 @pitanje.TipPitanja
                             </span>
-                        }
-                        else if (pitanje.TipPitanja.Contains("Više"))
-                        {
-                            <span class="badge bg-info">
-                                @pitanje.TipPitanja
+
+                            <span class="badge @tezinaClass">
+                                @pitanje.Tezina
                             </span>
-                        }
-                        else
-                        {
+
                             <span class="badge bg-dark">
-                                @pitanje.TipPitanja
+                                @pitanje.Bodovi.ToString("0.##") bod.
                             </span>
-                        }
 
-                        @* TEŽINA *@
-                        @if (pitanje.Tezina.Contains("Lako"))
-                        {
-                            <span class="badge bg-success">
-                                @pitanje.Tezina
-                            </span>
-                        }
-                        else if (pitanje.Tezina.Contains("Srednje"))
-                        {
-                            <span class="badge bg-warning text-dark">
-                                @pitanje.Tezina
-                            </span>
-                        }
-                        else if (pitanje.Tezina.Contains("Teško"))
-                        {
-                            <span class="badge bg-danger">
-                                @pitanje.Tezina
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">
-                                @pitanje.Tezina
-                            </span>
-                        }
-
-                        @* BODOVI *@
-                        <span class="badge bg-secondary">
-                            @pitanje.Bodovi.ToString("0.##") bod.
-                        </span>
+                        </div>
 
                     </div>
-                </div>
 
-                @if (pitanje.Odgovori != null && pitanje.Odgovori.Any())
-                {
-                    <table class="table table-sm table-bordered bg-white mb-0">
-                        <thead>
-                            <tr>
-                                <th>Odgovor</th>
-                                <th style="width:100px;">Tačan</th>
-                                <th style="width:120px;">Bodovi</th>
-                                <th style="width:150px;">Kazneni</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <!-- SLIKA PITANJA -->
+                    @if (!string.IsNullOrWhiteSpace(pitanje.SlikaPutanja))
+                    {
+                        var imageUrl = Url.Content(
+                        "~/" + pitanje.SlikaPutanja.TrimStart('~', '/'));
+
+                        <div class="preview-question-image">
+
+                            <a href="@imageUrl"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               title="Otvori sliku u punoj veličini">
+
+                                <img src="@imageUrl"
+                                     alt="@(string.IsNullOrWhiteSpace(pitanje.SlikaNaziv)
+                                                                              ? "Slika uz pitanje"
+                                                                              : pitanje.SlikaNaziv)"
+                         loading="lazy" />
+
+                            </a>
+
+                        </div>
+                        }
+
+                    <!-- PONUĐENI ODGOVORI -->
+                    @if (pitanje.Odgovori != null &&
+                                pitanje.Odgovori.Any())
+                    {
+                        <div class="preview-answer-list">
+
                             @foreach (var odgovor in pitanje.Odgovori)
                             {
-                                <tr>
-                                    <td>@odgovor.TekstOdgovora</td>
-                                    <td>
-                                        @if (odgovor.IsTacan == "Y")
+                                var tacan = odgovor.IsTacan == "Y";
+
+                                <div class="preview-answer @(tacan ? "correct" : "")">
+
+                                    <div class="preview-answer-icon">
+
+                                        @if (tacan)
                                         {
-                                            <span class="badge bg-success">DA</span>
+                                            <i class="fas fa-check-circle"></i>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary">NE</span>
+                                            <i class="far fa-circle"></i>
                                         }
-                                    </td>
-                                    <td>@((odgovor.Bodovi ?? 0).ToString("0.##"))</td>
-                                    <td>@((odgovor.NegativniBodovi ?? 0).ToString("0.##"))</td>
-                                </tr>
+
+                                    </div>
+
+                                    <div class="preview-answer-text">
+
+                                        <div>
+                                            @odgovor.TekstOdgovora
+                                        </div>
+
+                                        <div class="preview-answer-meta">
+
+                                            @if (tacan)
+                                            {
+                                                <span class="text-success fw-bold">
+                                                    Tačan odgovor
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span>
+                                                    Netačan odgovor
+                                                </span>
+                                            }
+
+                                            <span>
+                                                Bodovi:
+                                                @((odgovor.Bodovi ?? 0).ToString("0.##"))
+                                            </span>
+
+                                            <span>
+                                                Kazneni:
+                                                @((odgovor.NegativniBodovi ?? 0).ToString("0.##"))
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
                             }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <small class="text-muted">Esejsko pitanje nema ponuđene odgovore.</small>
-                }
-            </div>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted small">
+
+                            <i class="fas fa-pen me-1"></i>
+                            Esejsko pitanje nema ponuđene odgovore.
+
+                        </div>
+                    }
+
+                </div>
+            }
         }
+
     </div>
 
 </div>

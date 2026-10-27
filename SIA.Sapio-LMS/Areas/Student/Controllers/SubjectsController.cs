@@ -12,17 +12,26 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly UserTrainingMatrixService _userTrainingMatrixService;
+        private readonly UserCustomTrainingMatrixService _userCustomTrainingMatrixService;
+        private readonly UserOtherTrainingsService _userOtherTrainingsService;
         private readonly IWebHostEnvironment _environment;
         private readonly MaterialPdfService _materialPdfService;
+        private readonly UserTrainingHistoryService _userTrainingHistoryService;
 
         public SubjectsController(
             ApplicationDbContext dbContext,
             UserTrainingMatrixService userTrainingMatrixService,
+            UserCustomTrainingMatrixService userCustomTrainingMatrixService,
+            UserOtherTrainingsService userOtherTrainingsService,
+            UserTrainingHistoryService userTrainingHistoryService,
             IWebHostEnvironment environment,
             MaterialPdfService materialPdfService)
         {
             _dbContext = dbContext;
             _userTrainingMatrixService = userTrainingMatrixService;
+            _userCustomTrainingMatrixService = userCustomTrainingMatrixService;
+            _userOtherTrainingsService = userOtherTrainingsService;
+            _userTrainingHistoryService = userTrainingHistoryService;
             _environment = environment;
             _materialPdfService = materialPdfService;
         }
@@ -35,13 +44,62 @@ namespace SIA.Sapio_LMS.Areas.Student.Controllers
             if (korisnik == null)
             {
                 ViewBag.TrainingMatrix = null;
+                ViewBag.CustomTrainingMatrix = null;
+                ViewBag.OtherTrainings = null;
+
                 return View();
             }
 
-            ViewBag.TrainingMatrix =
-                await _userTrainingMatrixService.GetForRadnikAsync(korisnik.ACCESS_KEY);
+            // 1. Primarna V3 matrica
+            var v3Matrix = await _userTrainingMatrixService
+                .GetForRadnikAsync(korisnik.ACCESS_KEY);
+
+            ViewBag.TrainingMatrix = v3Matrix;
+
+            // 2. Sekundarna LMS matrica
+            ViewBag.CustomTrainingMatrix =
+                await _userCustomTrainingMatrixService
+                    .GetForKorisnikAsync(korisnik.ID, v3Matrix);
+
+            // 3. Ostale obuke i polaganja
+            ViewBag.OtherTrainings =
+                await _userOtherTrainingsService
+                    .GetForKorisnikAsync(korisnik.ID, v3Matrix);
 
             return View();
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> TrainingHistory(int predmetId)
+        {
+            if (predmetId <= 0)
+                return BadRequest();
+
+            // Trenutno prijavljeni student
+            var korisnik = await _dbContext.KORISNICI
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.USER_ID == CurrentUserId);
+
+            if (korisnik == null)
+                return NotFound();
+
+            var imePrezime = string.Join(" ",
+                new[] { korisnik.IME, korisnik.PREZIME }
+                    .Where(x => !string.IsNullOrWhiteSpace(x)));
+
+            var model = await _userTrainingHistoryService
+                .GetForKorisnikAndPredmetAsync(
+                    korisnik.ID,
+                    predmetId,
+                    imePrezime);
+
+            if (model == null)
+                return NotFound();
+
+            return View(
+                "~/Views/Shared/TrainingHistory.cshtml",
+                model);
         }
 
         public async Task<IActionResult> Details(int id)

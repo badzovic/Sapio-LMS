@@ -1,0 +1,1033 @@
+﻿@using SIA.Sapio_LMS.Areas.Admin.Models
+@using SIA.Sapio_LMS.Models.Shared
+
+@model AssignedTestsIndexVM
+
+@{
+    ViewData["Title"] = "Evidencija dodijeljenih testova";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var statusOptions = new[]
+    {
+        new { Value = "", Text = "Svi statusi" },
+        new { Value = "waiting", Text = "Čeka polaganje" },
+        new { Value = "in_progress", Text = "U toku" },
+        new { Value = "pending_review", Text = "Na ocjenjivanju" },
+        new { Value = "passed", Text = "Položen" },
+        new { Value = "failed", Text = "Nije položen" },
+        new { Value = "expired", Text = "Rok istekao" }
+    };
+}
+
+
+<style>
+    /* =========================================================
+       STATISTIKA
+       ========================================================= */
+
+    .assigned-stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .assigned-stat {
+        min-width: 0;
+        padding: 18px;
+        background: #fff;
+        border: 1px solid #e5e9ee;
+        border-radius: 10px;
+    }
+
+    .assigned-stat-label {
+        color: #75808b;
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .assigned-stat-value {
+        font-size: 25px;
+        font-weight: 700;
+        color: #263238;
+    }
+
+    .assigned-stat-icon {
+        float: right;
+        font-size: 20px;
+        color: #aab3bd;
+    }
+
+
+    /* =========================================================
+       FILTERI
+       ========================================================= */
+
+    .assigned-filters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .assigned-filter-group {
+        min-width: 0;
+    }
+
+    .assigned-filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #53606c;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .assigned-filter-group .form-control,
+    .assigned-filter-group .form-select {
+        min-height: 40px;
+        border-radius: 7px;
+        width: 100%;
+    }
+
+    .assigned-filter-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+        margin-top: 18px;
+    }
+
+
+    /* =========================================================
+       TABELA - OSNOVNI IZGLED
+       ========================================================= */
+
+    .assigned-table-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .assigned-table {
+        width: 100% !important;
+        max-width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        margin-bottom: 0;
+    }
+
+    .assigned-table thead th {
+        vertical-align: middle;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.35;
+        padding: 10px 6px;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .assigned-table tbody td {
+        vertical-align: middle;
+        font-size: 12px;
+        line-height: 1.4;
+        padding: 10px 6px;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .assigned-table th,
+    .assigned-table td {
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+
+    /* =========================================================
+       RASPODJELA ŠIRINE KOLONA
+       Ukupno: 100%
+       ========================================================= */
+
+    /* Korisnik */
+    .assigned-table th:nth-child(1) {
+        width: 13%;
+    }
+
+    /* Predmet / Test */
+    .assigned-table th:nth-child(2) {
+        width: 25%;
+    }
+
+    /* Datum dodjele */
+    .assigned-table th:nth-child(3) {
+        width: 10%;
+    }
+
+    /* Rok */
+    .assigned-table th:nth-child(4) {
+        width: 10%;
+    }
+
+    /* Način dodjele */
+    .assigned-table th:nth-child(5) {
+        width: 9%;
+    }
+
+    /* Pokušaji */
+    .assigned-table th:nth-child(6) {
+        width: 7%;
+    }
+
+    /* Rezultat */
+    .assigned-table th:nth-child(7) {
+        width: 7%;
+    }
+
+    /* Status */
+    .assigned-table th:nth-child(8) {
+        width: 9%;
+    }
+
+    /* Akcije */
+    .assigned-table th:nth-child(9) {
+        width: 10%;
+    }
+
+
+    /* =========================================================
+       KORISNIK
+       ========================================================= */
+
+    .assigned-person {
+        font-weight: 600;
+        color: #263238;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.4;
+    }
+
+
+    /* =========================================================
+       NAZIV TESTA I PREDMETA
+       ========================================================= */
+
+    .assigned-test-name {
+        font-weight: 600;
+        color: #263238;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.4;
+    }
+
+    .assigned-subject {
+        color: #7a8793;
+        font-size: 11px;
+        margin-top: 5px;
+        line-height: 1.45;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .assigned-class {
+        display: inline-block;
+        max-width: 100%;
+        margin-top: 6px;
+        padding: 3px 7px;
+        background: #edf3ff;
+        color: #315d9e;
+        font-size: 11px;
+        line-height: 1.4;
+        border-radius: 5px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+
+    /* =========================================================
+       DATUMI
+       ========================================================= */
+
+    .assigned-date {
+        white-space: normal !important;
+        text-align: center;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .assigned-date-small {
+        color: #8a949e;
+        font-size: 11px;
+        margin-top: 3px;
+        line-height: 1.3;
+    }
+
+
+    /* =========================================================
+       STATUSI
+       ========================================================= */
+
+    .assigned-status {
+        display: inline-block;
+        max-width: 100%;
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.4;
+        text-align: center;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .assigned-status-passed {
+        background: #e7f5ec;
+        color: #21834a;
+    }
+
+    .assigned-status-failed {
+        background: #fdecec;
+        color: #b83c3c;
+    }
+
+    .assigned-status-expired {
+        background: #fdecec;
+        color: #b83c3c;
+    }
+
+    .assigned-status-progress {
+        background: #e7f0ff;
+        color: #2865b1;
+    }
+
+    .assigned-status-review {
+        background: #fff3d9;
+        color: #946900;
+    }
+
+    .assigned-status-waiting {
+        background: #edf0f3;
+        color: #687480;
+    }
+
+
+    /* =========================================================
+       BADGE ELEMENTI UNUTAR TABELE
+       ========================================================= */
+
+    .assigned-table .badge {
+        display: inline-block;
+        max-width: 100%;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        line-height: 1.4;
+        text-align: center;
+        font-size: 11px;
+        padding: 5px 7px;
+    }
+
+
+    /* =========================================================
+       AKCIJE - DUGMAD
+       ========================================================= */
+
+    .assigned-table td:last-child {
+        text-align: center;
+    }
+
+    .assigned-table td:last-child .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 3px;
+        max-width: 100%;
+        padding: 6px 7px;
+        font-size: 11px;
+        line-height: 1.35;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        text-align: center;
+    }
+
+
+    /* =========================================================
+       PAGINACIJA
+       ========================================================= */
+
+    .assigned-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .assigned-pagination-info {
+        color: #75808b;
+        font-size: 13px;
+    }
+
+    .assigned-page-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .assigned-page-link {
+        display: inline-block;
+        padding: 7px 12px;
+        border: 1px solid #dce2e8;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4e5c6a;
+        font-size: 13px;
+    }
+
+    .assigned-page-link:hover {
+        background: #f0f4f8;
+    }
+
+    .assigned-page-link.current {
+        background: #306ac4;
+        border-color: #306ac4;
+        color: #fff;
+    }
+
+
+    /* =========================================================
+       PRAZNA EVIDENCIJA
+       ========================================================= */
+
+    .assigned-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: #85909b;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @@media (max-width: 1199px) {
+
+        .assigned-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .assigned-table thead th {
+            font-size: 11px;
+            padding: 9px 5px;
+        }
+
+        .assigned-table tbody td {
+            font-size: 11px;
+            padding: 9px 5px;
+        }
+    }
+
+    @@media (max-width: 991px) {
+
+        /* Horizontalni skrol samo na užim ekranima */
+        .assigned-table {
+            min-width: 850px;
+        }
+
+        .assigned-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    @@media (max-width: 767px) {
+
+        .assigned-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .assigned-filters {
+            grid-template-columns: 1fr;
+        }
+
+        .assigned-pagination {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @@media (max-width: 480px) {
+
+        .assigned-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+
+</style>
+
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Evidencija testova",
+                 Subtitle = "Pregled dodjela i polaganja testova"
+             }' />
+
+    <!-- TABOVI -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+
+        <a href="@Url.Action("Index", "AssignedTests", new { area = "Admin" })"
+           class="btn-sapio btn-sapio-primary">
+
+            <i class="fas fa-clipboard-list me-1"></i>
+            Sve dodjele
+        </a>
+
+        <a href="@Url.Action("Polaganja", "AssignedTests", new { area = "Admin" })"
+           class="btn-sapio btn-sapio-secondary">
+
+            <i class="fas fa-clipboard-check me-1"></i>
+            Sva polaganja
+        </a>
+
+    </div>
+
+    <!-- STATISTIKA -->
+    <div class="assigned-stats">
+
+        <div class="assigned-stat">
+            <i class="fas fa-clipboard-list assigned-stat-icon"></i>
+            <div class="assigned-stat-label">
+                Ukupno dodjela
+            </div>
+            <div class="assigned-stat-value">
+                @Model.UkupnoDodjela
+            </div>
+        </div>
+
+        <div class="assigned-stat">
+            <i class="fas fa-clock assigned-stat-icon"></i>
+            <div class="assigned-stat-label">
+                Čeka polaganje
+            </div>
+            <div class="assigned-stat-value">
+                @Model.CekaPolaganje
+            </div>
+        </div>
+
+        <div class="assigned-stat">
+            <i class="fas fa-check-circle assigned-stat-icon"></i>
+            <div class="assigned-stat-label">
+                Položeno
+            </div>
+            <div class="assigned-stat-value">
+                @Model.Polozeno
+            </div>
+        </div>
+
+        <div class="assigned-stat">
+            <i class="fas fa-times-circle assigned-stat-icon"></i>
+            <div class="assigned-stat-label">
+                Nije položeno
+            </div>
+            <div class="assigned-stat-value">
+                @Model.NijePolozeno
+            </div>
+        </div>
+
+        <div class="assigned-stat">
+            <i class="fas fa-calendar-times assigned-stat-icon"></i>
+            <div class="assigned-stat-label">
+                Rok istekao
+            </div>
+            <div class="assigned-stat-value">
+                @Model.RokIstekao
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FILTERI -->
+    <div class="card-custom">
+
+        <h4 class="mb-3">
+            <i class="fas fa-filter me-2"></i>
+            Filteri evidencije
+        </h4>
+
+        <form asp-area="Admin"
+              asp-controller="AssignedTests"
+              asp-action="Index"
+              method="get">
+
+            <input type="hidden"
+                   name="page"
+                   value="1" />
+
+            <div class="assigned-filters">
+
+                <div class="assigned-filter-group">
+                    <label for="search">
+                        Pretraga
+                    </label>
+
+                    <input type="text"
+                           id="search"
+                           name="search"
+                           value="@Model.Search"
+                           class="form-control"
+                           placeholder="Korisnik, predmet ili test..." />
+                </div>
+
+                <div class="assigned-filter-group">
+                    <label for="status">
+                        Status polaganja
+                    </label>
+
+                    <select id="status"
+                            name="status"
+                            class="form-select">
+
+                        @foreach (var option in statusOptions)
+                        {
+                            <option value="@option.Value"
+                                    selected="@(Model.Status == option.Value)">
+                                @option.Text
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+                <div class="assigned-filter-group">
+                    <label for="nacinDodjele">
+                        Način dodjele
+                    </label>
+
+                    <select id="nacinDodjele"
+                            name="nacinDodjele"
+                            class="form-select">
+
+                        <option value=""
+                                selected="@(string.IsNullOrWhiteSpace(Model.NacinDodjele))">
+                            Sve dodjele
+                        </option>
+
+                        <option value="auto"
+                                selected="@(Model.NacinDodjele == "auto")">
+                            Automatske
+                        </option>
+
+                        <option value="manual"
+                                selected="@(Model.NacinDodjele == "manual")">
+                            Ručne
+                        </option>
+
+                    </select>
+                </div>
+
+                <div class="assigned-filter-group">
+                    <label for="pageSize">
+                        Broj zapisa po stranici
+                    </label>
+
+                    <select id="pageSize"
+                            name="pageSize"
+                            class="form-select">
+
+                        @foreach (var size in new[] { 10, 25, 50, 100 })
+                        {
+                            <option value="@size"
+                                    selected="@(Model.PageSize == size)">
+                                @size
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+                <div class="assigned-filter-group">
+                    <label for="datumOd">
+                        Datum dodjele od
+                    </label>
+
+                    <input type="date"
+                           id="datumOd"
+                           name="datumOd"
+                           value="@(Model.DatumOd?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+                </div>
+
+                <div class="assigned-filter-group">
+                    <label for="datumDo">
+                        Datum dodjele do
+                    </label>
+
+                    <input type="date"
+                           id="datumDo"
+                           name="datumDo"
+                           value="@(Model.DatumDo?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+                </div>
+
+            </div>
+            
+            <div class="assigned-filter-actions">
+
+                <button type="submit"
+                        class="btn-sapio btn-sapio-primary">
+
+                    <i class="fas fa-search"></i>
+                    Primijeni filtere
+
+                </button>
+
+                <a asp-area="Admin"
+                    asp-controller="AssignedTests"
+                    asp-action="Index"
+                    class="btn-sapio btn-sapio-secondary">
+
+                    <i class="fas fa-undo"></i>
+                    Resetuj
+
+                </a>
+
+                <!-- NOVO: VIDI SPORNE -->
+                <a href="@Url.Action("Index", "AssignedTests", new {
+                        area = "Admin",
+                        sporni = true,
+                        page = 1,
+                        pageSize = Model.PageSize
+                    })"
+                    class="btn-sapio btn-sapio-secondary"
+                    style="border: 1px solid #dc3545; color: #dc3545;">
+
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Vidi sporne
+
+                </a>
+
+                @if (ViewBag.Sporni == true)
+                {
+                    <a href="@Url.Action("Index", "AssignedTests", new {
+                            area = "Admin"
+                        })"
+                        class="btn-sapio btn-sapio-secondary">
+
+                        <i class="fas fa-list me-1"></i>
+                        Prikaži sve dodjele
+
+                    </a>
+                }
+
+            </div>                
+
+        </form>
+
+    </div>
+
+    <!-- EVIDENCIJA -->
+    <div class="card-custom">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+
+            <h4 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Dodijeljeni testovi
+            </h4>
+
+            <span class="text-muted small">
+                Pronađeno: @Model.TotalCount
+            </span>
+
+        </div>
+
+        <div class="table-responsive assigned-table-container">
+
+            <table class="table table-bordered table-striped align-middle assigned-table">
+
+                <thead>
+                    <tr>
+                        <th>Korisnik</th>
+                        <th>Predmet / Test</th>
+                        <th>Datum dodjele</th>
+                        <th>Rok</th>
+                        <th>Način</th>
+                        <th>Pokušaji</th>
+                        <th>Rezultat</th>
+                        <th>Status</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.Dodjele)
+                    {
+                        var statusClass = item.StatusPolaganja switch
+                        {
+                            "Položen" => "assigned-status-passed",
+                            "Nije položen" => "assigned-status-failed",
+                            "Rok istekao" => "assigned-status-expired",
+                            "U toku" => "assigned-status-progress",
+                            "Na ocjenjivanju" => "assigned-status-review",
+                            _ => "assigned-status-waiting"
+                        };
+
+                        <tr>
+
+                            <!-- KORISNIK -->
+                            <td>
+                                <div class="assigned-person">
+                                    @item.ImePrezime
+                                </div>
+
+                                <div class="assigned-date-small">
+                                    ID: @item.KorisnikId
+                                </div>
+                            </td>
+
+                            <!-- TEST -->
+                            <td>
+                                <div class="assigned-test-name">
+                                    @item.TestNaziv
+                                </div>
+
+                                <div class="assigned-subject">
+                                    @item.PredmetNaziv
+                                </div>
+
+                                <span class="assigned-class">
+                                    @item.TestKlasaNaziv
+                                </span>
+                            </td>
+
+                            <!-- DATUM DODJELE -->
+                            <td class="assigned-date">
+                                @item.DatumDodjele.ToString("dd.MM.yyyy")
+
+                                <div class="assigned-date-small">
+                                    @item.DatumDodjele.ToString("HH:mm")
+                                </div>
+                            </td>
+
+                            <!-- ROK -->
+                            <td class="assigned-date">
+
+                                @if (item.RokZaPolaganje.HasValue)
+                                {
+                                    @item.RokZaPolaganje.Value.ToString("dd.MM.yyyy")
+
+                                    <div class="assigned-date-small">
+                                        @item.RokZaPolaganje.Value.ToString("HH:mm")
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        Nije definisan
+                                    </span>
+                                }
+
+                            </td>
+
+                            <!-- NAČIN -->
+                            <td>
+                                @if (item.NacinDodjele == "Automatska")
+                                {
+                                    <span class="badge bg-info text-dark">
+                                        Automatska
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        Ručna
+                                    </span>
+                                }
+
+                                @if (!item.Aktivno)
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge bg-dark">
+                                            Neaktivna dodjela
+                                        </span>
+                                    </div>
+                                }
+                            </td>
+
+                            <!-- POKUŠAJI -->
+                            <td class="text-center">
+                                @item.BrojPokusaja
+                            </td>
+
+                            <!-- REZULTAT -->
+                            <td class="text-center">
+
+                                @if (item.NajboljiProcenat.HasValue)
+                                {
+                                    <strong>
+                                        @item.NajboljiProcenat.Value.ToString("0.##")%
+                                    </strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        -
+                                    </span>
+                                }
+
+                            </td>
+
+                            <!-- STATUS -->
+                            <td>
+                                <span class="assigned-status @statusClass">
+                                    @item.StatusPolaganja
+                                </span>
+                            </td>
+                            
+                            <!-- AKCIJE -->
+                            <td class="text-center">
+
+                                @if (item.BrojPokusaja > 0)
+                                {
+                                    <a asp-area="Admin"
+                                       asp-controller="AssignedTests"
+                                       asp-action="Answers"
+                                       asp-route-id="@item.ID"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Pregled pitanja i odgovora studenta">
+
+                                        <i class="fas fa-eye me-1"></i>
+                                        Pregled odgovora
+
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small"
+                                          title="Korisnik još nije polagao ovaj test.">
+
+                                        <i class="fas fa-minus-circle me-1"></i>
+                                        Nije polagao
+
+                                    </span>
+                                }
+
+                            </td>
+
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        @if (!Model.Dodjele.Any())
+        {
+            <div class="assigned-empty">
+
+                <i class="fas fa-search fa-2x mb-3"></i>
+
+                <div>
+                    Nema pronađenih dodjela za odabrane kriterije.
+                </div>
+
+            </div>
+        }
+
+        <!-- PAGINACIJA -->
+        @if (Model.TotalPages > 1)
+        {
+            var startPage = Math.Max(1, Model.Page - 2);
+            var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
+
+            <div class="assigned-pagination">
+
+                <div class="assigned-pagination-info">
+                    Stranica @Model.Page od @Model.TotalPages
+                </div>
+
+                <div class="assigned-page-links">
+
+                    
+                    @if (Model.Page > 1)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="AssignedTests"
+                           asp-action="Index"
+                           asp-route-page="1"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-search="@Model.Search"
+                           asp-route-status="@Model.Status"
+                           asp-route-nacinDodjele="@Model.NacinDodjele"
+                           asp-route-datumOd="@(Model.DatumOd?.ToString("yyyy-MM-dd"))"
+                           asp-route-datumDo="@(Model.DatumDo?.ToString("yyyy-MM-dd"))"
+                           asp-route-sporni="@(ViewBag.Sporni == true)"
+                           class="assigned-page-link">
+
+                            <i class="fas fa-angle-double-left"></i>
+                            Prva
+
+                        </a>
+                    }
+
+
+                    @for (var p = startPage; p <= endPage; p++)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="AssignedTests"
+                           asp-action="Index"
+                           asp-route-page="@p"
+                           asp-route-pageSize="@Model.PageSize"
+                           asp-route-search="@Model.Search"
+                           asp-route-status="@Model.Status"
+                           asp-route-nacinDodjele="@Model.NacinDodjele"
+                           asp-route-datumOd="@(Model.DatumOd?.ToString("yyyy-MM-dd"))"
+                           asp-route-datumDo="@(Model.DatumDo?.ToString("yyyy-MM-dd"))"
+                           asp-route-sporni="@(ViewBag.Sporni == true)"
+                           class="assigned-page-link @(p == Model.Page ? "current" : "")">
+
+                            @p
+
+                        </a>
+                    }
+                    
+                        @if (Model.Page < Model.TotalPages)
+                        {
+                            <a asp-area="Admin"
+                               asp-controller="AssignedTests"
+                               asp-action="Index"
+                               asp-route-page="@Model.TotalPages"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-search="@Model.Search"
+                               asp-route-status="@Model.Status"
+                               asp-route-nacinDodjele="@Model.NacinDodjele"
+                               asp-route-datumOd="@(Model.DatumOd?.ToString("yyyy-MM-dd"))"
+                               asp-route-datumDo="@(Model.DatumDo?.ToString("yyyy-MM-dd"))"
+                               asp-route-sporni="@(ViewBag.Sporni == true)"
+                               class="assigned-page-link">
+
+                                Zadnja
+                                <i class="fas fa-angle-double-right"></i>
+
+                            </a>
+                        }
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>

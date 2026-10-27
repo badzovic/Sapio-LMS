@@ -4,15 +4,31 @@
 }
 
 <div class="container-fluid">
+
     <div class="card-custom">
         <h3 class="mb-1">Moji predmeti</h3>
         <p class="text-muted mb-0">
-            Pregled predmeta koje trebate polagati po matrici obuka.
+            Pregled predmeta prema matrici obuka,
+            dodatno dodijeljenih predmeta i ostalih obuka.
         </p>
     </div>
 
+    @* PRIMARNA V3 MATRICA *@
     @await Html.PartialAsync(
     "~/Views/Shared/_UserTrainingMatrix.cshtml",
         ViewBag.TrainingMatrix as SIA.Sapio_LMS.Models.UserTrainingMatrixVM
         )
+
+    @* SEKUNDARNA LMS MATRICA *@
+    @await Html.PartialAsync(
+        "~/Views/Shared/_UserCustomTrainingMatrix.cshtml",
+        ViewBag.CustomTrainingMatrix as SIA.Sapio_LMS.Models.UserCustomTrainingMatrixVM
+        )
+
+    @* OSTALE OBUKE *@
+    @await Html.PartialAsync(
+        "~/Views/Shared/_UserOtherTrainings.cshtml",
+        ViewBag.OtherTrainings as SIA.Sapio_LMS.Models.UserOtherTrainingsVM
+        )
+
 </div>

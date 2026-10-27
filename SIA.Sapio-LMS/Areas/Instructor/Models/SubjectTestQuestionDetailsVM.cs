@@ -18,5 +18,11 @@
         public int Redoslijed { get; set; }
 
         public List<SubjectTestAnswerDetailsVM> Odgovori { get; set; } = new();
+
+
+        public string? SlikaPutanja { get; set; }
+
+        public string? SlikaNaziv { get; set; }
+
     }
 }

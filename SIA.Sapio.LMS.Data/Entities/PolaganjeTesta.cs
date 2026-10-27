@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -17,6 +18,10 @@ namespace SIA.Sapio.LMS.Data.Entities
 
         [Column("KORISNIK_ID")]
         public int KORISNIK_ID { get; set; }
+
+        // Veza s konkretnom dodjelom testa
+        [Column("DODIJELJENI_TEST_ID")]
+        public int? DODIJELJENI_TEST_ID { get; set; }
 
         [Column("DATUM_POCETKA")]
         public DateTime DATUM_POCETKA { get; set; }
@@ -50,14 +55,19 @@ namespace SIA.Sapio.LMS.Data.Entities
 
         [Column("DATUM_KREIRANJA")]
         public DateTime DATUM_KREIRANJA { get; set; }
+
         [Column("DATUM_IZMJENE")]
         public DateTime? DATUM_IZMJENE { get; set; }
 
+        // Navigacijska svojstva
         [ForeignKey(nameof(TEST_ID))]
         public Test? Test { get; set; }
 
         [ForeignKey(nameof(KORISNIK_ID))]
-        public Korisnik? Korisnik { get; set; }        
+        public Korisnik? Korisnik { get; set; }
+
+        [ForeignKey(nameof(DODIJELJENI_TEST_ID))]
+        public DodijeljeniTest? DodijeljeniTest { get; set; }
 
         public ICollection<PolaganjePitanja> Pitanja { get; set; } = new List<PolaganjePitanja>();
 

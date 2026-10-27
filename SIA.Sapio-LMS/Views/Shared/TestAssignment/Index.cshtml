@@ -1,76 +1,526 @@
 ﻿@model List<SIA.Sapio_LMS.Areas.Models.TestAssignmentListItemVM>
 
 @{
-    ViewData["Title"] = "Testiranja";
+    ViewData["Title"] = "Dodjela testova";
+
+    var mode = ViewBag.Mode?.ToString() ?? "instructor";
+    var isAdminMode = mode == "admin";
+
+    var predmeti = Model
+        .GroupBy(x => x.PredmetNaziv ?? "")
+        .OrderBy(x => x.Key)
+        .ToList();
 }
+
+<style>
+    .assignment-search {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .assignment-search input {
+            width: 100%;
+            padding: 13px 15px 13px 44px;
+            border: 1px solid #dee2e6;
+            border-radius: 9px;
+            background: #fff;
+            outline: none;
+        }
+
+            .assignment-search input:focus {
+                border-color: #80bdff;
+                box-shadow: 0 0 0 3px rgba(0,123,255,.10);
+            }
+
+        .assignment-search i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8993a0;
+        }
+
+    .assignment-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+
+    .assignment-filter {
+        padding: 9px 16px;
+        border: 1px solid #e1e5ea;
+        border-radius: 8px;
+        background: #fff;
+        color: #596574;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+
+        .assignment-filter:hover {
+            background: #f5f7fa;
+        }
+
+        .assignment-filter.active {
+            background: #edf3ff;
+            border-color: #3972c7;
+            color: #285da6;
+        }
+
+    .assignment-subject {
+        border: 1px solid #e4e8ed;
+        border-radius: 10px;
+        background: #fff;
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+
+    .assignment-subject-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 20px;
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+    }
+
+        .assignment-subject-header::-webkit-details-marker {
+            display: none;
+        }
+
+        .assignment-subject-header:hover {
+            background: #f8f9fb;
+        }
+
+    .assignment-subject-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 9px;
+        background: #edf3ff;
+        color: #306ac4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .assignment-subject-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .assignment-subject-name {
+        font-weight: 600;
+        font-size: 16px;
+        color: #263238;
+        margin: 0;
+    }
+
+    .assignment-subject-count {
+        font-size: 13px;
+        color: #78838e;
+        margin-top: 4px;
+    }
+
+    .assignment-chevron {
+        color: #8b95a0;
+        transition: transform .2s ease;
+    }
+
+    .assignment-subject[open] .assignment-chevron {
+        transform: rotate(180deg);
+    }
+
+    .assignment-tests {
+        border-top: 1px solid #e9ecef;
+        padding: 4px 20px;
+    }
+
+    .assignment-test {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        padding: 18px 0;
+    }
+
+        .assignment-test + .assignment-test {
+            border-top: 1px solid #edf0f2;
+        }
+
+    .assignment-test-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .assignment-test-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #263238;
+        margin-bottom: 9px;
+        overflow-wrap: break-word;
+    }
+
+    .assignment-test-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 9px 15px;
+        font-size: 13px;
+        color: #76818d;
+    }
+
+        .assignment-test-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+    .assignment-class {
+        border-radius: 5px;
+        background: #edf3ff;
+        color: #315d9e;
+        padding: 4px 9px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .assignment-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .assignment-status-active {
+        background: #e7f5ec;
+        color: #21834a;
+    }
+
+    .assignment-status-expired {
+        background: #fdecec;
+        color: #b83c3c;
+    }
+
+    .assignment-status-inactive {
+        background: #edf0f3;
+        color: #687480;
+    }
+
+    .assignment-status-scheduled {
+        background: #fff3d9;
+        color: #946900;
+    }
+
+    .assignment-test-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+        .assignment-test-actions a,
+        .assignment-test-actions button {
+            white-space: nowrap;
+        }
+
+    .assignment-preview-disabled {
+        padding: 7px 12px;
+        border: 1px solid #dce1e6;
+        border-radius: 6px;
+        background: #f8f9fa;
+        color: #8a939d;
+        cursor: not-allowed;
+        font-size: 13px;
+    }
+
+    .assignment-empty {
+        text-align: center;
+        color: #89939d;
+        padding: 35px 15px;
+    }
+
+    @@media (max-width: 768px) {
+        .assignment-test {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+        }
+
+        .assignment-test-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+            .assignment-test-actions a,
+            .assignment-test-actions button {
+                display: block;
+                text-align: center;
+                width: 100%;
+            }
+
+        .assignment-subject-header {
+            padding: 15px;
+        }
+
+        .assignment-tests {
+            padding: 0 15px;
+        }
+
+        .assignment-filters {
+            gap: 6px;
+        }
+
+        .assignment-filter {
+            padding: 8px 12px;
+        }
+    }
+</style>
 
 <div class="page-toolbar d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="mb-0">Testiranja</h2>
+        <h2 class="mb-0">
+            @(isAdminMode ? "Dodjela i pregled testova" : "Dodjela testova")
+        </h2>
+
         <p class="text-muted mb-0">
-            Dodjela aktivnih testova studentima
+            @if (isAdminMode)
+            {
+                <text>Pregled testova po predmetima, njihovih statusa i dodjela studentima.</text>
+            }
+            else
+            {
+                <text>Odaberite predmet za pregled i dodjelu aktivnih testova studentima.</text>
+            }
         </p>
     </div>
 </div>
 
 <div class="card-custom">
-    <div class="table-responsive">
-        <table id="testAssignmentsTable" class="table table-striped table-bordered align-middle">
-            <thead>
-                <tr>
-                    <th>Predmet</th>
-                    <th>Test</th>
-                    <th>Period</th>
-                    <th>Broj pitanja</th>
-                    <th>Dodijeljeno studenata</th>
-                    <th style="width:180px;">Akcije</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>
-                            @item.PredmetNaziv
-                        </td>
 
-                        <td>
-                            <strong>@item.TestNaziv</strong>
-                        </td>
+    <!-- PRETRAGA -->
+    <div class="assignment-search">
+        <i class="fas fa-search"></i>
 
-                        <td>
-                            <div>
-                                <strong>Od:</strong>
-                                @(item.DatumOd?.ToString("dd.MM.yyyy"))
-                            </div>
-
-                            <div>
-                                <strong>Do:</strong>
-                                @(item.DatumDo?.ToString("dd.MM.yyyy"))
-                            </div>
-                        </td>
-
-                        <td>
-                            @item.BrojPitanja
-                        </td>
-
-                        <td>
-                            <span class="badge bg-info">
-                                @item.BrojDodijeljenihStudenata
-                            </span>
-                        </td>
-
-                        <td>
-                            <a href="/TestAssignments/Assign/@item.TestId?mode=@ViewBag.Mode"
-                               class="btn-sapio btn-sapio-primary btn-sm">
-                                Dodijeli studentima
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <input type="text"
+               id="assignmentSearch"
+               placeholder="Pretraži predmet ili naziv testa..."
+               autocomplete="off" />
     </div>
+
+    <!-- FILTERI SAMO ZA ADMINISTRATORA -->
+    @if (isAdminMode)
+    {
+        <div class="assignment-filters" id="assignmentFilters">
+
+            <button type="button"
+                    class="assignment-filter active"
+                    data-filter="Aktivan">
+                Aktivni
+            </button>
+
+            <button type="button"
+                    class="assignment-filter"
+                    data-filter="Istekao">
+                Istekli
+            </button>
+
+            <button type="button"
+                    class="assignment-filter"
+                    data-filter="Neaktivan">
+                Neaktivni
+            </button>
+
+            <button type="button"
+                    class="assignment-filter"
+                    data-filter="Zakazan">
+                Zakazani
+            </button>
+
+            <button type="button"
+                    class="assignment-filter"
+                    data-filter="Svi">
+                Svi testovi
+            </button>
+
+        </div>
+    }
+
+    <!-- PREDMETI -->
+    <div id="assignmentSubjects">
+
+        @foreach (var predmet in predmeti)
+        {
+            var testovi = predmet
+            .OrderBy(x => x.TestNaziv)
+            .ToList();
+
+            <details class="assignment-subject"
+                     data-subject="@predmet.Key">
+
+                <summary class="assignment-subject-header">
+
+                    <div class="assignment-subject-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+
+                    <div class="assignment-subject-info">
+
+                        <div class="assignment-subject-name">
+                            @predmet.Key
+                        </div>
+
+                        <div class="assignment-subject-count">
+                            <span class="assignment-visible-count">
+                                @testovi.Count
+                            </span>
+                            <span class="assignment-count-label">
+                                testova
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <i class="fas fa-chevron-down assignment-chevron"></i>
+
+                </summary>
+
+                <div class="assignment-tests">
+
+                    @foreach (var test in testovi)
+                    {
+                        var status = test.StatusPrikaza;
+
+                        var statusClass = status switch
+                        {
+                            "Aktivan" => "assignment-status-active",
+                            "Istekao" => "assignment-status-expired",
+                            "Zakazan" => "assignment-status-scheduled",
+                            _ => "assignment-status-inactive"
+                        };
+
+                        var statusIcon = status switch
+                        {
+                            "Aktivan" => "fas fa-check-circle",
+                            "Istekao" => "fas fa-clock",
+                            "Zakazan" => "fas fa-calendar-alt",
+                            _ => "fas fa-ban"
+                        };
+
+                        <div class="assignment-test"
+                             data-test="@test.TestNaziv"
+                             data-status="@status">
+
+                            <div class="assignment-test-content">
+
+                                <!-- NAZIV TESTA -->
+                                <div class="assignment-test-name">
+                                    @test.TestNaziv
+                                </div>
+
+                                <!-- DETALJI TESTA -->
+                                <div class="assignment-test-meta">
+
+                                    <span class="assignment-class">
+                                        <i class="fas fa-layer-group"></i>
+                                        @test.TestKlasaNaziv
+                                    </span>
+
+                                    <span>
+                                        <i class="fas fa-list-ol"></i>
+                                        @test.BrojPitanja pitanja
+                                    </span>
+
+                                    <span>
+                                        <i class="fas fa-users"></i>
+                                        @test.BrojDodijeljenihStudenata dodjela
+                                    </span>
+
+                                    <span>
+                                        <i class="far fa-calendar-alt"></i>
+
+                                        @test.DatumOd?.ToString("dd.MM.yyyy")
+                                        -
+                                        @test.DatumDo?.ToString("dd.MM.yyyy")
+                                    </span>
+
+                                    @if (isAdminMode)
+                                    {
+                                        <span class="assignment-status @statusClass">
+                                            <i class="@statusIcon"></i>
+                                            @status
+                                        </span>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                            <!-- AKCIJE -->
+                            <div class="assignment-test-actions">
+
+                                @if (test.MozeDodijeliti)
+                                {
+                                    <a asp-controller="TestAssignments"
+                                       asp-action="Assign"
+                                       asp-route-id="@test.TestId"
+                                       asp-route-mode="@mode"
+                                       class="btn-sapio btn-sapio-primary btn-sapio-sm">
+
+                                        <i class="fas fa-user-plus"></i>
+                                        Dodijeli studentima
+
+                                    </a>
+                                }
+
+
+                                @if (isAdminMode && test.MozePregledati)
+                                {
+                                    <a asp-area=""
+                                       asp-controller="TestAssignments"
+                                       asp-action="Preview"
+                                       asp-route-id="@test.TestId"
+                                       class="btn-sapio btn-sapio-secondary btn-sapio-sm">
+
+                                        <i class="fas fa-eye"></i>
+                                        Pregledaj test
+
+                                    </a>
+                                }
+
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+            </details>
+        }
+
+    </div>
+
+    <!-- NEMA REZULTATA -->
+    <div id="assignmentNoResults"
+         class="assignment-empty"
+         style="display:none;">
+
+        <i class="fas fa-search fa-2x mb-3"></i>
+
+        <div>
+            Nema pronađenih testova za odabrane kriterije.
+        </div>
+
+    </div>
+
 </div>
 
 @section Scripts {
@@ -78,23 +528,141 @@
     <script>
         $(document).ready(function () {
 
-            $('#testAssignmentsTable').DataTable({
-                pageLength: 25,
-                order: [[0, 'asc']],
-                responsive: true,
-                language: {
-                    search: "Pretraga:",
-                    lengthMenu: "Prikaži _MENU_ zapisa",
-                    info: "Prikazano _START_ do _END_ od ukupno _TOTAL_ zapisa",
-                    infoEmpty: "Nema zapisa",
-                    zeroRecords: "Nema pronađenih testova",
-                    paginate: {
-                        previous: "Prethodna",
-                        next: "Sljedeća"
+            var $search = $('#assignmentSearch');
+            var $subjects = $('.assignment-subject');
+            var $noResults = $('#assignmentNoResults');
+
+            var isAdminMode = @(isAdminMode ? "true" : "false");
+
+            // Početni filter za admina
+            var activeFilter = isAdminMode ? 'Aktivan' : 'Svi';
+
+            function normalizeText(value) {
+                return (value || '')
+                    .toLocaleLowerCase()
+                    .trim();
+            }
+
+            function updateDisplay() {
+
+                var search = normalizeText($search.val());
+                var visibleSubjects = 0;
+
+                $subjects.each(function () {
+
+                    var $subject = $(this);
+
+                    var subjectName = normalizeText(
+                        $subject.attr('data-subject')
+                    );
+
+                    var subjectMatches =
+                        subjectName.includes(search);
+
+                    var visibleTests = 0;
+
+                    var $tests = $subject.find('.assignment-test');
+
+                    $tests.each(function () {
+
+                        var $test = $(this);
+
+                        var testName = normalizeText(
+                            $test.attr('data-test')
+                        );
+
+                        var testStatus = $test.attr('data-status');
+
+                        // Provjera statusa
+                        var statusMatches =
+                            activeFilter === 'Svi' ||
+                            testStatus === activeFilter;
+
+                        // Provjera pretrage
+                        var searchMatches =
+                            search === '' ||
+                            subjectMatches ||
+                            testName.includes(search);
+
+                        var showTest =
+                            statusMatches && searchMatches;
+
+                        $test.toggle(showTest);
+
+                        if (showTest) {
+                            visibleTests++;
+                        }
+
+                    });
+
+                    // Predmet prikazujemo samo ako
+                    // ima barem jedan odgovarajući test.
+                    var showSubject = visibleTests > 0;
+
+                    $subject.toggle(showSubject);
+
+                    // Ažuriranje broja vidljivih testova
+                    $subject.find('.assignment-visible-count')
+                        .text(visibleTests);
+
+                    $subject.find('.assignment-count-label')
+                        .text(
+                            visibleTests === 1
+                                ? 'test'
+                                : 'testova'
+                        );
+
+                    if (showSubject) {
+
+                        visibleSubjects++;
+
+                        // Kod pretrage automatski
+                        // proširujemo odgovarajući predmet.
+                        if (search !== '') {
+                            $subject.prop('open', true);
+                        }
+
                     }
+
+                });
+
+                // Poruka ako nema rezultata
+                $noResults.toggle(visibleSubjects === 0);
+            }
+
+            // PRETRAGA
+            $search.on('input', function () {
+                updateDisplay();
+
+                // Kad se pretraga obriše,
+                // zatvaramo sve predmete.
+                if (normalizeText($search.val()) === '') {
+                    $subjects.prop('open', false);
                 }
             });
 
+            // FILTERI ZA ADMINA
+            $('.assignment-filter').on('click', function () {
+
+                $('.assignment-filter')
+                    .removeClass('active');
+
+                $(this).addClass('active');
+
+                activeFilter = $(this).attr('data-filter');
+
+                // Prilikom promjene filtera
+                // zatvaramo prethodno otvorene predmete.
+                $subjects.prop('open', false);
+
+                updateDisplay();
+
+            });
+
+            // Početni prikaz
+            updateDisplay();
+
         });
     </script>
+
 }

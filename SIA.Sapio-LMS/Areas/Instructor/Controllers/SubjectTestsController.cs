@@ -563,6 +563,10 @@ namespace SIA.Sapio_LMS.Areas.Instructor.Controllers
                     ID = pitanje.ID,
                     OriginalPitanjeId = pitanje.ORIGINAL_PITANJE_ID,
                     TekstPitanja = pitanje.TEKST_PITANJA,
+
+                    SlikaPutanja = pitanje.SLIKA_PUTANJA,
+                    SlikaNaziv = pitanje.SLIKA_NAZIV,
+
                     TipPitanja = pitanje.TipPitanja?.NAZIV ?? "-",
                     Tezina = pitanje.TipTezinePitanja?.NAZIV ?? "-",
                     Bodovi = pitanje.BODOVI,

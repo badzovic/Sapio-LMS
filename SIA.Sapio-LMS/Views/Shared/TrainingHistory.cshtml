@@ -1,0 +1,569 @@
+﻿@using SIA.Sapio_LMS.Models
+@using SIA.Sapio_LMS.Models.Shared
+
+@model UserTrainingHistoryVM
+
+@{
+    ViewData["Title"] = "Historija polaganja";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+
+    var isAdmin = currentArea.Equals(
+        "Admin", StringComparison.OrdinalIgnoreCase);
+
+    var isStudent = currentArea.Equals(
+        "Student", StringComparison.OrdinalIgnoreCase);
+
+    var userId = ViewBag.UserId as string;
+
+    string StatusText(string? status, string? isPassed)
+    {
+        if (isPassed == "Y")
+            return "Položen";
+
+        if (status == "IN_PROGRESS")
+            return "U toku";
+
+        if (status == "PENDING_REVIEW")
+            return "Na ocjenjivanju";
+
+        if (isPassed == "N")
+            return "Nije položen";
+
+        return status ?? "Nepoznato";
+    }
+
+    string StatusClass(string? status, string? isPassed)
+    {
+        if (isPassed == "Y")
+            return "bg-success";
+
+        if (status == "IN_PROGRESS")
+            return "bg-primary";
+
+        if (status == "PENDING_REVIEW")
+            return "bg-warning text-dark";
+
+        if (isPassed == "N")
+            return "bg-danger";
+
+        return "bg-secondary";
+    }
+}
+
+<style>
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .history-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #263238;
+        margin-bottom: 6px;
+        overflow-wrap: anywhere;
+    }
+
+    .history-subtitle {
+        font-size: 14px;
+        color: #75808b;
+    }
+
+    .history-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .history-info-box {
+        padding: 15px;
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        background: #f8f9fb;
+        min-width: 0;
+    }
+
+    .history-info-label {
+        display: block;
+        font-size: 12px;
+        color: #75808b;
+        margin-bottom: 6px;
+    }
+
+    .history-info-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: #263238;
+        overflow-wrap: anywhere;
+    }
+
+    .history-section-title {
+        font-size: 19px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    /* DODJELE */
+
+    .history-assignment {
+        border: 1px solid #e5e9ee;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 17px;
+        background: #fff;
+    }
+
+        .history-assignment:last-child {
+            margin-bottom: 0;
+        }
+
+    .history-assignment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .history-assignment-title {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.5;
+        color: #263238;
+        overflow-wrap: anywhere;
+    }
+
+    .history-assignment-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .history-assignment-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 25px;
+        font-size: 13px;
+        color: #46515d;
+    }
+
+        .history-assignment-info strong {
+            color: #263238;
+        }
+
+    .history-assignment-note {
+        margin-top: 12px;
+        padding: 12px 14px;
+        background: #f8f9fb;
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #46515d;
+        overflow-wrap: anywhere;
+    }
+
+    /* POKUŠAJI */
+
+    .history-attempts-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #263238;
+        margin-bottom: 12px;
+    }
+
+    .history-attempt {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 13px 15px;
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        background: #fafbfc;
+        margin-bottom: 8px;
+    }
+
+        .history-attempt:last-child {
+            margin-bottom: 0;
+        }
+
+    .history-attempt-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .history-attempt-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #263238;
+        margin-bottom: 6px;
+    }
+
+    .history-attempt-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        font-size: 12px;
+        color: #75808b;
+    }
+
+    .history-attempt-result {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .history-score {
+        font-size: 14px;
+        font-weight: 600;
+        color: #263238;
+    }
+
+    .history-empty {
+        border: 1px dashed #dce2e8;
+        border-radius: 8px;
+        padding: 22px;
+        text-align: center;
+        color: #75808b;
+        background: #fafbfc;
+        font-size: 13px;
+    }
+
+    .history-divider {
+        border: 0;
+        border-top: 1px solid #e6eaf0;
+        margin: 18px 0;
+        opacity: 1;
+    }
+
+    @@media (max-width: 991px) {
+        .history-info-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 575px) {
+        .history-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .history-assignment {
+            padding: 15px;
+        }
+
+        .history-attempt {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .history-attempt-result {
+            width: 100%;
+        }
+
+            .history-attempt-result a {
+                width: 100%;
+                text-align: center;
+            }
+    }
+</style>
+
+<div class="container-fluid">
+
+    <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
+             model='new PageHeaderVM
+             {
+                 Title = "Historija polaganja",
+                 Subtitle = Model.NazivPredmeta
+             }' />
+
+    <!-- OSNOVNI PODACI -->
+
+    <div class="card-custom">
+
+        <div class="history-header">
+
+            <div>
+                <div class="history-title">
+                    @Model.NazivPredmeta
+                </div>
+
+                <div class="history-subtitle">
+                    <i class="fas fa-user me-1"></i>
+                    @Model.ImePrezime
+                </div>
+            </div>
+
+            <div>
+
+                @if (isAdmin && !string.IsNullOrWhiteSpace(userId))
+                {
+                    <a asp-area="Admin"
+                       asp-controller="InternalUsersManagement"
+                       asp-action="Details"
+                       asp-route-userId="@userId"
+                       class="btn-sapio btn-sapio-secondary">
+
+                        <i class="fas fa-arrow-left"></i>
+                        Nazad na korisnika
+
+                    </a>
+                }
+                else if (isStudent)
+                {
+                    <a asp-area="Student"
+                       asp-controller="Subjects"
+                       asp-action="Index"
+                       class="btn-sapio btn-sapio-secondary">
+
+                        <i class="fas fa-arrow-left"></i>
+                        Nazad na moje predmete
+
+                    </a>
+                }
+
+            </div>
+        </div>
+
+        <div class="history-info-grid">
+
+            <div class="history-info-box">
+                <span class="history-info-label">
+                    Predmet
+                </span>
+
+                <div class="history-info-value">
+                    @Model.NazivPredmeta
+                </div>
+            </div>
+
+            <div class="history-info-box">
+                <span class="history-info-label">
+                    Ukupno dodjela
+                </span>
+
+                <div class="history-info-value">
+                    @Model.BrojDodjela
+                </div>
+            </div>
+
+            <div class="history-info-box">
+                <span class="history-info-label">
+                    Ukupno pokušaja
+                </span>
+
+                <div class="history-info-value">
+                    @Model.BrojPokusaja
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- HISTORIJA DODJELA -->
+
+    <div class="card-custom">
+
+        <h4 class="history-section-title">
+            <i class="fas fa-history me-2"></i>
+            Historija dodjela i polaganja
+        </h4>
+
+        @if (!Model.Dodjele.Any())
+        {
+            <div class="history-empty">
+                <i class="fas fa-info-circle me-2"></i>
+                Za ovaj predmet nema evidentiranih LMS dodjela testova.
+            </div>
+        }
+        else
+        {
+            @foreach (var dodjela in Model.Dodjele)
+            {
+                <div class="history-assignment">
+
+                    <!-- ZAGLAVLJE DODJELE -->
+
+                    <div class="history-assignment-header">
+
+                        <div class="history-assignment-title">
+
+                            <i class="fas fa-file-alt me-2 text-primary"></i>
+                            @dodjela.NazivTesta
+
+                        </div>
+
+                        <div class="history-assignment-badges">
+
+                            @if (!string.IsNullOrWhiteSpace(dodjela.RazlogDodjele))
+                            {
+                                <span class="badge bg-primary">
+                                    @dodjela.RazlogDodjele
+                                </span>
+                            }
+
+                        <span class="badge @(dodjela.AutoDodjela == "Y" ? "bg-info text-dark" : "bg-secondary")">
+                            @(dodjela.AutoDodjela == "Y"
+                                                    ? "Automatska dodjela"
+                                                    : "Ručna dodjela")
+                    </span>
+
+                    @if (dodjela.Aktivno != "Y")
+                            {
+                                <span class="badge bg-secondary">
+                                    Neaktivna dodjela
+                                </span>
+                            }
+
+                    </div>
+                </div>
+
+                <!-- INFORMACIJE O DODJELI -->
+
+                <div class="history-assignment-info">
+
+                    <span>
+                        <strong>Dodijeljeno:</strong>
+                        @dodjela.DatumDodjele.ToString("dd.MM.yyyy. HH:mm")
+                    </span>
+
+                    <span>
+                        <strong>Rok:</strong>
+                        @(dodjela.RokZaPolaganje.HasValue
+                                            ? dodjela.RokZaPolaganje.Value.ToString("dd.MM.yyyy. HH:mm")
+                                            : "Nije definisan")
+                </span>
+
+                        <span>
+                            <strong>Broj pokušaja:</strong>
+                            @dodjela.Pokusaji.Count
+                        </span>
+
+                @if (!string.IsNullOrWhiteSpace(dodjela.Status))
+                        {
+                            <span>
+                                <strong>Status dodjele:</strong>
+                                @dodjela.Status
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(dodjela.NazivKlase))
+                        {
+                            <span>
+                                <strong>Klasa:</strong>
+                                @dodjela.NazivKlase
+                            </span>
+                        }
+
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(dodjela.Napomena))
+                    {
+                        <div class="history-assignment-note">
+                            <strong>Napomena:</strong>
+                            @dodjela.Napomena
+                        </div>
+                    }
+
+                    <hr class="history-divider" />
+
+                    <!-- POKUŠAJI -->
+
+                    <div class="history-attempts-title">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Pokušaji polaganja (@dodjela.Pokusaji.Count)
+                    </div>
+
+                    @if (!dodjela.Pokusaji.Any())
+                    {
+                        <div class="history-empty">
+                            Za ovu dodjelu nema evidentiranih pokušaja.
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var pokusaj in dodjela.Pokusaji)
+                        {
+                            <div class="history-attempt">
+
+                                <div class="history-attempt-content">
+
+                                    <div class="history-attempt-name">
+                                        Pokušaj @pokusaj.RedniBrojPokusaja
+                                    </div>
+
+                                    <div class="history-attempt-meta">
+
+                                        <span>
+                                            <i class="far fa-calendar-alt me-1"></i>
+                                            @pokusaj.DatumPocetka.ToString("dd.MM.yyyy. HH:mm")
+                                        </span>
+
+                                        @if (pokusaj.DatumZavrsetka.HasValue)
+                                        {
+                                            <span>
+                                                <i class="far fa-clock me-1"></i>
+                                                Završeno:
+                                                @pokusaj.DatumZavrsetka.Value.ToString("dd.MM.yyyy. HH:mm")
+                                            </span>
+                                        }
+
+                                    <span>
+                                        @(pokusaj.AutoSubmitted
+                                                                    ? "Automatska predaja"
+                                                                    : "Ručna predaja")
+                                                                                  </span>
+
+                                </div>
+                            </div>
+
+                            <div class="history-attempt-result">
+
+                                <span class="history-score">
+
+                                    @(pokusaj.Procenat.HasValue
+                                                            ? pokusaj.Procenat.Value.ToString("0.##") + "%"
+                                                            : "-")
+
+                    </span>
+
+                                    <span class="badge @StatusClass(pokusaj.Status, pokusaj.IsPassed)">
+                                        @StatusText(pokusaj.Status, pokusaj.IsPassed)
+                                    </span>
+
+                    @if (isAdmin)
+                                    {
+                                        <a asp-area="Admin"
+                                           asp-controller="AssignedTests"
+                                           asp-action="Answers"
+                                           asp-route-id="@dodjela.DodjelaId"
+                                           asp-route-polaganjeId="@pokusaj.PolaganjeId"
+                                           class="btn-sapio btn-sapio-secondary">
+
+                                            <i class="fas fa-eye"></i>
+                                            Pregled odgovora
+
+                                        </a>
+                                    }
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+            }
+        }
+
+    </div>
+
+</div>

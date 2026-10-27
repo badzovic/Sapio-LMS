@@ -1,5 +1,6 @@
 ﻿@using SIA.Sapio_LMS.Areas.Student.Models
 @using SIA.Sapio_LMS.Models.Shared
+
 @model List<StudentAssignedTestVM>
 
 @{
@@ -7,118 +8,365 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<style>
+    #studentTestsTable {
+        width: 100% !important;
+        table-layout: auto;
+        border-collapse: collapse;
+    }
+
+        #studentTestsTable thead th {
+            white-space: normal !important;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 1.3;
+            padding: 10px 8px;
+        }
+
+        #studentTestsTable tbody td {
+            vertical-align: middle;
+            padding: 10px 8px;
+            white-space: normal;
+            word-break: normal;
+            overflow-wrap: normal;
+            box-sizing: border-box;
+        }
+
+        #studentTestsTable .test-name,
+        #studentTestsTable .test-subject {
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+            hyphens: none;
+        }
+
+        #studentTestsTable .test-description {
+            margin-top: 4px;
+            color: #6c757d;
+            font-size: 0.875em;
+            white-space: normal;
+        }
+
+        #studentTestsTable .test-deadline {
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        #studentTestsTable .test-status-description {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+
+        #studentTestsTable .test-actions,
+        #studentTestsTable .test-status,
+        #studentTestsTable .test-attempts,
+        #studentTestsTable .test-duration {
+            text-align: center;
+        }
+
+        #studentTestsTable .test-actions,
+        #studentTestsTable .test-attempts,
+        #studentTestsTable .test-duration {
+            white-space: nowrap;
+        }
+
+        #studentTestsTable .test-status .badge {
+            white-space: normal;
+            line-height: 1.4;
+            padding: 6px 10px;
+        }
+
+        #studentTestsTable thead th {
+            box-sizing: border-box;
+        }
+</style>
+
 <div class="container-fluid">
 
     <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
              model='new PageHeaderVM
              {
                  Title = "Moji testovi",
-                 Subtitle = "Pregled testova koji su vam dodijeljeni za polaganje"
+                 Subtitle = "Pregled dodijeljenih testova i rokova za polaganje"
              }' />
 
     <div class="card-custom">
+
         <div class="table-responsive">
-            <table id="studentTestsTable" class="table table-bordered table-striped w-100">
+
+            <table id="studentTestsTable"
+                   class="table table-bordered table-striped align-middle w-100">
+
                 <thead>
                     <tr>
                         <th>Naziv testa</th>
                         <th>Predmet</th>
-                        <th>Period</th>
+                        <th>Rok za<br />polaganje</th>
                         <th>Trajanje</th>
                         <th>Pokušaji</th>
                         <th>Status</th>
                         <th>Akcije</th>
                     </tr>
                 </thead>
+
                 <tbody>
+
                     @foreach (var test in Model)
                     {
-                        var nemaPokusaja = test.BrojPokusajaPreostalo <= 0;
+                        var mozePolagati = test.MozePolagati;
+                        var status = test.StatusDostupnosti ?? "";
+
+                        var rokIstekao = status == "Rok istekao";
+                        var uToku = status == "U toku";
+                        var nemaPokusaja = status == "Nema pokušaja";
+                        var testNedostupan = status == "Test nije dostupan";
+                        var dostupan = status == "Dostupno";
+                        var polozen = status == "Položen";
+                        var naOcjenjivanju = status == "Na ocjenjivanju";
 
                         <tr>
+
+                            <!-- NAZIV TESTA -->
                             <td>
-                                <strong>@test.NazivTesta</strong>
+                                <div class="test-name">
+                                    <strong>@test.NazivTesta</strong>
+                                </div>
 
                                 @if (!string.IsNullOrWhiteSpace(test.Opis))
                                 {
-                                    <div class="text-muted small">@test.Opis</div>
+                                    <div class="test-description">
+                                        @test.Opis
+                                    </div>
                                 }
-                            </td>
+                        </td>
 
-                            <td>@(test.Predmet ?? "-")</td>
+                        <!-- PREDMET -->
+                        <td>
+                            <div class="test-subject">
+                                @(string.IsNullOrWhiteSpace(test.Predmet)
+                                                                ? "-"
+                                                                : test.Predmet)
+                            </div>
+                        </td>
 
-                            <td>
-                                @test.DatumOd?.ToString("dd.MM.yyyy HH:mm")
-                                <br />
-                                <span class="text-muted">
-                                    do @test.DatumDo?.ToString("dd.MM.yyyy HH:mm")
-                                </span>
-                            </td>
+                            <!-- ROK ZA POLAGANJE -->
+                            <td data-order="@(test.RokZaPolaganje?.ToString("yyyyMMddHHmmss") ?? "99999999999999")">
 
-                            <td>@test.VrijemeTrajanjaMin min</td>
-
-                            <td>
-                                @test.BrojPokusajaIskoristeno / @test.BrojPokusajaDozvoljeno
-                            </td>
-
-                            <td>
-                                @if (nemaPokusaja)
+                            @if (test.RokZaPolaganje.HasValue)
                                 {
-                                    <span class="badge bg-danger">Nema pokušaja</span>
+                                    <div class="test-deadline @(rokIstekao ? "text-danger" : "")">
+                                        @test.RokZaPolaganje.Value.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+
+                                    @if (rokIstekao)
+                                    {
+                                        <small class="text-danger">
+                                            Rok je istekao
+                                        </small>
+                                    }
                                 }
                                 else
                                 {
-                                    <span class="badge bg-success">Dostupno</span>
+                                    <span class="text-muted">
+                                        Nije definisan
+                                    </span>
                                 }
+
                             </td>
 
-                            <td>
-                                @if (!nemaPokusaja)
+                            <!-- TRAJANJE -->
+                            <td class="test-duration">
+                                @test.VrijemeTrajanjaMin min
+                            </td>
+
+                            <!-- POKUŠAJI -->
+                            <td class="test-attempts">
+
+                                <strong>
+                                    @test.BrojPokusajaIskoristeno
+                                    /
+                                    @test.BrojPokusajaDozvoljeno
+                                </strong>
+
+                                @if (nemaPokusaja)
                                 {
-                                    <form action="/Student/Tests/Start/@test.TestId"
+                                    <div>
+                                        <small class="text-danger">
+                                            Iskorišteni
+                                        </small>
+                                    </div>
+                                }
+
+                            </td>
+
+                            <!-- STATUS -->
+                            <td class="test-status">
+
+                                @if (polozen)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Položen
+                                    </span>
+                                }
+                                else if (uToku)
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-spinner me-1"></i>
+                                        U toku
+                                    </span>
+                                }
+                                else if (naOcjenjivanju)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-hourglass-half me-1"></i>
+                                        Na ocjenjivanju
+                                    </span>
+                                }
+                                else if (rokIstekao)
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Rok istekao
+                                    </span>
+                                }
+                                else if (nemaPokusaja)
+                                {
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-ban me-1"></i>
+                                        Nema pokušaja
+                                    </span>
+                                }
+                                else if (testNedostupan)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Test nije dostupan
+                                    </span>
+                                }
+                                else if (dostupan)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Dostupno
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        @status
+                                    </span>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(test.RazlogNedostupnosti))
+                                {
+                                    <span class="test-status-description">
+                                        @test.RazlogNedostupnosti
+                                    </span>
+                                }
+
+                            </td>
+
+                            <!-- AKCIJE -->
+                            <!-- AKCIJE -->
+                            <td class="test-actions">
+
+                                @if (mozePolagati)
+                                {
+                                    <form action="@Url.Action("Start", "Tests", new { area = "Student" })"
                                           method="post"
                                           class="d-inline">
+
                                         @Html.AntiForgeryToken()
+
+                                        <!-- ID konkretne dodjele testa -->
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@test.DodjelaId" />
 
                                         <button type="submit"
                                                 class="btn-sapio btn-sapio-primary btn-sapio-sm">
-                                            <i class="fas fa-play"></i> Polaži test
+
+                                            @if (uToku)
+                                            {
+                                                <i class="fas fa-play-circle"></i>
+                                                <text>Nastavi polaganje</text>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-play"></i>
+                                                <text>Polaži test</text>
+                                            }
+
                                         </button>
+
                                     </form>
                                 }
                                 else
                                 {
                                     <button type="button"
                                             class="btn-sapio btn-sapio-secondary btn-sapio-sm"
-                                            disabled>
-                                        <i class="fas fa-ban"></i> Nedostupno
+                                            disabled
+                                            title="@(test.RazlogNedostupnosti ?? "Test nije dostupan za polaganje.")">
+
+                                        <i class="fas fa-ban"></i>
+                                        Nedostupno
+
                                     </button>
                                 }
+
                             </td>
+
+
                         </tr>
                     }
+
                 </tbody>
+
             </table>
+
         </div>
+
     </div>
+
 </div>
 
 @section Scripts {
+
     <script>
         $(document).ready(function () {
+
             $('#studentTestsTable').DataTable({
+
                 pageLength: 10,
                 lengthMenu: [10, 25, 50, 100],
+
                 ordering: true,
                 searching: true,
+
                 responsive: false,
-                scrollX: true,
+                scrollX: false,
+                autoWidth: false,
+
+                // Najbliži rokovi prvi
+                order: [[2, 'asc']],
+
+                columnDefs: [
+                    {
+                        targets: 6,
+                        orderable: false
+                    }
+                ],
+
                 language: {
                     search: "Pretraga:",
                     lengthMenu: "Prikaži _MENU_ zapisa",
                     info: "Prikaz _START_ do _END_ od _TOTAL_ zapisa",
                     infoEmpty: "Nema zapisa",
-                    zeroRecords: "Trenutno nemate dodijeljenih testova za polaganje",
+                    zeroRecords: "Nema pronađenih testova",
                     paginate: {
                         first: "Prva",
                         last: "Zadnja",
@@ -126,7 +374,9 @@
                         previous: "Prethodna"
                     }
                 }
+
             });
+
         });
     </script>
 }

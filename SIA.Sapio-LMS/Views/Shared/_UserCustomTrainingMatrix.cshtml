@@ -1,0 +1,284 @@
+﻿@model SIA.Sapio_LMS.Models.UserCustomTrainingMatrixVM
+
+@{
+    var predmeti = Model?.Predmeti
+        ?? new List<SIA.Sapio_LMS.Models.UserCustomTrainingMatrixItemVM>();
+
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+
+    var isStudent = currentArea.Equals(
+        "Student",
+        StringComparison.OrdinalIgnoreCase);
+
+    var isAdmin = currentArea.Equals(
+        "Admin",
+        StringComparison.OrdinalIgnoreCase);
+
+    // Na Admin/Details korisnik dolazi kroz userId parametar.
+    var userId = Context.Request.Query["userId"].ToString();
+}
+
+<style>
+    .custom-matrix-card {
+        border: 1px solid #e6eaf0;
+        border-radius: 10px;
+        background: #fff;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .custom-matrix-body {
+        padding: 18px;
+    }
+
+    .custom-matrix-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #263238;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .custom-matrix-status {
+        flex-shrink: 0;
+        white-space: normal;
+        text-align: center;
+        max-width: 170px;
+    }
+
+    .custom-matrix-info {
+        font-size: 13px;
+        line-height: 1.65;
+        color: #46515d;
+    }
+
+        .custom-matrix-info strong {
+            font-weight: 600;
+            color: #263238;
+        }
+
+    .custom-matrix-note {
+        padding: 11px 13px;
+        background: #f8f9fb;
+        border: 1px solid #e6eaf0;
+        border-radius: 8px;
+        margin-top: 14px;
+    }
+
+    .custom-matrix-footer {
+        padding: 12px 18px;
+        border-top: 1px solid #e6eaf0;
+        background: #fff;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+        .custom-matrix-footer .btn-sapio {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+
+    @@media (max-width: 575px) {
+        .custom-matrix-body {
+            padding: 15px;
+        }
+
+        .custom-matrix-footer {
+            padding: 12px 15px;
+        }
+
+            .custom-matrix-footer .btn-sapio {
+                width: 100%;
+            }
+
+        .custom-matrix-status {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header pb-0">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+            <div>
+                <h5 class="mb-1">
+                    <i class="fas fa-book-open me-2 text-info"></i>
+                    Sekundarna matrica obuka - LMS Sapio
+                </h5>
+
+                <p class="text-sm text-muted mb-0">
+                    Dodatni predmeti dodijeljeni korisniku izvan primarne V3 matrice.
+                </p>
+            </div>
+
+            <span class="badge bg-gradient-info">
+                @predmeti.Count predmeta
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        @if (!predmeti.Any())
+        {
+            <div class="alert alert-light text-center mb-0">
+                Korisnik trenutno nema dodatnih predmeta u sekundarnoj matrici.
+            </div>
+        }
+        else
+        {
+            <div class="row">
+
+                @foreach (var item in predmeti)
+                {
+                    var status = item.LmsStatus ?? "";
+
+                    var badgeClass = status switch
+                    {
+                        "Položen u LMS-u" => "bg-gradient-success",
+                        "Test dodijeljen" => "bg-gradient-info",
+                        "Polaganje u toku" => "bg-gradient-warning",
+                        "Na ocjenjivanju" => "bg-gradient-warning",
+                        "Nije položen u LMS-u" => "bg-gradient-danger",
+                        "Rok testa istekao" => "bg-gradient-danger",
+                        "Neaktivna dodjela" => "bg-gradient-secondary",
+                        _ => "bg-gradient-secondary"
+                    };
+
+                    <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+
+                        <div class="custom-matrix-card d-flex flex-column">
+
+                            <!-- PODACI O PREDMETU -->
+
+                            <div class="custom-matrix-body flex-grow-1">
+
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+
+                                    <div class="custom-matrix-title">
+                                        @item.NazivPredmeta
+                                    </div>
+
+                                    <span class="badge @badgeClass custom-matrix-status">
+                                        @item.LmsStatus
+                                    </span>
+
+                                </div>
+
+                                <div class="custom-matrix-info">
+
+                                    <div class="mb-2">
+                                        <strong>Dodijeljen predmet:</strong>
+                                        @item.DatumDodjele.ToString("dd.MM.yyyy.")
+                                    </div>
+
+                                    @if (item.LmsDatumDodjele.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Test dodijeljen:</strong>
+                                            @item.LmsDatumDodjele.Value.ToString("dd.MM.yyyy.")
+                                        </div>
+                                    }
+
+                                    @if (item.LmsRokZaPolaganje.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Rok za polaganje:</strong>
+                                            @item.LmsRokZaPolaganje.Value.ToString("dd.MM.yyyy.")
+                                        </div>
+                                    }
+
+                                    @if (item.LmsDatumPolaganja.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Posljednje polaganje:</strong>
+                                            @item.LmsDatumPolaganja.Value.ToString("dd.MM.yyyy.")
+                                        </div>
+                                    }
+
+                                    <div class="mb-2">
+                                        <strong>Broj pokušaja:</strong>
+                                        @item.LmsBrojPokusaja
+                                    </div>
+
+                                    @if (item.LmsNajboljiProcenat.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Najbolji rezultat:</strong>
+                                            @item.LmsNajboljiProcenat.Value.ToString("0.##")%
+                                        </div>
+                                    }
+
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(item.Napomena))
+                                {
+                                    <div class="custom-matrix-note">
+
+                                        <span class="text-xs text-muted">
+                                            Napomena:
+                                        </span>
+
+                                        <div class="text-sm">
+                                            @item.Napomena
+                                        </div>
+
+                                    </div>
+                                }
+
+                            </div>
+
+                            <!-- AKCIJE -->
+
+                            <div class="custom-matrix-footer">
+
+                                @if (isStudent)
+                                {
+                                    <a asp-area="Student"
+                                       asp-controller="Subjects"
+                                       asp-action="TrainingHistory"
+                                       asp-route-predmetId="@item.PredmetId"
+                                       class="btn-sapio btn-sapio-secondary">
+
+                                        <i class="fas fa-history"></i>
+                                        Historija polaganja
+
+                                    </a>
+                                }
+                                else if (isAdmin && !string.IsNullOrWhiteSpace(userId))
+                                {
+                                    <a asp-area="Admin"
+                                       asp-controller="InternalUsersManagement"
+                                       asp-action="TrainingHistory"
+                                       asp-route-userId="@userId"
+                                       asp-route-predmetId="@item.PredmetId"
+                                       class="btn-sapio btn-sapio-secondary">
+
+                                        <i class="fas fa-history"></i>
+                                        Historija polaganja
+
+                                    </a>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>

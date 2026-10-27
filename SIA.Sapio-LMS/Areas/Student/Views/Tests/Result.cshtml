@@ -3,8 +3,20 @@
 @{
     ViewData["Title"] = "Rezultat testa";
 
+    var pendingReview =
+        string.Equals(
+            Model.STATUS,
+            "PENDING_REVIEW",
+            StringComparison.OrdinalIgnoreCase);
+
     var procenat = Model.PROCENAT ?? 0;
-    var passed = (Model.IS_PASSED ?? "N") == "Y";
+
+    var passed =
+        !pendingReview &&
+        string.Equals(
+            Model.IS_PASSED,
+            "Y",
+            StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="container py-5">
@@ -17,46 +29,116 @@
 
                 <div class="card-body p-5 text-center">
 
-                    <div class="mb-4">
+                    @if (pendingReview)
+                    {
+                        <!-- ========================= -->
+                        <!-- TEST ČEKA PREGLED ESEJA -->
+                        <!-- ========================= -->
 
-                        @if (passed)
-                        {
-                            <div style="font-size:72px;">✅</div>
-                        }
-                        else
-                        {
-                            <div style="font-size:72px;">📄</div>
-                        }
-
-                    </div>
-
-                    <h2 class="fw-bold mb-3">
-                        Test je uspješno završen
-                    </h2>
-
-                    <p class="text-muted mb-4">
-                        @Model.Test?.NAZIV
-                    </p>
-
-                    <div class="mb-4">
-
-                        <div class="text-muted mb-2">
-                            Ostvareni rezultat
+                        <div class="mb-4">
+                            <div style="font-size:72px;">
+                                ⏳
+                            </div>
                         </div>
 
-                        <div class="display-4 fw-bold @(passed ? "text-success" : "text-warning")">
-                            @procenat.ToString("0.##")%
+                        <h2 class="fw-bold mb-3">
+                            Test je uspješno predan
+                        </h2>
+
+                        <p class="text-muted mb-4">
+                            @Model.Test?.NAZIV
+                        </p>
+
+                        <div class="alert alert-info border-0 rounded-4 p-4 text-start">
+
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-clock me-2"></i>
+                                Rezultat još nije dostupan
+                            </h5>
+
+                            <p class="mb-2">
+                                Ovaj test sadrži jedno ili više esejska pitanja
+                                koja zahtijevaju pregled instruktora.
+                            </p>
+
+                            <p class="mb-0">
+                                Konačan broj bodova, procenat uspješnosti i
+                                informacija o tome da li je test položen bit će
+                                dostupni nakon što instruktor pregleda i ocijeni
+                                esejske odgovore.
+                            </p>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- ========================= -->
+                        <!-- AUTOMATSKI OCJENJEN TEST -->
+                        <!-- ========================= -->
+
+                        <div class="mb-4">
+
+                            @if (passed)
+                            {
+                                <div style="font-size:72px;">
+                                    ✅
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="font-size:72px;">
+                                    📄
+                                </div>
+                            }
+
                         </div>
 
-                    </div>
+                        <h2 class="fw-bold mb-3">
+                            Test je uspješno završen
+                        </h2>
 
-                    <div class="alert alert-light border rounded-4 text-start">
+                        <p class="text-muted mb-4">
+                            @Model.Test?.NAZIV
+                        </p>
 
-                        Ukoliko je test sadržavao esejska pitanja,
-                        instruktor će evaluirati Vaše odgovore naknadno.
+                        <div class="mb-4">
 
-                    </div>
-                    <div class="alert alert-info border-0 rounded-4 mt-4 text-start">
+                            <div class="text-muted mb-2">
+                                Ostvareni rezultat
+                            </div>
+
+                            <div class="display-4 fw-bold @(passed ? "text-success" : "text-warning")">
+                                @procenat.ToString("0.##")%
+                            </div>
+
+                        </div>
+
+                        <div class="mt-3">
+
+                            @if (passed)
+                            {
+                                <span class="badge bg-success fs-5 px-4 py-3 rounded-pill">
+                                    <i class="fas fa-check me-2"></i>
+                                    Test je položen
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger fs-5 px-4 py-3 rounded-pill">
+                                    <i class="fas fa-times me-2"></i>
+                                    Test nije položen
+                                </span>
+                            }
+
+                        </div>
+                    }
+
+
+                    <!-- ===================================== -->
+                    <!-- DEBUG - privremeno za vrijeme razvoja -->
+                    <!-- ===================================== -->
+
+                    <div class="alert alert-light border rounded-4 mt-5 text-start">
 
                         <div class="fw-bold mb-2">
                             DEBUG / TEST INFO
@@ -64,22 +146,64 @@
 
                         <div>
                             <strong>Osvojeni bodovi:</strong>
-                            @Model.OSTVARENI_BODOVI
+
+                            @if (Model.OSTVARENI_BODOVI.HasValue)
+                            {
+                                @Model.OSTVARENI_BODOVI.Value.ToString("0.##")
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
                         </div>
 
                         <div>
                             <strong>Maksimalni bodovi:</strong>
-                            @Model.MAX_BODOVI
+
+                            @if (Model.MAX_BODOVI.HasValue)
+                            {
+                                @Model.MAX_BODOVI.Value.ToString("0.##")
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
                         </div>
 
                         <div>
                             <strong>Procenat:</strong>
-                            @Model.PROCENAT%
+
+                            @if (Model.PROCENAT.HasValue)
+                            {
+                                <span>
+                                    @Model.PROCENAT.Value.ToString("0.##")%
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    -
+                                </span>
+                            }
                         </div>
 
                         <div>
                             <strong>Prolaz:</strong>
-                            @Model.IS_PASSED
+
+                            @if (Model.IS_PASSED == "Y")
+                            {
+                                <span>DA</span>
+                            }
+                            else if (Model.IS_PASSED == "N")
+                            {
+                                <span>NE</span>
+                            }
+                            else
+                            {
+                                <span>
+                                    Čeka ocjenjivanje
+                                </span>
+                            }
                         </div>
 
                         <div>
@@ -89,13 +213,15 @@
 
                     </div>
 
+
                     <div class="mt-4">
-
-                        <a href="/Student/Tests"
+                        <a href="@Url.Action("Index", "Tests", new { area = "Student" })"
                            class="btn btn-primary px-4 py-2 rounded-pill">
-                            Povratak na moje testove
-                        </a>
 
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Povratak na moje testove
+
+                        </a>
                     </div>
 
                 </div>

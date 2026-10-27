@@ -4,23 +4,172 @@
     ViewData["Title"] = "Dodjela testa studentima";
 
     var mode = Context.Request.Query["mode"].ToString();
+
     if (string.IsNullOrWhiteSpace(mode))
     {
         mode = "instructor";
     }
 
+    var isAdminMode = mode == "admin";
+
     var studentFilter = Context.Request.Query["studentFilter"].ToString();
+
     if (string.IsNullOrWhiteSpace(studentFilter))
     {
         studentFilter = "dueSoon";
     }
 }
 
+<style>
+    /* Tabela */
+    #assignStudentsTable {
+        width: 100% !important;
+        border-collapse: collapse;
+    }
+
+        #assignStudentsTable thead th {
+            vertical-align: middle;
+            padding: 12px 10px;
+            white-space: normal;
+        }
+
+        #assignStudentsTable tbody td {
+            vertical-align: middle;
+            padding: 10px;
+        }
+
+        #assignStudentsTable th:first-child,
+        #assignStudentsTable td:first-child {
+            width: 65px !important;
+            min-width: 65px;
+            text-align: center !important;
+            vertical-align: middle !important;
+        }
+
+        /* Checkboxovi - nezavisno od Bootstrap stilova */
+        #assignStudentsTable input.student-check,
+        #selectAllStudents {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 22px !important;
+            height: 22px !important;
+            min-width: 22px !important;
+            min-height: 22px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 2px solid #64748b !important;
+            border-radius: 5px !important;
+            background: #ffffff !important;
+            background-image: none !important;
+            cursor: pointer !important;
+            vertical-align: middle !important;
+            position: relative !important;
+            box-shadow: none !important;
+            outline: none;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+            /* Hover */
+            #assignStudentsTable input.student-check:hover,
+            #selectAllStudents:hover {
+                border-color: #2563eb !important;
+                background-color: #eff6ff !important;
+            }
+
+            /* Označen checkbox */
+            #assignStudentsTable input.student-check:checked,
+            #selectAllStudents:checked {
+                border-color: #2563eb !important;
+                background-color: #2563eb !important;
+                background-image: none !important;
+            }
+
+                /* Bijela kvačica */
+                #assignStudentsTable input.student-check:checked::after,
+                #selectAllStudents:checked::after {
+                    content: "" !important;
+                    display: block !important;
+                    position: absolute !important;
+                    width: 7px;
+                    height: 12px;
+                    left: 6px;
+                    top: 1px;
+                    border: solid #ffffff;
+                    border-width: 0 3px 3px 0;
+                    transform: rotate(45deg);
+                }
+
+            /* Fokus */
+            #assignStudentsTable input.student-check:focus-visible,
+            #selectAllStudents:focus-visible {
+                outline: 3px solid #93c5fd !important;
+                outline-offset: 2px;
+            }
+
+    /* Polje checkboxa */
+    .student-selection-cell {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* Nedostupna dodjela */
+    .student-selection-locked {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        color: #9ca3af;
+        font-size: 16px;
+    }
+
+    /* Brojač odabranih */
+    .selected-students-counter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border: 1px solid #dbeafe;
+        border-radius: 6px;
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    /* Označeni red */
+    #assignStudentsTable tbody tr.student-row-selected td {
+        background-color: #eff6ff !important;
+    }
+
+    /* Informacije o dodjeli */
+    .assignment-details {
+        min-width: 150px;
+    }
+
+        .assignment-details .badge {
+            white-space: normal;
+            line-height: 1.4;
+        }
+
+        .assignment-details .small {
+            line-height: 1.5;
+        }
+</style>
+
 <div class="page-toolbar d-flex justify-content-between align-items-center mb-4">
+
     <div>
-        <h2 class="mb-0">Dodjela testa studentima</h2>
+        <h2 class="mb-0">
+            Dodjela testa studentima
+        </h2>
+
         <p class="text-muted mb-0">
             @Model.TestNaziv
+
             @if (!string.IsNullOrWhiteSpace(Model.PredmetNaziv))
             {
                 <span> / @Model.PredmetNaziv</span>
@@ -28,32 +177,49 @@
         </p>
     </div>
 
-    <a href="/TestAssignments?mode=@mode" class="btn-sapio btn-sapio-secondary">
+    <a href="/TestAssignments?mode=@mode"
+       class="btn-sapio btn-sapio-secondary">
         Nazad
     </a>
+
 </div>
 
 <div class="card-custom">
-    <form asp-controller="TestAssignments" asp-action="Assign" method="post">
+
+    <form id="assignTestForm"
+          asp-controller="TestAssignments"
+          asp-action="Assign"
+          method="post">
+
         @Html.AntiForgeryToken()
 
         <input type="hidden" asp-for="TestId" />
         <input type="hidden" name="mode" value="@mode" />
 
+        <!-- ZAGLAVLJE -->
         <div class="d-flex justify-content-between align-items-center mb-3">
+
             <div>
-                <h5 class="mb-1">Studenti</h5>
+                <h5 class="mb-1">
+                    Studenti
+                </h5>
+
                 <p class="text-muted mb-0">
-                    Default prikaz prikazuje studente kojima obuka nedostaje, istekla je ili ističe u naredna 3 mjeseca.
+                    Pregled korisnika, prethodnih dodjela i mogućnosti dodjeljivanja testa.
                 </p>
             </div>
 
-            <button type="submit" class="btn-sapio btn-sapio-primary">
+            <button type="submit"
+                    class="btn-sapio btn-sapio-primary">
+                <i class="fas fa-save me-1"></i>
                 Sačuvaj dodjelu
             </button>
+
         </div>
 
+        <!-- FILTERI -->
         <div class="d-flex flex-wrap gap-2 mb-3">
+
             <a href="/TestAssignments/Assign/@Model.TestId?mode=@mode&studentFilter=dueSoon"
                class="btn-sapio @(studentFilter == "dueSoon" ? "btn-sapio-primary" : "btn-sapio-secondary") btn-sm">
                 Za polaganje u 3 mjeseca
@@ -68,42 +234,120 @@
                class="btn-sapio @(studentFilter == "all" ? "btn-sapio-primary" : "btn-sapio-secondary") btn-sm">
                 Svi korisnici
             </a>
+
         </div>
 
+        <!-- INFORMACIJA ZA ADMINISTRATORA -->
+        @if (isAdminMode)
+        {
+            <div class="alert alert-light border mb-3">
+
+                <i class="fas fa-info-circle me-1 text-info"></i>
+
+                Administrator može ponovo dodijeliti test korisniku kojem je
+                istekao rok ili je iskoristio sve pokušaje bez uspješnog polaganja.
+
+                Prethodna dodjela i historija polaganja ostaju sačuvane.
+
+            </div>
+        }
+
+        <!-- BROJAČ ODABRANIH -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <div class="selected-students-counter">
+
+                <i class="fas fa-user-check"></i>
+
+                Označeno korisnika:
+
+                <span id="selectedStudentsCount">0</span>
+
+            </div>
+
+            <small class="text-muted">
+                Označi korisnike kojima želiš dodijeliti test.
+            </small>
+
+        </div>
+
+        <!-- TABELA -->
         <div class="table-responsive">
-            <table id="assignStudentsTable" class="table table-striped table-bordered align-middle">
+
+            <table id="assignStudentsTable"
+                   class="table table-striped table-bordered align-middle w-100">
+
                 <thead>
                     <tr>
-                        <th style="width: 60px;">
-                            <input type="checkbox" id="selectAllStudents" />
+
+                        <!-- OZNAČI SVE -->
+                        <th>
+                            <input type="checkbox"
+                                   id="selectAllStudents"
+                                   aria-label="Označi sve dostupne korisnike"
+                                   title="Označi sve dostupne korisnike" />
                         </th>
+
                         <th>Student</th>
+
                         <th>Email</th>
+
                         <th>Kompanija</th>
+
                         <th>Važi do</th>
+
                         <th>Status obuke</th>
-                        <th>Dodjela</th>
+
+                        <th>Prethodna dodjela</th>
+
+                        <th>Nova dodjela</th>
+
                     </tr>
                 </thead>
+
                 <tbody>
-                    @for (int i = 0; i < Model.Studenti.Count; i++)
+
+                    @foreach (var s in Model.Studenti)
                     {
-                        var s = Model.Studenti[i];
+                        var mozeDodijeliti = s.MozeNovaDodjela;
 
                         <tr>
-                            <td>
-                                <input type="checkbox"
-                                       name="SelectedStudentIds"
-                                       value="@s.KorisnikId"
-                                       class="student-check form-check-input"
-                                       @(s.Odabran ? "checked" : "") />
+
+                            <!-- ODABIR KORISNIKA -->
+                            <td class="student-selection-cell">
+
+                                @if (mozeDodijeliti)
+                                {
+                                    <input type="checkbox"
+                                           value="@s.KorisnikId"
+                                           class="student-check"
+                                           aria-label="Dodijeli test korisniku @s.ImePrezime"
+                                           title="Označi korisnika za dodjelu testa" />
+                                }
+                                else
+                                {
+                                    <span class="student-selection-locked"
+                                          title="Dodjela testa nije dozvoljena">
+
+                                        <i class="fas fa-lock"></i>
+
+                                    </span>
+                                }
+
                             </td>
 
+                            <!-- STUDENT -->
                             <td>
-                                <strong>@s.ImePrezime</strong>
+
+                                <strong>
+                                    @s.ImePrezime
+                                </strong>
+
                             </td>
 
+                            <!-- EMAIL -->
                             <td>
+
                                 @if (!string.IsNullOrWhiteSpace(s.Email))
                                 {
                                     @s.Email
@@ -112,9 +356,12 @@
                                 {
                                     <span class="text-muted">-</span>
                                 }
+
                             </td>
 
+                            <!-- KOMPANIJA -->
                             <td>
+
                                 @if (!string.IsNullOrWhiteSpace(s.Kompanija))
                                 {
                                     @s.Kompanija
@@ -123,39 +370,61 @@
                                 {
                                     <span class="text-muted">-</span>
                                 }
+
                             </td>
 
+                            <!-- DATUM VAŽENJA V3 OBUKE -->
                             <td>
+
                                 @if (s.DatumVaziDo.HasValue)
                                 {
                                     @s.DatumVaziDo.Value.ToString("dd.MM.yyyy")
                                 }
+                                else if (s.StatusObuke == "Van matrice")
+                                {
+                                    <span class="text-muted">-</span>
+                                }
                                 else
                                 {
-                                    <span class="text-muted">Nema evidencije</span>
+                                    <span class="text-muted">
+                                        Nema evidencije
+                                    </span>
                                 }
+
                             </td>
 
+                            <!-- STATUS OBUKE -->
                             <td>
+
                                 @if (s.StatusObuke == "Nema evidenciju")
                                 {
-                                    <span class="badge bg-warning text-dark">Nema evidenciju</span>
+                                    <span class="badge bg-warning text-dark">
+                                        Nema evidenciju
+                                    </span>
                                 }
                                 else if (s.StatusObuke == "Isteklo")
                                 {
-                                    <span class="badge bg-danger">Isteklo</span>
+                                    <span class="badge bg-danger">
+                                        Isteklo
+                                    </span>
                                 }
                                 else if (s.StatusObuke == "Ističe u 3 mjeseca")
                                 {
-                                    <span class="badge bg-info">Ističe u 3 mjeseca</span>
+                                    <span class="badge bg-info">
+                                        Ističe u 3 mjeseca
+                                    </span>
                                 }
                                 else if (s.StatusObuke == "Važeće")
                                 {
-                                    <span class="badge bg-success">Važeće</span>
+                                    <span class="badge bg-success">
+                                        Važeće
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">@s.StatusObuke</span>
+                                    <span class="badge bg-secondary">
+                                        @s.StatusObuke
+                                    </span>
                                 }
 
                                 @if (s.DanaDoIsteka.HasValue)
@@ -164,39 +433,179 @@
                                         @s.DanaDoIsteka dana
                                     </div>
                                 }
+
                             </td>
 
-                            <td>
-                                @if (s.VecDodijeljen)
+                            <!-- PRETHODNA DODJELA -->
+                            <td class="assignment-details">
+
+                                @if (!s.PosljednjaDodjelaId.HasValue)
                                 {
-                                    <span class="badge bg-success">Već dodijeljen</span>
+                                    <span class="badge bg-secondary">
+                                        Nema prethodne dodjele
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Nije dodijeljen</span>
+                                    <div class="mb-2">
+
+                                        @if (s.ImaPolozenTest)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                Položen
+                                            </span>
+                                        }
+                                        else if (s.CekaOcjenjivanje)
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-hourglass-half me-1"></i>
+                                                Na ocjenjivanju
+                                            </span>
+                                        }
+                                        else if (s.PotrebnaIntervencijaAdmina)
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                Potrebna intervencija
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info">
+                                                @s.StatusPosljednjeDodjele
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                    @if (s.DatumPosljednjeDodjele.HasValue)
+                                    {
+                                        <div class="text-muted small">
+                                            Dodijeljeno:
+                                            @s.DatumPosljednjeDodjele.Value.ToString("dd.MM.yyyy")
+                                        </div>
+                                    }
+
+                                    @if (s.RokPosljednjeDodjele.HasValue)
+                                    {
+                                        <div class="text-muted small">
+                                            Rok:
+                                            @s.RokPosljednjeDodjele.Value.ToString("dd.MM.yyyy")
+                                        </div>
+                                    }
+
+                                    <div class="text-muted small mt-1">
+
+                                        Pokušaji:
+
+                                        <strong>
+                                            @s.BrojIskoristenihPokusaja
+                                            /
+                                            @s.BrojDozvoljenihPokusaja
+                                        </strong>
+
+                                    </div>
                                 }
+
                             </td>
+
+                            <!-- NOVA DODJELA -->
+                            <td class="assignment-details">
+
+                                @if (mozeDodijeliti)
+                                {
+                                    @if (s.PosljednjaDodjelaId.HasValue)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+
+                                            <i class="fas fa-redo me-1"></i>
+
+                                            Ponovna dodjela
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+
+                                            <i class="fas fa-plus-circle me-1"></i>
+
+                                            Može se dodijeliti
+
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+
+                                        <i class="fas fa-lock me-1"></i>
+
+                                        Nije dozvoljeno
+
+                                    </span>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(s.RazlogNemoguceDodjele))
+                                {
+                                    <div class="text-muted small mt-1">
+                                        @s.RazlogNemoguceDodjele
+                                    </div>
+                                }
+
+                            </td>
+
                         </tr>
                     }
+
                 </tbody>
+
             </table>
+
         </div>
 
-        <div class="d-flex justify-content-end mt-3">
-            <button type="submit" class="btn-sapio btn-sapio-primary">
+        <!-- DONJI DIO -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+
+            <div class="selected-students-counter">
+
+                <i class="fas fa-user-check"></i>
+
+                Ukupno označeno:
+
+                <span id="selectedStudentsCountBottom">0</span>
+
+            </div>
+
+            <button type="submit"
+                    class="btn-sapio btn-sapio-primary">
+
+                <i class="fas fa-save me-1"></i>
+
                 Sačuvaj dodjelu
+
             </button>
+
         </div>
+
     </form>
+
 </div>
 
 @section Scripts {
+
     <script>
         $(document).ready(function () {
+
             var table = $('#assignStudentsTable').DataTable({
+
                 pageLength: 25,
+
                 order: [[1, 'asc']],
+
                 responsive: true,
+
                 language: {
                     search: "Pretraga:",
                     lengthMenu: "Prikaži _MENU_ zapisa",
@@ -210,28 +619,168 @@
                 }
             });
 
-            $('#selectAllStudents').on('change', function () {
-                var checked = this.checked;
+            // Ažuriranje broja označenih korisnika
+            function updateSelectedCount() {
 
-                table.rows({ search: 'applied' }).every(function () {
-                    $(this.node()).find('.student-check').prop('checked', checked);
-                });
-            });
+                var selectedIds = new Set();
 
-            $('form').on('submit', function () {
                 table.rows().every(function () {
+
+                    var checkbox = $(this.node())
+                        .find('.student-check');
+
+                    if (checkbox.length && checkbox.prop('checked')) {
+                        selectedIds.add(checkbox.val());
+                    }
+
+                });
+
+                $('#selectedStudentsCount').text(selectedIds.size);
+                $('#selectedStudentsCountBottom').text(selectedIds.size);
+
+                updateSelectAllState();
+            }
+
+            // Prikaz označenih redova
+            function updateRowHighlight() {
+
+                table.rows().every(function () {
+
                     var row = $(this.node());
                     var checkbox = row.find('.student-check');
 
-                    if (checkbox.length && checkbox.prop('checked')) {
-                        $('<input>')
-                            .attr('type', 'hidden')
-                            .attr('name', 'SelectedStudentIds')
-                            .val(checkbox.val())
-                            .appendTo('form');
-                    }
+                    row.toggleClass(
+                        'student-row-selected',
+                        checkbox.length > 0 && checkbox.prop('checked')
+                    );
+
                 });
+            }
+
+            // Status checkboxa "Označi sve"
+            function updateSelectAllState() {
+
+                var available = 0;
+                var selected = 0;
+
+                table.rows({ search: 'applied' }).every(function () {
+
+                    var checkbox = $(this.node())
+                        .find('.student-check');
+
+                    if (checkbox.length) {
+                        available++;
+
+                        if (checkbox.prop('checked')) {
+                            selected++;
+                        }
+                    }
+
+                });
+
+                var selectAll = $('#selectAllStudents');
+
+                selectAll.prop(
+                    'checked',
+                    available > 0 && selected === available
+                );
+
+                selectAll.prop(
+                    'indeterminate',
+                    selected > 0 && selected < available
+                );
+
+                selectAll.prop('disabled', available === 0);
+            }
+
+            // Pojedinačno označavanje
+            $('#assignStudentsTable').on(
+                'change',
+                '.student-check',
+                function () {
+
+                    updateSelectedCount();
+                    updateRowHighlight();
+
+                }
+            );
+
+            // Označi sve dostupne korisnike
+            $('#selectAllStudents').on('change', function () {
+
+                var checked = this.checked;
+
+                table.rows({ search: 'applied' }).every(function () {
+
+                    $(this.node())
+                        .find('.student-check')
+                        .prop('checked', checked);
+
+                });
+
+                updateSelectedCount();
+                updateRowHighlight();
             });
+
+            // Promjena filtera ili stranice DataTables
+            table.on('draw', function () {
+
+                updateSelectedCount();
+                updateRowHighlight();
+
+            });
+
+            // Slanje svih označenih korisnika
+            // uključujući one na drugim stranicama tabele
+            $('#assignTestForm').on('submit', function (e) {
+
+                var form = $(this);
+
+                form.find('.generated-student-id').remove();
+
+                var selectedIds = new Set();
+
+                table.rows().every(function () {
+
+                    var checkbox = $(this.node())
+                        .find('.student-check');
+
+                    if (
+                        checkbox.length &&
+                        checkbox.prop('checked')
+                    ) {
+                        selectedIds.add(checkbox.val());
+                    }
+
+                });
+
+                if (selectedIds.size === 0) {
+
+                    e.preventDefault();
+
+                    alert('Morate označiti najmanje jednog korisnika.');
+
+                    return false;
+                }
+
+                selectedIds.forEach(function (id) {
+
+                    $('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', 'SelectedStudentIds')
+                        .addClass('generated-student-id')
+                        .val(id)
+                        .appendTo(form);
+
+                });
+
+            });
+
+            // Inicijalno stanje
+            updateSelectedCount();
+            updateRowHighlight();
+
         });
     </script>
+
 }

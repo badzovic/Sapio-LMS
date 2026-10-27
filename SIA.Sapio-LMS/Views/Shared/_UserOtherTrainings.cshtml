@@ -1,0 +1,256 @@
+﻿@model SIA.Sapio_LMS.Models.UserOtherTrainingsVM
+
+@{
+    var predmeti = Model?.Predmeti
+        ?? new List<SIA.Sapio_LMS.Models.UserOtherTrainingItemVM>();
+
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+
+    var isStudent = currentArea.Equals(
+        "Student",
+        StringComparison.OrdinalIgnoreCase);
+
+    var isAdmin = currentArea.Equals(
+        "Admin",
+        StringComparison.OrdinalIgnoreCase);
+
+    // Admin profil koristi userId iz URL-a.
+    var userId = Context.Request.Query["userId"].ToString();
+}
+
+<style>
+    .other-training-card {
+        border: 1px solid #e6eaf0;
+        border-radius: 10px;
+        background: #fff;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .other-training-body {
+        padding: 18px;
+    }
+
+    .other-training-title {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.5;
+        color: #263238;
+        overflow-wrap: anywhere;
+    }
+
+    .other-training-status {
+        flex-shrink: 0;
+        white-space: normal;
+        text-align: center;
+        max-width: 170px;
+    }
+
+    .other-training-info {
+        font-size: 13px;
+        line-height: 1.65;
+        color: #46515d;
+    }
+
+        .other-training-info strong {
+            font-weight: 600;
+            color: #263238;
+        }
+
+    .other-training-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 12px 18px;
+        border-top: 1px solid #e6eaf0;
+        background: #fff;
+    }
+
+        .other-training-footer .btn-sapio {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+
+    @@media (max-width: 575px) {
+        .other-training-body {
+            padding: 15px;
+        }
+
+        .other-training-footer {
+            padding: 12px 15px;
+        }
+
+            .other-training-footer .btn-sapio {
+                width: 100%;
+            }
+
+        .other-training-status {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header pb-0">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+            <div>
+                <h5 class="mb-1">
+                    <i class="fas fa-history me-2 text-secondary"></i>
+                    Ostala polaganja
+                </h5>
+
+                <p class="text-sm text-muted mb-0">
+                    Historija LMS polaganja za predmete koji nisu u trenutnoj
+                    primarnoj ili sekundarnoj matrici.
+                </p>
+            </div>
+
+            <span class="badge bg-gradient-secondary">
+                @predmeti.Count predmeta
+            </span>
+
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        @if (!predmeti.Any())
+        {
+            <div class="alert alert-light text-center mb-0">
+                Korisnik nema drugih evidentiranih LMS polaganja ili dodjela testova.
+            </div>
+        }
+        else
+        {
+            <div class="row">
+
+                @foreach (var item in predmeti)
+                {
+                    <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+
+                        <div class="other-training-card d-flex flex-column">
+
+                            <!-- PODACI O PREDMETU -->
+
+                            <div class="other-training-body flex-grow-1">
+
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+
+                                    <div class="other-training-title">
+                                        @item.NazivPredmeta
+                                    </div>
+
+                                    @if (item.ImaPolozenTest)
+                                    {
+                                        <span class="badge bg-gradient-success other-training-status">
+                                            Položen
+                                        </span>
+                                    }
+                                    else if (item.BrojPokusaja > 0)
+                                    {
+                                        <span class="badge bg-gradient-warning other-training-status">
+                                            Evidentirana polaganja
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-gradient-secondary other-training-status">
+                                            Samo dodjela
+                                        </span>
+                                    }
+
+                                </div>
+
+                                <div class="other-training-info">
+
+                                    <div class="mb-2">
+                                        <strong>Broj dodjela testova:</strong>
+                                        @item.BrojDodjela
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <strong>Broj pokušaja:</strong>
+                                        @item.BrojPokusaja
+                                    </div>
+
+                                    @if (item.PosljednjaDodjela.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Posljednja dodjela:</strong>
+                                            @item.PosljednjaDodjela.Value.ToString("dd.MM.yyyy.")
+                                        </div>
+                                    }
+
+                                    @if (item.PosljednjePolaganje.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Posljednje polaganje:</strong>
+                                            @item.PosljednjePolaganje.Value.ToString("dd.MM.yyyy.")
+                                        </div>
+                                    }
+
+                                    @if (item.NajboljiProcenat.HasValue)
+                                    {
+                                        <div class="mb-2">
+                                            <strong>Najbolji rezultat:</strong>
+                                            @item.NajboljiProcenat.Value.ToString("0.##")%
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                            <!-- AKCIJE -->
+                            @if (isStudent || (isAdmin && !string.IsNullOrWhiteSpace(userId)))
+                            {
+                                <div class="other-training-footer">
+
+                                    @if (isStudent)
+                                    {
+                                        <a asp-area="Student"
+                                           asp-controller="Subjects"
+                                           asp-action="TrainingHistory"
+                                           asp-route-predmetId="@item.PredmetId"
+                                           class="btn-sapio btn-sapio-secondary">
+
+                                            <i class="fas fa-history"></i>
+                                            Historija polaganja
+
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-area="Admin"
+                                           asp-controller="InternalUsersManagement"
+                                           asp-action="TrainingHistory"
+                                           asp-route-userId="@userId"
+                                           asp-route-predmetId="@item.PredmetId"
+                                           class="btn-sapio btn-sapio-secondary">
+
+                                            <i class="fas fa-history"></i>
+                                            Historija polaganja
+
+                                        </a>
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>
