@@ -424,62 +424,69 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             return RedirectToAction(nameof(Details), new { userId });
         }
 
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> ToggleActive(int hrmId, string userId)
+        //{
+        //    try
+        //    {
+        //        var korisnik = await _dbContext.KORISNICI
+        //            .FirstOrDefaultAsync(x => x.HRM_ID == hrmId);
+
+        //        if (korisnik == null)
+        //        {
+        //            TempData["ImportMessage"] = "Korisnik nije pronađen u bazi.";
+        //            return RedirectToAction(nameof(Details), new { userId });
+        //        }
+
+        //        var identityUser = await _userManager.FindByIdAsync(userId);
+
+        //        if (identityUser == null)
+        //        {
+        //            TempData["ImportMessage"] = "Identity korisnik nije pronađen.";
+        //            return RedirectToAction(nameof(Details), new { userId });
+        //        }
+
+        //        bool isCurrentlyActive = korisnik.AKTIVAN == "Y";
+
+        //        if (isCurrentlyActive)
+        //        {
+        //            korisnik.AKTIVAN = "N";
+
+        //            identityUser.IsActive = false;
+        //            identityUser.LockoutEnabled = true;
+        //            identityUser.LockoutEnd = DateTimeOffset.MaxValue;
+
+        //            TempData["ImportMessage"] = "Korisnik je deaktiviran.";
+        //        }
+        //        else
+        //        {
+        //            korisnik.AKTIVAN = "Y";
+
+        //            identityUser.IsActive = true;
+        //            identityUser.LockoutEnabled = true;
+        //            identityUser.LockoutEnd = null;
+
+        //            TempData["ImportMessage"] = "Korisnik je aktiviran.";
+        //        }
+
+        //        await _userManager.UpdateAsync(identityUser);
+        //        await _dbContext.SaveChangesAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        TempData["ImportMessage"] = "Greška prilikom promjene statusa.";
+        //        TempData["ImportErrors"] = ex.Message;
+        //    }
+
+        //    return RedirectToAction(nameof(Details), new { userId });
+        //}
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleActive(int hrmId, string userId)
+        public IActionResult ToggleActive(int hrmId, string userId)
         {
-            try
-            {
-                var korisnik = await _dbContext.KORISNICI
-                    .FirstOrDefaultAsync(x => x.HRM_ID == hrmId);
-
-                if (korisnik == null)
-                {
-                    TempData["ImportMessage"] = "Korisnik nije pronađen u bazi.";
-                    return RedirectToAction(nameof(Details), new { userId });
-                }
-
-                var identityUser = await _userManager.FindByIdAsync(userId);
-
-                if (identityUser == null)
-                {
-                    TempData["ImportMessage"] = "Identity korisnik nije pronađen.";
-                    return RedirectToAction(nameof(Details), new { userId });
-                }
-
-                bool isCurrentlyActive = korisnik.AKTIVAN == "Y";
-
-                if (isCurrentlyActive)
-                {
-                    korisnik.AKTIVAN = "N";
-
-                    identityUser.IsActive = false;
-                    identityUser.LockoutEnabled = true;
-                    identityUser.LockoutEnd = DateTimeOffset.MaxValue;
-
-                    TempData["ImportMessage"] = "Korisnik je deaktiviran.";
-                }
-                else
-                {
-                    korisnik.AKTIVAN = "Y";
-
-                    identityUser.IsActive = true;
-                    identityUser.LockoutEnabled = true;
-                    identityUser.LockoutEnd = null;
-
-                    TempData["ImportMessage"] = "Korisnik je aktiviran.";
-                }
-
-                await _userManager.UpdateAsync(identityUser);
-                await _dbContext.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                TempData["ImportMessage"] = "Greška prilikom promjene statusa.";
-                TempData["ImportErrors"] = ex.Message;
-            }
-
-            return RedirectToAction(nameof(Details), new { userId });
+            return Forbid();
         }
     }
 }

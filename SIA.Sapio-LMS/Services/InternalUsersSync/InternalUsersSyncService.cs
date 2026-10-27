@@ -32,9 +32,35 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
         {
             var result = new InternalUsersImportResult();
 
+            /*
+             * ============================================================
+             * 1. PREUZIMANJE AKTIVNIH KORISNIKA IZ HRM API-JA
+             * ============================================================
+             */
+
             var apiUsers = (await _internalUsersApiService.GetUsersAsync())
                 .ToList();
 
+            if (!apiUsers.Any())
+            {
+                result.Failed++;
+
+                result.ErrorMessages.Add(
+                    "HRM API nije vratio nijednog aktivnog korisnika. " +
+                    "Import nije izvršen.");
+
+                _logger.LogWarning(
+                    "Import internih korisnika preskočen jer HRM API " +
+                    "nije vratio nijednog korisnika.");
+
+                return result;
+            }
+
+            /*
+             * Zadržavamo postojeći način kreiranja korisnika.
+             * Početnu lozinku kasnije treba zamijeniti sigurnijim
+             * postupkom postavljanja lozinke.
+             */
             const string defaultPassword = "Sarajevo2026!";
 
             foreach (var apiUser in apiUsers)
@@ -48,6 +74,18 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         "=== START IMPORT HRM_ID={HrmId} ===",
                         apiUser.HrmId);
 
+                    /*
+                     * ========================================================
+                     * 2. PROVJERA POSTOJEĆEG INTERNOG KORISNIKA
+                     * ========================================================
+                     *
+                     * HRM_ID je ključ za povezivanje radnika.
+                     *
+                     * Ako korisnik već postoji, ne kreiramo novi račun.
+                     * Njegove podatke i eventualnu reaktivaciju
+                     * obrađuje RunSyncAsync().
+                     */
+
                     var postojiUKorisnici = await _dbContext.KORISNICI
                         .AnyAsync(x => x.HRM_ID == apiUser.HrmId);
 
@@ -60,6 +98,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         continue;
                     }
 
+                    /*
+                     * ========================================================
+                     * 3. PRIPREMA PODATAKA ZA PODUDARANJE
+                     * ========================================================
+                     */
+
                     var apiImeNormalized =
                         NormalizeName(apiUser.Ime);
 
@@ -68,6 +112,32 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
                     var apiImeOcaNormalized =
                         NormalizeName(apiUser.ImeOca);
+
+                    /*
+                     * Ne pokušavamo automatsku konverziju na osnovu
+                     * praznog imena ili prezimena.
+                     */
+
+                    if (string.IsNullOrWhiteSpace(apiImeNormalized) ||
+                        string.IsNullOrWhiteSpace(apiPrezimeNormalized))
+                    {
+                        result.Skipped++;
+
+                        _logger.LogWarning(
+                            "IMPORT PRESKOČEN: HRM_ID={HrmId} " +
+                            "nema validno ime ili prezime.",
+                            apiUser.HrmId);
+
+                        await transaction.RollbackAsync();
+
+                        continue;
+                    }
+
+                    /*
+                     * ========================================================
+                     * 4. PRETRAGA EKSTERNIH / SEZONSKIH KORISNIKA
+                     * ========================================================
+                     */
 
                     var moguciKandidati = await _dbContext.KORISNICI
                         .Where(x =>
@@ -93,9 +163,9 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         .ToList();
 
                     /*
-                     * ============================================================
-                     * POSTOJEĆI EKSTERNI / SEZONSKI KORISNIK
-                     * ============================================================
+                     * ========================================================
+                     * 5. POSTOJEĆI EKSTERNI / SEZONSKI KORISNIK
+                     * ========================================================
                      */
 
                     if (kandidati.Count == 1)
@@ -121,6 +191,28 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                                 $"{postojeciKorisnik.USER_ID} nije pronađen.");
                         }
 
+                        /*
+                         * Zaštita od toga da isti Identity račun bude
+                         * povezan s više redova u KORISNICI.
+                         */
+
+                        var identityVecPovezan = await _dbContext.KORISNICI
+                            .AnyAsync(x =>
+                                x.USER_ID == postojeciIdentityUser.Id &&
+                                x.ID != postojeciKorisnik.ID);
+
+                        if (identityVecPovezan)
+                        {
+                            throw new InvalidOperationException(
+                                $"Identity USER_ID={postojeciIdentityUser.Id} " +
+                                "već je povezan s drugim LMS korisnikom. " +
+                                "Automatska konverzija nije dozvoljena.");
+                        }
+
+                        /*
+                         * Čuvamo prethodne podatke za audit.
+                         */
+
                         var stariTipKorisnikaId =
                             postojeciKorisnik.TIP_KORISNIKA_ID;
 
@@ -133,6 +225,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         var novoImeOca = NormalizeValue(apiUser.ImeOca);
                         var noviEmail = NormalizeValue(apiUser.Email);
 
+                        /*
+                         * ====================================================
+                         * 6. KONVERZIJA U INTERNOG KORISNIKA
+                         * ====================================================
+                         */
+
                         postojeciKorisnik.TIP_KORISNIKA_ID = 1;
                         postojeciKorisnik.HRM_ID = apiUser.HrmId;
                         postojeciKorisnik.ACCESS_KEY = apiUser.AccessKey;
@@ -142,7 +240,17 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         postojeciKorisnik.EMAIL = noviEmail;
                         postojeciKorisnik.KOMPANIJA =
                             apiUser.Kompanija ?? "MAS";
+
                         postojeciKorisnik.AKTIVAN = "Y";
+
+                        /*
+                         * ====================================================
+                         * 7. REAKTIVACIJA POSTOJEĆEG IDENTITY RAČUNA
+                         * ====================================================
+                         *
+                         * Koristimo postojeći USER_ID.
+                         * Ne kreiramo novi račun.
+                         */
 
                         postojeciIdentityUser.FirstName =
                             novoIme ?? string.Empty;
@@ -151,10 +259,23 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             novoPrezime ?? string.Empty;
 
                         postojeciIdentityUser.Email = noviEmail;
+
                         postojeciIdentityUser.IsExternalCollaborator = false;
+
                         postojeciIdentityUser.IsActive = true;
+                        postojeciIdentityUser.IsDeleted = false;
+
                         postojeciIdentityUser.LockoutEnabled = true;
-                        postojeciIdentityUser.LockoutEnd = null;
+
+                        /*
+                         * Uklanjamo samo trajni lockout koji je
+                         * postavljen prilikom deaktivacije.
+                         */
+                        if (postojeciIdentityUser.LockoutEnd ==
+                            DateTimeOffset.MaxValue)
+                        {
+                            postojeciIdentityUser.LockoutEnd = null;
+                        }
 
                         var identityUpdateResult =
                             await _userManager.UpdateAsync(
@@ -169,6 +290,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                                     identityUpdateResult.Errors
                                         .Select(x => x.Description)));
                         }
+
+                        /*
+                         * ====================================================
+                         * 8. AUDIT KONVERZIJE
+                         * ====================================================
+                         */
 
                         var nacinPovezivanja =
                             string.IsNullOrWhiteSpace(apiUser.ImeOca)
@@ -202,7 +329,8 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
                                 OPIS =
                                     "Postojeći eksterni ili sezonski korisnik " +
-                                    "automatski je pretvoren u internog korisnika.",
+                                    "automatski je pretvoren u internog korisnika. " +
+                                    "Identity račun je aktiviran i soft-delete uklonjen.",
 
                                 DATUM_KREIRANJA = DateTime.UtcNow,
                                 PREGLEDANO = false,
@@ -219,13 +347,19 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
                         result.Converted++;
 
+                        _logger.LogInformation(
+                            "USPJEŠNA KONVERZIJA: KORISNIK_ID={KorisnikId}, " +
+                            "HRM_ID={HrmId}",
+                            postojeciKorisnik.ID,
+                            apiUser.HrmId);
+
                         continue;
                     }
 
                     /*
-                     * ============================================================
-                     * VIŠE MOGUĆIH KANDIDATA
-                     * ============================================================
+                     * ========================================================
+                     * 9. VIŠE MOGUĆIH KANDIDATA
+                     * ========================================================
                      */
 
                     if (kandidati.Count > 1)
@@ -233,9 +367,8 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         result.Ambiguous++;
 
                         _logger.LogWarning(
-                            "NEJASNO PODUDARANJE: Za HRM_ID={HrmId}, " +
-                            "{Ime} {Prezime}, pronađeno je " +
-                            "{BrojKandidata} kandidata.",
+                            "NEJASNO PODUDARANJE: HRM_ID={HrmId}, " +
+                            "{Ime} {Prezime}, pronađeno {Broj} kandidata.",
                             apiUser.HrmId,
                             apiUser.Ime,
                             apiUser.Prezime,
@@ -247,9 +380,9 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                     }
 
                     /*
-                     * ============================================================
-                     * POTPUNO NOVI KORISNIK
-                     * ============================================================
+                     * ========================================================
+                     * 10. POTPUNO NOVI KORISNIK
+                     * ========================================================
                      */
 
                     var cleanEmail =
@@ -260,94 +393,112 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             ? cleanEmail
                             : $"hrm_{apiUser.HrmId}";
 
-                    var identityUser =
+                    /*
+                     * Ako postoji Identity račun s istim UserName,
+                     * ne smijemo ga automatski povezati na osnovu
+                     * korisničkog imena ili e-mail adrese.
+                     */
+
+                    var postojeciIdentity =
                         await _userManager.FindByNameAsync(userName);
 
-                    if (identityUser == null)
+                    if (postojeciIdentity != null)
                     {
-                        identityUser = new ApplicationUser
+                        var vecPovezan = await _dbContext.KORISNICI
+                            .AnyAsync(x =>
+                                x.USER_ID == postojeciIdentity.Id);
+
+                        if (vecPovezan)
                         {
-                            FirstName =
-                                apiUser.Ime?.Trim() ?? string.Empty,
-
-                            LastName =
-                                apiUser.Prezime?.Trim() ?? string.Empty,
-
-                            IsExternalCollaborator = false,
-                            IsActive = true,
-                            CreatedAt = DateTime.UtcNow,
-
-                            UserName = userName,
-                            Email = cleanEmail,
-
-                            EmailConfirmed = false,
-                            PhoneNumberConfirmed = false,
-                            TwoFactorEnabled = false,
-                            LockoutEnabled = true,
-                            AccessFailedCount = 0,
-
-                            PhoneNumber = null,
-                            LockoutEnd = null
-                        };
-
-                        /*
-                         * CreateAsync odmah upisuje korisnika u AspNetUsers.
-                         * Nakon uspješnog CreateAsync identityUser.Id je dostupan.
-                         */
-                        var createResult =
-                            await _userManager.CreateAsync(
-                                identityUser,
-                                defaultPassword);
-
-                        if (!createResult.Succeeded)
-                        {
-                            var createErrors = string.Join(
-                                " | ",
-                                createResult.Errors.Select(
-                                    e => $"{e.Code}: {e.Description}"));
-
-                            throw new Exception(
-                                $"CREATE USER FAILED: {createErrors}");
+                            throw new InvalidOperationException(
+                                $"Identity račun {postojeciIdentity.Id} " +
+                                $"već je povezan s drugim LMS korisnikom. " +
+                                $"HRM_ID={apiUser.HrmId}.");
                         }
 
-                        /*
-                         * ========================================================
-                         * STUDENT ROLA
-                         * ========================================================
-                         *
-                         * Svaki potpuno novi LMS korisnik koji se kreira
-                         * kroz HRM import automatski dobija Student rolu.
-                         *
-                         * UserManager će napraviti zapis u AspNetUserRoles.
-                         */
-
-                        var addRoleResult =
-                            await _userManager.AddToRoleAsync(
-                                identityUser,
-                                "Student");
-
-                        if (!addRoleResult.Succeeded)
-                        {
-                            var roleErrors = string.Join(
-                                " | ",
-                                addRoleResult.Errors.Select(
-                                    e => $"{e.Code}: {e.Description}"));
-
-                            throw new Exception(
-                                $"ADD STUDENT ROLE FAILED: {roleErrors}");
-                        }
-
-                        _logger.LogInformation(
-                            "Korisniku USER_ID={UserId}, HRM_ID={HrmId} " +
-                            "dodijeljena Student rola.",
-                            identityUser.Id,
-                            apiUser.HrmId);
+                        throw new InvalidOperationException(
+                            $"Identity račun s UserName='{userName}' već postoji, " +
+                            $"ali nema potvrđenu vezu s HRM_ID={apiUser.HrmId}. " +
+                            "Potrebna je ručna provjera.");
                     }
 
                     /*
-                     * ============================================================
-                     * KORISNICI
-                     * ============================================================
+                     * ========================================================
+                     * 11. KREIRANJE IDENTITY KORISNIKA
+                     * ========================================================
+                     */
+
+                    var identityUser = new ApplicationUser
+                    {
+                        FirstName =
+                            apiUser.Ime?.Trim() ?? string.Empty,
+
+                        LastName =
+                            apiUser.Prezime?.Trim() ?? string.Empty,
+
+                        IsExternalCollaborator = false,
+
+                        IsActive = true,
+                        IsDeleted = false,
+
+                        CreatedAt = DateTime.UtcNow,
+
+                        UserName = userName,
+                        Email = cleanEmail,
+
+                        EmailConfirmed = false,
+                        PhoneNumberConfirmed = false,
+                        TwoFactorEnabled = false,
+
+                        LockoutEnabled = true,
+                        AccessFailedCount = 0,
+
+                        PhoneNumber = null,
+                        LockoutEnd = null
+                    };
+
+                    var createResult =
+                        await _userManager.CreateAsync(
+                            identityUser,
+                            defaultPassword);
+
+                    if (!createResult.Succeeded)
+                    {
+                        var createErrors = string.Join(
+                            " | ",
+                            createResult.Errors.Select(
+                                e => $"{e.Code}: {e.Description}"));
+
+                        throw new Exception(
+                            $"CREATE USER FAILED: {createErrors}");
+                    }
+
+                    /*
+                     * ========================================================
+                     * 12. STUDENT ROLA
+                     * ========================================================
+                     */
+
+                    var addRoleResult =
+                        await _userManager.AddToRoleAsync(
+                            identityUser,
+                            "Student");
+
+                    if (!addRoleResult.Succeeded)
+                    {
+                        var roleErrors = string.Join(
+                            " | ",
+                            addRoleResult.Errors.Select(
+                                e => $"{e.Code}: {e.Description}"));
+
+                        throw new Exception(
+                            $"ADD STUDENT ROLE FAILED: {roleErrors}");
+                    }
+
+                    /*
+                     * ========================================================
+                     * 13. KREIRANJE KORISNIKA U POSLOVNOJ TABELI
+                     * ========================================================
                      */
 
                     var noviKorisnik = new Korisnik
@@ -355,9 +506,11 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         IME = NormalizeValue(apiUser.Ime),
                         PREZIME = NormalizeValue(apiUser.Prezime),
                         IME_OCA = NormalizeValue(apiUser.ImeOca),
+
                         ACCESS_KEY = apiUser.AccessKey,
                         USER_ID = identityUser.Id,
                         EMAIL = cleanEmail,
+
                         KOMPANIJA = apiUser.Kompanija ?? "MAS",
                         HRM_ID = apiUser.HrmId,
 
@@ -405,9 +558,23 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
             try
             {
-                // API vraća samo trenutno aktivne i neobrisane HRM korisnike.
+                /*
+                 * API vraća samo aktivne i neobrisane HRM korisnike.
+                 */
                 var apiUsers =
                     await _internalUsersApiService.GetUsersAsync();
+
+                if (apiUsers == null || !apiUsers.Any())
+                {
+                    result.Failed++;
+                    result.ErrorMessages.Add(
+                        "HRM API nije vratio aktivne korisnike. Sync nije izvršen.");
+
+                    _logger.LogWarning(
+                        "Sinhronizacija preskočena jer HRM API nije vratio korisnike.");
+
+                    return result;
+                }
 
                 foreach (var apiUser in apiUsers)
                 {
@@ -416,6 +583,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
 
                     try
                     {
+                        /*
+                         * ====================================================
+                         * 1. POSTOJEĆI KORISNIK
+                         * ====================================================
+                         */
+
                         var postojeci = await _dbContext.KORISNICI
                             .FirstOrDefaultAsync(
                                 x => x.HRM_ID == apiUser.HrmId);
@@ -425,29 +598,53 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             result.Missing++;
 
                             await transaction.RollbackAsync();
-
                             continue;
                         }
 
-                        var novoIme =
-                            NormalizeValue(apiUser.Ime);
+                        /*
+                         * Osiguravamo da postoji Identity račun.
+                         *
+                         * Ne želimo označiti korisnika kao uspješno
+                         * reaktiviranog ako nema povezan Identity račun.
+                         */
 
-                        var novoPrezime =
-                            NormalizeValue(apiUser.Prezime);
+                        if (string.IsNullOrWhiteSpace(postojeci.USER_ID))
+                        {
+                            throw new Exception(
+                                $"Korisnik KORISNIK_ID={postojeci.ID}, " +
+                                $"HRM_ID={apiUser.HrmId} nema USER_ID.");
+                        }
 
-                        var novoImeOca =
-                            NormalizeValue(apiUser.ImeOca);
+                        var identityUser =
+                            await _userManager.FindByIdAsync(postojeci.USER_ID);
 
-                        var noviEmail =
-                            NormalizeValue(apiUser.Email);
+                        if (identityUser == null)
+                        {
+                            throw new Exception(
+                                $"Identity korisnik nije pronađen. " +
+                                $"USER_ID={postojeci.USER_ID}");
+                        }
 
-                        // Čuvamo staro stanje za audit.
+                        /*
+                         * ====================================================
+                         * 2. PODACI IZ HRM API-JA
+                         * ====================================================
+                         */
+
+                        var novoIme = NormalizeValue(apiUser.Ime);
+                        var novoPrezime = NormalizeValue(apiUser.Prezime);
+                        var novoImeOca = NormalizeValue(apiUser.ImeOca);
+                        var noviEmail = NormalizeValue(apiUser.Email);
+
+                        /*
+                         * Čuvamo prethodne podatke za audit.
+                         */
+
                         var staroIme = postojeci.IME;
                         var staroPrezime = postojeci.PREZIME;
                         var staroImeOca = postojeci.IME_OCA;
                         var stariEmail = postojeci.EMAIL;
                         var stariAccessKey = postojeci.ACCESS_KEY;
-                        var stariTipKorisnikaId = postojeci.TIP_KORISNIKA_ID;
 
                         var promijenjenaPolja = new List<string>();
 
@@ -455,15 +652,14 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         bool identityChanged = false;
 
                         /*
-                         * ============================================================
-                         * KORISNICI
-                         * ============================================================
+                         * ====================================================
+                         * 3. KORISNICI - SINHRONIZACIJA PODATAKA
+                         * ====================================================
                          */
 
                         if (!AreEqual(postojeci.IME, novoIme))
                         {
                             postojeci.IME = novoIme;
-
                             promijenjenaPolja.Add("IME");
                             korisnikChanged = true;
                         }
@@ -471,7 +667,6 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         if (!AreEqual(postojeci.PREZIME, novoPrezime))
                         {
                             postojeci.PREZIME = novoPrezime;
-
                             promijenjenaPolja.Add("PREZIME");
                             korisnikChanged = true;
                         }
@@ -479,7 +674,6 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         if (!AreEqual(postojeci.IME_OCA, novoImeOca))
                         {
                             postojeci.IME_OCA = novoImeOca;
-
                             promijenjenaPolja.Add("IME_OCA");
                             korisnikChanged = true;
                         }
@@ -487,7 +681,6 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         if (!AreEqual(postojeci.EMAIL, noviEmail))
                         {
                             postojeci.EMAIL = noviEmail;
-
                             promijenjenaPolja.Add("EMAIL");
                             korisnikChanged = true;
                         }
@@ -495,7 +688,6 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         if (postojeci.ACCESS_KEY != apiUser.AccessKey)
                         {
                             postojeci.ACCESS_KEY = apiUser.AccessKey;
-
                             promijenjenaPolja.Add("ACCESS_KEY");
                             korisnikChanged = true;
                         }
@@ -503,153 +695,153 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         if (postojeci.TIP_KORISNIKA_ID != 1)
                         {
                             postojeci.TIP_KORISNIKA_ID = 1;
-
                             promijenjenaPolja.Add("TIP_KORISNIKA_ID");
                             korisnikChanged = true;
                         }
 
                         /*
-                         * API GetUsersAsync() vraća samo aktivne i neobrisane
-                         * HRM korisnike.
+                         * ====================================================
+                         * 4. KORISNICI - REAKTIVACIJA
+                         * ====================================================
                          *
-                         * Zato svaki korisnik koji se nalazi u ovom API odgovoru
-                         * mora biti aktivan i u LMS tabeli KORISNICI.
-                         *
-                         * Ovo također automatski reaktivira korisnika ako je
-                         * ranije iz bilo kojeg razloga ostao AKTIVAN = "N".
+                         * Ako HRM vrati radnika među aktivnima,
+                         * lokalni status mora biti Y.
                          */
+
                         if (postojeci.AKTIVAN != "Y")
                         {
                             postojeci.AKTIVAN = "Y";
-
                             promijenjenaPolja.Add("AKTIVAN");
                             korisnikChanged = true;
                         }
 
                         /*
-                         * ============================================================
-                         * ASP.NET IDENTITY
-                         * ============================================================
+                         * ====================================================
+                         * 5. IDENTITY - OSNOVNI PODACI
+                         * ====================================================
                          */
 
-                        if (!string.IsNullOrWhiteSpace(postojeci.USER_ID))
+                        if (!AreEqual(identityUser.FirstName, novoIme))
                         {
-                            var identityUser =
-                                await _userManager.FindByIdAsync(
-                                    postojeci.USER_ID);
+                            identityUser.FirstName = novoIme ?? string.Empty;
+                            promijenjenaPolja.Add("IDENTITY_FIRSTNAME");
+                            identityChanged = true;
+                        }
 
-                            if (identityUser == null)
+                        if (!AreEqual(identityUser.LastName, novoPrezime))
+                        {
+                            identityUser.LastName = novoPrezime ?? string.Empty;
+                            promijenjenaPolja.Add("IDENTITY_LASTNAME");
+                            identityChanged = true;
+                        }
+
+                        if (!AreEqual(identityUser.Email, noviEmail))
+                        {
+                            identityUser.Email = noviEmail;
+                            promijenjenaPolja.Add("IDENTITY_EMAIL");
+                            identityChanged = true;
+                        }
+
+                        /*
+                         * ====================================================
+                         * 6. IDENTITY - REAKTIVACIJA
+                         * ====================================================
+                         *
+                         * Zadržavamo postojeći USER_ID.
+                         * Nikada ne kreiramo novi račun pri reaktivaciji.
+                         */
+
+                        if (!identityUser.IsActive)
+                        {
+                            identityUser.IsActive = true;
+                            promijenjenaPolja.Add("IDENTITY_ISACTIVE");
+                            identityChanged = true;
+                        }
+
+                        /*
+                         * Soft-delete vraćamo na false.
+                         * Korisnik ponovo postaje vidljiv.
+                         */
+
+                        if (identityUser.IsDeleted)
+                        {
+                            identityUser.IsDeleted = false;
+                            promijenjenaPolja.Add("IDENTITY_ISDELETED");
+                            identityChanged = true;
+                        }
+
+                        /*
+                         * LockoutEnabled ostaje true.
+                         */
+
+                        if (!identityUser.LockoutEnabled)
+                        {
+                            identityUser.LockoutEnabled = true;
+                            promijenjenaPolja.Add("IDENTITY_LOCKOUTENABLED");
+                            identityChanged = true;
+                        }
+
+                        /*
+                         * Uklanjamo trajni lockout postavljen
+                         * prilikom prethodne deaktivacije.
+                         *
+                         * Ne uklanjamo obični privremeni lockout.
+                         */
+
+                        if (identityUser.LockoutEnd == DateTimeOffset.MaxValue)
+                        {
+                            identityUser.LockoutEnd = null;
+                            promijenjenaPolja.Add("IDENTITY_LOCKOUTEND");
+                            identityChanged = true;
+                        }
+
+                        /*
+                         * ====================================================
+                         * 7. ČUVANJE IDENTITY PROMJENA
+                         * ====================================================
+                         */
+
+                        if (identityChanged)
+                        {
+                            var updateResult =
+                                await _userManager.UpdateAsync(identityUser);
+
+                            if (!updateResult.Succeeded)
                             {
+                                var identityErrors = string.Join(
+                                    " | ",
+                                    updateResult.Errors.Select(
+                                        x => x.Description));
+
                                 throw new Exception(
-                                    $"Identity korisnik nije pronađen. " +
-                                    $"USER_ID={postojeci.USER_ID}");
-                            }
-
-                            if (!AreEqual(
-                                    identityUser.FirstName,
-                                    novoIme))
-                            {
-                                identityUser.FirstName =
-                                    novoIme ?? string.Empty;
-
-                                identityChanged = true;
-                            }
-
-                            if (!AreEqual(
-                                    identityUser.LastName,
-                                    novoPrezime))
-                            {
-                                identityUser.LastName =
-                                    novoPrezime ?? string.Empty;
-
-                                identityChanged = true;
-                            }
-
-                            if (!AreEqual(
-                                    identityUser.Email,
-                                    noviEmail))
-                            {
-                                identityUser.Email = noviEmail;
-
-                                identityChanged = true;
-                            }
-
-                            /*
-                             * Ako je korisnik vraćen iz HRM API-ja,
-                             * HRM ga smatra aktivnim.
-                             *
-                             * Osiguravamo da je aktivan i u AspNetUsers.
-                             */
-                            if (!identityUser.IsActive)
-                            {
-                                identityUser.IsActive = true;
-                                identityChanged = true;
-                            }
-
-                            /*
-                             * LockoutEnabled ostavljamo uključen jer Identity
-                             * koristi ovaj mehanizam i za standardni lockout.
-                             */
-                            if (!identityUser.LockoutEnabled)
-                            {
-                                identityUser.LockoutEnabled = true;
-                                identityChanged = true;
-                            }
-
-                            /*
-                             * Deaktivacija korisnika postavlja LockoutEnd na MaxValue.
-                             * Ako je korisnik ponovo aktivan u HRM-u,
-                             * uklanjamo taj lockout.
-                             */
-                            if (identityUser.LockoutEnd != null)
-                            {
-                                identityUser.LockoutEnd = null;
-                                identityChanged = true;
-                            }
-
-                            if (identityChanged)
-                            {
-                                var updateResult =
-                                    await _userManager.UpdateAsync(
-                                        identityUser);
-
-                                if (!updateResult.Succeeded)
-                                {
-                                    var identityErrors = string.Join(
-                                        " | ",
-                                        updateResult.Errors.Select(
-                                            x => x.Description));
-
-                                    throw new Exception(
-                                        "Identity update nije uspio: " +
-                                        identityErrors);
-                                }
+                                    "Identity update nije uspio: " +
+                                    identityErrors);
                             }
                         }
 
-                        bool hasChanges =
-                            korisnikChanged || identityChanged;
+                        /*
+                         * ====================================================
+                         * 8. PROVJERA PROMJENA
+                         * ====================================================
+                         */
+
+                        bool hasChanges = korisnikChanged || identityChanged;
 
                         if (!hasChanges)
                         {
                             result.Unchanged++;
 
                             await transaction.RollbackAsync();
-
                             continue;
                         }
 
                         var promijenjenaPoljaText =
-                            promijenjenaPolja.Any()
-                                ? string.Join(
-                                    ", ",
-                                    promijenjenaPolja)
-                                : "IDENTITY_PODACI";
+                            string.Join(", ", promijenjenaPolja);
 
                         /*
-                         * ============================================================
-                         * AUDIT
-                         * ============================================================
+                         * ====================================================
+                         * 9. AUDIT SINHRONIZACIJE
+                         * ====================================================
                          */
 
                         var auditZapis =
@@ -674,14 +866,12 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                                 STARI_ACCESS_KEY = stariAccessKey,
                                 NOVI_ACCESS_KEY = postojeci.ACCESS_KEY,
 
-                                PROMIJENJENA_POLJA =
-                                    promijenjenaPoljaText,
+                                PROMIJENJENA_POLJA = promijenjenaPoljaText,
 
                                 OPIS =
-                                    $"Sinhronizovani podaci internog " +
-                                    $"korisnika iz HRM sistema. " +
-                                    $"Promijenjena polja: " +
-                                    $"{promijenjenaPoljaText}.",
+                                    "Sinhronizovani podaci internog korisnika " +
+                                    "iz HRM sistema. Promijenjena polja: " +
+                                    promijenjenaPoljaText + ".",
 
                                 DATUM_KREIRANJA = DateTime.Now,
 
@@ -694,11 +884,24 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             .EVIDENCIJA_SINHRONIZACIJE_KORISNIKA
                             .Add(auditZapis);
 
-                        await _dbContext.SaveChangesAsync();
+                        /*
+                         * ====================================================
+                         * 10. ČUVANJE TRANSAKCIJE
+                         * ====================================================
+                         */
 
+                        await _dbContext.SaveChangesAsync();
                         await transaction.CommitAsync();
 
                         result.Updated++;
+
+                        _logger.LogInformation(
+                            "SINHRONIZOVAN INTERNI KORISNIK: " +
+                            "KORISNIK_ID={KorisnikId}, HRM_ID={HrmId}, " +
+                            "Promjene={Promjene}",
+                            postojeci.ID,
+                            apiUser.HrmId,
+                            promijenjenaPoljaText);
                     }
                     catch (Exception ex)
                     {
@@ -738,8 +941,7 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
             {
                 _logger.LogError(
                     ex,
-                    "Opšta greška tokom sinhronizacije " +
-                    "internih korisnika.");
+                    "Opšta greška tokom sinhronizacije internih korisnika.");
 
                 result.Failed++;
 
@@ -758,15 +960,18 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
             try
             {
                 /*
-                 * API treba vratiti trenutno aktivne interne radnike.
+                 * ============================================================
+                 * 1. PREUZIMANJE AKTIVNIH KORISNIKA IZ HRM API-JA
+                 * ============================================================
                  */
+
                 var apiUsers =
                     (await _internalUsersApiService.GetUsersAsync())
                     .ToList();
 
                 /*
-                 * Zaštita od slučajne masovne deaktivacije ako API
-                 * zbog greške vrati praznu listu.
+                 * Zaštita od masovne deaktivacije ako API vrati
+                 * praznu listu korisnika.
                  */
                 if (!apiUsers.Any())
                 {
@@ -784,32 +989,34 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                     .ToHashSet();
 
                 /*
-                 * Uzimamo sve lokalne interne korisnike koji imaju HRM_ID.
+                 * ============================================================
+                 * 2. LOKALNI INTERNI KORISNICI
+                 * ============================================================
+                 *
+                 * AsNoTracking koristimo jer svakog korisnika
+                 * posebno učitavamo unutar njegove transakcije.
                  */
+
                 var localInternalUsers = await _dbContext.KORISNICI
+                    .AsNoTracking()
                     .Where(x =>
                         x.TIP_KORISNIKA_ID == 1 &&
                         x.HRM_ID != null)
+                    .Select(x => new
+                    {
+                        x.ID,
+                        x.HRM_ID
+                    })
                     .ToListAsync();
 
-                foreach (var korisnik in localInternalUsers)
+                foreach (var localUser in localInternalUsers)
                 {
                     /*
-                     * Ako se HRM_ID još uvijek nalazi u API odgovoru,
-                     * korisnik je aktivan i ne mijenjamo ga.
+                     * Ako je korisnik pronađen među aktivnim
+                     * radnicima HRM-a, ne deaktiviramo ga.
                      */
-                    if (activeHrmIds.Contains(korisnik.HRM_ID!.Value))
+                    if (activeHrmIds.Contains(localUser.HRM_ID!.Value))
                     {
-                        continue;
-                    }
-
-                    /*
-                     * Ako je već neaktivan, nema potrebe ponavljati izmjenu
-                     * niti kreirati novi audit zapis.
-                     */
-                    if (korisnik.AKTIVAN == "N")
-                    {
-                        result.AlreadyInactive++;
                         continue;
                     }
 
@@ -819,8 +1026,37 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                     try
                     {
                         /*
-                         * Čuvamo staro stanje prije deaktivacije.
+                         * ====================================================
+                         * 3. UČITAVANJE KORISNIKA
+                         * ====================================================
                          */
+
+                        var korisnik = await _dbContext.KORISNICI
+                            .FirstOrDefaultAsync(x => x.ID == localUser.ID);
+
+                        if (korisnik == null)
+                        {
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        /*
+                         * Dodatna provjera tipa i HRM ID-a.
+                         */
+                        if (korisnik.TIP_KORISNIKA_ID != 1 ||
+                            korisnik.HRM_ID == null ||
+                            activeHrmIds.Contains(korisnik.HRM_ID.Value))
+                        {
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        /*
+                         * ====================================================
+                         * 4. POSTOJEĆI STATUSI
+                         * ====================================================
+                         */
+
                         bool? stariLmsStatus = korisnik.AKTIVAN switch
                         {
                             "Y" => true,
@@ -831,74 +1067,147 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         bool? stariIdentityStatus = null;
                         bool? noviIdentityStatus = null;
 
-                        string auditOpis;
+                        bool lmsChanged = false;
+                        bool identityChanged = false;
+
+                        bool stvarnaDeaktivacija = false;
+
+                        string auditOpis = string.Empty;
 
                         /*
-                         * Deaktivacija u poslovnoj tabeli.
+                         * ====================================================
+                         * 5. PROVJERA IDENTITY KORISNIKA
+                         * ====================================================
                          */
-                        korisnik.AKTIVAN = "N";
 
-                        /*
-                         * Deaktivacija povezanog Identity korisnika.
-                         */
-                        if (string.IsNullOrWhiteSpace(korisnik.USER_ID))
+                        ApplicationUser? identityUser = null;
+
+                        if (!string.IsNullOrWhiteSpace(korisnik.USER_ID))
                         {
-                            result.SkippedWithoutIdentity++;
+                            identityUser = await _userManager.FindByIdAsync(
+                                korisnik.USER_ID);
+                        }
+
+                        if (identityUser != null)
+                        {
+                            stariIdentityStatus = identityUser.IsActive;
+                            noviIdentityStatus = identityUser.IsActive;
+                        }
+
+                        /*
+                         * ====================================================
+                         * 6. UTVRĐIVANJE DEAKTIVACIJE
+                         * ====================================================
+                         *
+                         * Audit deaktivacije pravimo samo kada
+                         * korisnik prelazi iz aktivnog u neaktivno stanje.
+                         *
+                         * Ako je već neaktivan, a neko polje nije
+                         * usklađeno, radimo samo korekciju statusa.
+                         */
+
+                        stvarnaDeaktivacija =
+                            korisnik.AKTIVAN == "Y" ||
+                            (identityUser != null && identityUser.IsActive);
+
+                        /*
+                         * ====================================================
+                         * 7. KORISNICI - POSLOVNA TABELA
+                         * ====================================================
+                         */
+
+                        if (korisnik.AKTIVAN != "N")
+                        {
+                            korisnik.AKTIVAN = "N";
+                            lmsChanged = true;
+                        }
+
+                        /*
+                         * ====================================================
+                         * 8. ASP.NET IDENTITY
+                         * ====================================================
+                         */
+
+                        if (identityUser == null)
+                        {
+                            /*
+                             * Korisnik nema povezan Identity račun
+                             * ili povezani račun nije pronađen.
+                             *
+                             * Poslovni status ipak deaktiviramo.
+                             */
+
+                            if (lmsChanged)
+                            {
+                                result.SkippedWithoutIdentity++;
+                            }
 
                             auditOpis =
                                 "Korisnik više nije pronađen među aktivnim " +
                                 "internim radnicima u HRM sistemu. " +
                                 "Deaktiviran je u tabeli KORISNICI, " +
-                                "ali nema povezan Identity USER_ID.";
+                                "ali povezani Identity korisnik ne postoji.";
 
                             _logger.LogWarning(
                                 "Korisnik KORISNIK_ID={KorisnikId}, " +
-                                "HRM_ID={HrmId} nema USER_ID. " +
-                                "Deaktiviran je samo u tabeli KORISNICI.",
+                                "HRM_ID={HrmId} nema povezan Identity račun.",
                                 korisnik.ID,
                                 korisnik.HRM_ID);
                         }
                         else
                         {
-                            var identityUser =
-                                await _userManager.FindByIdAsync(
-                                    korisnik.USER_ID);
-
-                            if (identityUser == null)
+                            /*
+                             * IsActive
+                             */
+                            if (identityUser.IsActive)
                             {
-                                result.SkippedWithoutIdentity++;
-
-                                auditOpis =
-                                    "Korisnik više nije pronađen među " +
-                                    "aktivnim internim radnicima u HRM sistemu. " +
-                                    "Deaktiviran je u tabeli KORISNICI, " +
-                                    "ali povezani Identity korisnik nije pronađen.";
-
-                                _logger.LogWarning(
-                                    "Identity korisnik nije pronađen za " +
-                                    "KORISNIK_ID={KorisnikId}, " +
-                                    "USER_ID={UserId}, HRM_ID={HrmId}. " +
-                                    "Deaktiviran je samo u tabeli KORISNICI.",
-                                    korisnik.ID,
-                                    korisnik.USER_ID,
-                                    korisnik.HRM_ID);
-                            }
-                            else
-                            {
-                                /*
-                                 * Čuvamo Identity stanje prije izmjene.
-                                 */
-                                stariIdentityStatus =
-                                    identityUser.IsActive;
-
                                 identityUser.IsActive = false;
-                                identityUser.LockoutEnabled = true;
-                                identityUser.LockoutEnd =
-                                    DateTimeOffset.MaxValue;
+                                identityChanged = true;
+                            }
 
+                            /*
+                             * IsDeleted - soft delete
+                             */
+                            if (!identityUser.IsDeleted)
+                            {
+                                identityUser.IsDeleted = true;
+                                identityChanged = true;
+                            }
+
+                            /*
+                             * LockoutEnabled
+                             */
+                            if (!identityUser.LockoutEnabled)
+                            {
+                                identityUser.LockoutEnabled = true;
+                                identityChanged = true;
+                            }
+
+                            /*
+                             * Trajno zaključavanje do reaktivacije.
+                             */
+                            if (identityUser.LockoutEnd != DateTimeOffset.MaxValue)
+                            {
+                                identityUser.LockoutEnd = DateTimeOffset.MaxValue;
+                                identityChanged = true;
+                            }
+
+                            noviIdentityStatus = false;
+
+                            auditOpis =
+                                "Korisnik više nije pronađen među aktivnim " +
+                                "internim radnicima u HRM sistemu. " +
+                                "Deaktiviran je u tabeli KORISNICI, " +
+                                "Identity račun je deaktiviran, " +
+                                "označen kao obrisan i zaključan.";
+
+                            /*
+                             * Identity ažuriramo samo kada postoji promjena.
+                             */
+                            if (identityChanged)
+                            {
                                 var updateResult =
-                                    await _userManager.UpdateAsync(
-                                        identityUser);
+                                    await _userManager.UpdateAsync(identityUser);
 
                                 if (!updateResult.Succeeded)
                                 {
@@ -909,72 +1218,114 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                                             updateResult.Errors.Select(
                                                 x => x.Description)));
                                 }
-
-                                noviIdentityStatus = false;
-
-                                auditOpis =
-                                    "Korisnik više nije pronađen među " +
-                                    "aktivnim internim radnicima u HRM sistemu. " +
-                                    "Deaktiviran je u tabeli KORISNICI " +
-                                    "i onemogućena mu je prijava kroz Identity.";
                             }
                         }
 
                         /*
-                         * Audit zapis deaktivacije.
+                         * ====================================================
+                         * 9. KORISNIK JE VEĆ POTPUNO DEAKTIVIRAN
+                         * ====================================================
                          */
-                        var audit =
-                            new EvidencijaDeaktivacijeKorisnika
-                            {
-                                KORISNIK_ID = korisnik.ID,
-                                USER_ID = korisnik.USER_ID,
-                                HRM_ID = korisnik.HRM_ID,
-                                IME = korisnik.IME,
-                                PREZIME = korisnik.PREZIME,
-                                EMAIL = korisnik.EMAIL,
-                                ACCESS_KEY = korisnik.ACCESS_KEY,
 
-                                STARI_AKTIVAN = stariLmsStatus,
-                                NOVI_AKTIVAN = false,
+                        if (!lmsChanged && !identityChanged)
+                        {
+                            result.AlreadyInactive++;
 
-                                STARI_IDENTITY_AKTIVAN =
-                                    stariIdentityStatus,
+                            await transaction.RollbackAsync();
 
-                                NOVI_IDENTITY_AKTIVAN =
-                                    noviIdentityStatus,
-
-                                RAZLOG_DEAKTIVACIJE =
-                                    "Korisnik nije pronađen među aktivnim " +
-                                    "radnicima u HRM API odgovoru.",
-
-                                OPIS = auditOpis,
-
-                                DATUM_KREIRANJA = DateTime.Now,
-                                PREGLEDANO = false,
-                                PREGLEDAO_USER_ID = null,
-                                DATUM_PREGLEDA = null
-                            };
-
-                        _dbContext
-                            .EVIDENCIJA_DEAKTIVACIJE_KORISNIKA
-                            .Add(audit);
+                            continue;
+                        }
 
                         /*
-                         * Promjena korisnika i audit zapis čuvaju se zajedno.
+                         * ====================================================
+                         * 10. AUDIT STVARNE DEAKTIVACIJE
+                         * ====================================================
+                         *
+                         * Audit kreiramo samo kada je korisnik
+                         * prethodno bio aktivan.
+                         *
+                         * Obično usklađivanje statusa već neaktivnog
+                         * korisnika ne kreira novi audit zapis.
                          */
+
+                        if (stvarnaDeaktivacija)
+                        {
+                            var audit =
+                                new EvidencijaDeaktivacijeKorisnika
+                                {
+                                    KORISNIK_ID = korisnik.ID,
+                                    USER_ID = korisnik.USER_ID,
+                                    HRM_ID = korisnik.HRM_ID,
+
+                                    IME = korisnik.IME,
+                                    PREZIME = korisnik.PREZIME,
+                                    EMAIL = korisnik.EMAIL,
+                                    ACCESS_KEY = korisnik.ACCESS_KEY,
+
+                                    STARI_AKTIVAN = stariLmsStatus,
+                                    NOVI_AKTIVAN = false,
+
+                                    STARI_IDENTITY_AKTIVAN =
+                                        stariIdentityStatus,
+
+                                    NOVI_IDENTITY_AKTIVAN =
+                                        noviIdentityStatus,
+
+                                    RAZLOG_DEAKTIVACIJE =
+                                        "Korisnik nije pronađen među aktivnim " +
+                                        "radnicima u HRM API odgovoru.",
+
+                                    OPIS = auditOpis,
+
+                                    DATUM_KREIRANJA = DateTime.Now,
+
+                                    PREGLEDANO = false,
+                                    PREGLEDAO_USER_ID = null,
+                                    DATUM_PREGLEDA = null
+                                };
+
+                            _dbContext
+                                .EVIDENCIJA_DEAKTIVACIJE_KORISNIKA
+                                .Add(audit);
+                        }
+
+                        /*
+                         * ====================================================
+                         * 11. ČUVANJE PROMJENA
+                         * ====================================================
+                         */
+
                         await _dbContext.SaveChangesAsync();
+
                         await transaction.CommitAsync();
 
-                        result.Deactivated++;
+                        if (stvarnaDeaktivacija)
+                        {
+                            result.Deactivated++;
 
-                        _logger.LogWarning(
-                            "DEAKTIVIRAN INTERNI KORISNIK: " +
-                            "KORISNIK_ID={KorisnikId}, " +
-                            "HRM_ID={HrmId}, IME={Ime}, PREZIME={Prezime}",
-                            korisnik.ID,
-                            korisnik.HRM_ID,
-                            korisnik.IME,
-                            korisnik.PREZIME);
+                            _logger.LogWarning(
+                                "DEAKTIVIRAN INTERNI KORISNIK: " +
+                                "KORISNIK_ID={KorisnikId}, " +
+                                "HRM_ID={HrmId}, IME={Ime}, PREZIME={Prezime}",
+                                korisnik.ID,
+                                korisnik.HRM_ID,
+                                korisnik.IME,
+                                korisnik.PREZIME);
+                        }
+                        else
+                        {
+                            /*
+                             * Korisnik je već bio neaktivan,
+                             * ali smo uskladili nedostajuća polja.
+                             */
+                            result.AlreadyInactive++;
+
+                            _logger.LogInformation(
+                                "USKLAĐEN STATUS NEAKTIVNOG KORISNIKA: " +
+                                "KORISNIK_ID={KorisnikId}, HRM_ID={HrmId}",
+                                korisnik.ID,
+                                korisnik.HRM_ID);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -983,8 +1334,8 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                         result.Failed++;
 
                         var message =
-                            $"KORISNIK_ID={korisnik.ID}, " +
-                            $"HRM_ID={korisnik.HRM_ID}: {ex.Message}";
+                            $"KORISNIK_ID={localUser.ID}, " +
+                            $"HRM_ID={localUser.HRM_ID}: {ex.Message}";
 
                         result.ErrorMessages.Add(message);
 
@@ -992,8 +1343,8 @@ namespace SIA.Sapio_LMS.Services.InternalUsersSync
                             ex,
                             "Greška pri deaktivaciji korisnika " +
                             "KORISNIK_ID={KorisnikId}, HRM_ID={HrmId}",
-                            korisnik.ID,
-                            korisnik.HRM_ID);
+                            localUser.ID,
+                            localUser.HRM_ID);
                     }
                     finally
                     {

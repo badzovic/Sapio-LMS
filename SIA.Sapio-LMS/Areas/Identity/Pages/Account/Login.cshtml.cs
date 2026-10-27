@@ -167,11 +167,71 @@ namespace SIA.Sapio_LMS.Areas.Identity.Pages.Account
 
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Neispravni podaci za prijavu.");
+
                 return Page();
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, Input.Password, lockoutOnFailure: false);
+            /*
+             * ============================================================
+             * PROVJERA STATUSA IDENTITY KORISNIKA
+             * ============================================================
+             */
+
+            if (!user.IsActive || user.IsDeleted)
+            {
+                _logger.LogWarning(
+                    "Odbijena prijava neaktivnog korisnika USER_ID={UserId}",
+                    user.Id);
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Korisnički račun nije aktivan.");
+
+                return Page();
+            }
+
+            /*
+             * ============================================================
+             * PROVJERA STATUSA U TABELI KORISNICI
+             * ============================================================
+             *
+             * Ako korisnik ima lokalni zapis, mora biti aktivan.
+             * Ako još nema KORISNICI zapis (npr. početna registracija),
+             * ne blokiramo prijavu samo zbog nepostojanja tog zapisa.
+             */
+
+            var lokalniStatusi = await _dbContext.KORISNICI
+                .AsNoTracking()
+                .Where(x => x.USER_ID == user.Id)
+                .Select(x => x.AKTIVAN)
+                .ToListAsync();
+
+            if (lokalniStatusi.Any(x => x != "Y"))
+            {
+                _logger.LogWarning(
+                    "Odbijena prijava zbog neaktivnog poslovnog statusa USER_ID={UserId}",
+                    user.Id);
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Korisnički račun nije aktivan.");
+
+                return Page();
+            }
+
+            /*
+             * ============================================================
+             * PROVJERA LOZINKE
+             * ============================================================
+             */
+
+            var result = await _signInManager.CheckPasswordSignInAsync(
+                user,
+                Input.Password,
+                lockoutOnFailure: false);
 
             if (result.Succeeded)
             {

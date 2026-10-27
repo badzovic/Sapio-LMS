@@ -48,50 +48,87 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         //    return View(users);
         //}
 
-        public async Task<IActionResult> Index(string status = "all", string type = "all")
+        public async Task<IActionResult> Index(
+     string status = "all",
+     string type = "all")
         {
-            status = (status ?? "all").ToLower();
-            type = (type ?? "all").ToLower();
+            status = (status ?? "all").ToLowerInvariant();
+            type = (type ?? "all").ToLowerInvariant();
+
+            /*
+             * ============================================================
+             * OSNOVNI UPIT
+             * ============================================================
+             *
+             * Ne filtriramo IsDeleted na početku.
+             * Administrator mora moći vidjeti i deaktivirane korisnike.
+             */
 
             var query =
                 from u in _dbContext.Users
-                join k in _dbContext.KORISNICI on u.Id equals k.USER_ID into korisniciJoin
+                join k in _dbContext.KORISNICI
+                    on u.Id equals k.USER_ID into korisniciJoin
                 from k in korisniciJoin.DefaultIfEmpty()
-                join tk in _dbContext.TIPOVI_KORISNIKA on k.TIP_KORISNIKA_ID equals tk.ID into tipoviJoin
+
+                join tk in _dbContext.TIPOVI_KORISNIKA
+                    on k.TIP_KORISNIKA_ID equals tk.ID into tipoviJoin
                 from tk in tipoviJoin.DefaultIfEmpty()
-                where !u.IsDeleted
+
                 select new UserIndexRowVM
                 {
                     UserId = u.Id,
+
                     KorisnikId = k != null ? k.ID : (int?)null,
+
                     Email = u.Email,
                     FirstName = u.FirstName,
                     LastName = u.LastName,
+
                     ImeOca = k != null ? k.IME_OCA : null,
 
-                    IsActiveIdentity = u.IsActive,
-                    AktivanLocal = k != null ? k.AKTIVAN : "N",
+                    IsActiveIdentity =
+                        u.IsActive && !u.IsDeleted,
 
-                    //IsExternalCollaborator = u.IsExternalCollaborator,
-                    //MustChangePassword = u.MustChangePassword,
+                    AktivanLocal =
+                        k != null ? k.AKTIVAN : "N",
 
-                    TipKorisnikaId = k != null ? k.TIP_KORISNIKA_ID : null,
-                    TipKorisnikaNaziv = tk != null ? tk.Naziv : null,
+                    TipKorisnikaId =
+                        k != null ? k.TIP_KORISNIKA_ID : null,
 
-                    IsPending = !u.IsActive && (k == null || k.TIP_KORISNIKA_ID == null),
+                    TipKorisnikaNaziv =
+                        tk != null ? tk.Naziv : null,
+
+                    /*
+                     * Pending korisnici nisu još povezani
+                     * s odgovarajućim tipom korisnika.
+                     */
+                    IsPending =
+                        !u.IsActive &&
+                        !u.IsDeleted &&
+                        (k == null || k.TIP_KORISNIKA_ID == null),
 
                     DetailsController =
-                        tk != null && tk.Naziv == "Interni" ? "InternalUsersManagement" :
-                        tk != null && tk.Naziv == "Eksterni" ? "ExternalUsersManagement" :
-                        tk != null && tk.Naziv == "Sezonski radnik" ? "SeasonalUsersManagement" :
+                        tk != null && tk.Naziv == "Interni"
+                            ? "InternalUsersManagement" :
+                        tk != null && tk.Naziv == "Eksterni"
+                            ? "ExternalUsersManagement" :
+                        tk != null && tk.Naziv == "Sezonski radnik"
+                            ? "SeasonalUsersManagement" :
                         "Users",
 
                     DetailsAction = "Details",
 
                     DetailsRouteType =
-                        tk != null && tk.Naziv == "Interni" ? "userId" :
-                        "id"
+                        tk != null && tk.Naziv == "Interni"
+                            ? "userId"
+                            : "id"
                 };
+
+            /*
+             * ============================================================
+             * FILTER STATUSA
+             * ============================================================
+             */
 
             if (status == "pending")
             {
@@ -99,29 +136,48 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             }
             else if (status == "active")
             {
-                query = query.Where(x => x.IsActiveIdentity);
+                query = query.Where(x =>
+                    x.IsActiveIdentity &&
+                    x.AktivanLocal == "Y");
             }
             else if (status == "inactive")
             {
-                query = query.Where(x => !x.IsActiveIdentity && !x.IsPending);
+                query = query.Where(x =>
+                    !x.IsActiveIdentity &&
+                    !x.IsPending);
             }
+
+            /*
+             * ============================================================
+             * FILTER TIPA KORISNIKA
+             * ============================================================
+             */
 
             if (type == "internal")
             {
-                query = query.Where(x => x.TipKorisnikaNaziv == "Interni");
+                query = query.Where(x =>
+                    x.TipKorisnikaNaziv == "Interni");
             }
             else if (type == "external")
             {
-                query = query.Where(x => x.TipKorisnikaNaziv == "Eksterni");
+                query = query.Where(x =>
+                    x.TipKorisnikaNaziv == "Eksterni");
             }
             else if (type == "seasonal")
             {
-                query = query.Where(x => x.TipKorisnikaNaziv == "Sezonski radnik");
+                query = query.Where(x =>
+                    x.TipKorisnikaNaziv == "Sezonski radnik");
             }
             else if (type == "pending")
             {
                 query = query.Where(x => x.IsPending);
             }
+
+            /*
+             * ============================================================
+             * REZULTAT
+             * ============================================================
+             */
 
             var model = new UserIndexVM
             {
@@ -129,6 +185,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                     .OrderBy(x => x.LastName)
                     .ThenBy(x => x.FirstName)
                     .ToListAsync(),
+
                 Status = status,
                 TypeFilter = type
             };
@@ -339,6 +396,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
             }
 
             var identityUser = await _userManager.FindByIdAsync(userId);
+
             if (identityUser == null)
             {
                 TempData["ImportMessage"] = "Korisnik nije pronađen.";
@@ -354,38 +412,80 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            /*
+             * Internim korisnicima upravlja HRM sinhronizacija.
+             * Ne dozvoljavamo njihovu konverziju ovom metodom.
+             */
+            if (lokalniUser.TIP_KORISNIKA_ID == 1)
+            {
+                TempData["ImportMessage"] =
+                    "Korisnik je interni radnik. Njegovim statusom upravlja HRM sinhronizacija.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
             var tip = await _dbContext.TIPOVI_KORISNIKA
                 .FirstOrDefaultAsync(x => x.Naziv == tipNaziv);
 
             if (tip == null)
             {
-                TempData["ImportMessage"] = $"Tip korisnika '{tipNaziv}' ne postoji.";
+                TempData["ImportMessage"] =
+                    $"Tip korisnika '{tipNaziv}' ne postoji.";
+
                 return RedirectToAction(nameof(Index));
             }
 
-            // update lokalna tabela
-            lokalniUser.TIP_KORISNIKA_ID = tip.ID;
-            lokalniUser.AKTIVAN = "Y";
+            await using var transaction =
+                await _dbContext.Database.BeginTransactionAsync();
 
-            // update identity
-            identityUser.IsActive = true;
-            identityUser.LockoutEnd = null;
-
-            // opcionalno: eksterni flag
-            identityUser.IsExternalCollaborator = true;
-
-            var result = await _userManager.UpdateAsync(identityUser);
-
-            if (!result.Succeeded)
+            try
             {
-                TempData["ImportMessage"] = "Greška prilikom aktivacije korisnika.";
-                TempData["ImportErrors"] = string.Join("\n", result.Errors.Select(e => e.Description));
-                return RedirectToAction(nameof(Index));
+                // Poslovna tabela
+                lokalniUser.TIP_KORISNIKA_ID = tip.ID;
+                lokalniUser.AKTIVAN = "Y";
+
+                // Identity
+                identityUser.IsActive = true;
+                identityUser.IsDeleted = false;
+                identityUser.IsExternalCollaborator = true;
+                identityUser.LockoutEnabled = true;
+
+                // Uklanjamo trajnu blokadu ako postoji.
+                if (identityUser.LockoutEnd == DateTimeOffset.MaxValue)
+                {
+                    identityUser.LockoutEnd = null;
+                }
+
+                var result = await _userManager.UpdateAsync(identityUser);
+
+                if (!result.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        "Greška prilikom aktivacije korisnika: " +
+                        string.Join(" | ",
+                            result.Errors.Select(e => e.Description)));
+                }
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["ImportMessage"] =
+                    $"Korisnik je aktiviran kao '{tipNaziv}'.";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                TempData["ImportMessage"] =
+                    "Greška prilikom aktivacije korisnika.";
+
+                TempData["ImportErrors"] = ex.Message;
+            }
+            finally
+            {
+                _dbContext.ChangeTracker.Clear();
             }
 
-            await _dbContext.SaveChangesAsync();
-
-            TempData["ImportMessage"] = $"Korisnik je aktiviran kao '{tipNaziv}'.";
             return RedirectToAction(nameof(Index));
         }
     }

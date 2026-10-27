@@ -266,15 +266,21 @@
                                 <td>
                                     @if (user.IsPending)
                                     {
-                                        <span class="badge bg-warning text-dark">Čeka odobrenje</span>
+                                        <span class="badge bg-warning text-dark">
+                                            Čeka odobrenje
+                                        </span>
                                     }
-                                    else if (user.IsActiveIdentity)
+                                    else if (user.IsActiveIdentity && user.AktivanLocal == "Y")
                                     {
-                                        <span class="badge bg-success">Aktivan</span>
+                                        <span class="badge bg-success">
+                                            Aktivan
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">Neaktivan</span>
+                                        <span class="badge bg-secondary">
+                                            Neaktivan
+                                        </span>
                                     }
                                 </td>
                                @*  <td>@(user.IsExternalCollaborator ? "Da" : "Ne")</td>

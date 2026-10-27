@@ -68,7 +68,10 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 
             ViewBag.UserRoles = userRoles;
             ViewBag.AllRoles = allRoles;
-            ViewBag.IsActive = lokalniUser.AKTIVAN == "Y";
+            ViewBag.IsActive =
+                lokalniUser.AKTIVAN == "Y" &&
+                identityUser?.IsActive == true &&
+                identityUser.IsDeleted == false;
             ViewBag.TipKorisnikaText = "Sezonski radnik";
 
             var model = new ExternalUserDetailsVM
@@ -173,80 +176,201 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id)
         {
-            var seasonalTipId = await _dbContext.TIPOVI_KORISNIKA
-                .Where(x => x.Naziv == "Sezonski radnik")
-                .Select(x => (int?)x.ID)
-                .FirstOrDefaultAsync();
-
-            if (seasonalTipId == null)
+            try
             {
-                TempData["ImportMessage"] = "Tip korisnika 'Sezonski radnik' nije pronađen.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
+                /*
+                 * ========================================================
+                 * 1. PRONALAZAK TIPA SEZONSKOG KORISNIKA
+                 * ========================================================
+                 */
 
-            var lokalniUser = await _dbContext.KORISNICI
-                .FirstOrDefaultAsync(x => x.ID == id && x.TIP_KORISNIKA_ID == seasonalTipId.Value);
+                var seasonalTipId = await _dbContext.TIPOVI_KORISNIKA
+                    .Where(x => x.Naziv == "Sezonski radnik")
+                    .Select(x => (int?)x.ID)
+                    .FirstOrDefaultAsync();
 
-            if (lokalniUser == null)
-            {
-                TempData["ImportMessage"] = "Korisnik nije pronađen.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            ApplicationUser? identityUser = null;
-
-            if (!string.IsNullOrWhiteSpace(lokalniUser.USER_ID))
-            {
-                identityUser = await _userManager.FindByIdAsync(lokalniUser.USER_ID);
-            }
-
-            bool isCurrentlyActive = lokalniUser.AKTIVAN == "Y";
-
-            if (isCurrentlyActive)
-            {
-                lokalniUser.AKTIVAN = "N";
-
-                if (identityUser != null)
+                if (seasonalTipId == null)
                 {
-                    identityUser.IsActive = false;
+                    TempData["ImportMessage"] =
+                        "Tip korisnika 'Sezonski radnik' nije pronađen.";
+
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                /*
+                 * ========================================================
+                 * 2. PRONALAZAK LOKALNOG KORISNIKA
+                 * ========================================================
+                 */
+
+                var lokalniUser = await _dbContext.KORISNICI
+                    .FirstOrDefaultAsync(x =>
+                        x.ID == id &&
+                        x.TIP_KORISNIKA_ID == seasonalTipId.Value);
+
+                if (lokalniUser == null)
+                {
+                    TempData["ImportMessage"] =
+                        "Sezonski korisnik nije pronađen.";
+
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                /*
+                 * ========================================================
+                 * 3. PROVJERA IDENTITY RAČUNA
+                 * ========================================================
+                 */
+
+                if (string.IsNullOrWhiteSpace(lokalniUser.USER_ID))
+                {
+                    TempData["ImportMessage"] =
+                        "Korisnik nema povezan Identity račun.";
+
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                var identityUser =
+                    await _userManager.FindByIdAsync(lokalniUser.USER_ID);
+
+                if (identityUser == null)
+                {
+                    TempData["ImportMessage"] =
+                        "Povezani Identity korisnik nije pronađen.";
+
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                /*
+                 * ========================================================
+                 * 4. ODREĐIVANJE NOVOG STATUSA
+                 * ========================================================
+                 *
+                 * Korisnik je aktivan samo ako su obje tabele
+                 * usklađene i Identity nije soft-deleteovan.
+                 */
+
+                bool trenutnoAktivan =
+                    lokalniUser.AKTIVAN == "Y" &&
+                    identityUser.IsActive &&
+                    !identityUser.IsDeleted;
+
+                bool noviStatus = !trenutnoAktivan;
+
+                /*
+                 * ========================================================
+                 * 5. TRANSAKCIJA
+                 * ========================================================
+                 */
+
+                await using var transaction =
+                    await _dbContext.Database.BeginTransactionAsync();
+
+                try
+                {
+                    /*
+                     * ====================================================
+                     * 6. KORISNICI - POSLOVNA TABELA
+                     * ====================================================
+                     */
+
+                    lokalniUser.AKTIVAN = noviStatus ? "Y" : "N";
+
+                    /*
+                     * ====================================================
+                     * 7. ASP.NET IDENTITY
+                     * ====================================================
+                     */
+
+                    identityUser.IsActive = noviStatus;
+                    identityUser.IsDeleted = !noviStatus;
                     identityUser.LockoutEnabled = true;
-                    identityUser.LockoutEnd = DateTimeOffset.MaxValue;
 
-                    var result = await _userManager.UpdateAsync(identityUser);
-                    if (!result.Succeeded)
+                    if (noviStatus)
                     {
-                        TempData["ImportMessage"] = "Greška prilikom deaktivacije korisnika.";
-                        TempData["ImportErrors"] = string.Join("\n", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                        return RedirectToAction(nameof(Details), new { id });
+                        /*
+                         * Ponovna aktivacija korisnika.
+                         * Uklanjamo trajnu blokadu koja je
+                         * postavljena prilikom deaktivacije.
+                         */
+
+                        if (identityUser.LockoutEnd ==
+                            DateTimeOffset.MaxValue)
+                        {
+                            identityUser.LockoutEnd = null;
+                        }
                     }
+                    else
+                    {
+                        /*
+                         * Deaktivacija korisnika.
+                         * Postavljamo trajnu blokadu prijave.
+                         */
+
+                        identityUser.LockoutEnd =
+                            DateTimeOffset.MaxValue;
+                    }
+
+                    /*
+                     * ====================================================
+                     * 8. UPDATE IDENTITY
+                     * ====================================================
+                     */
+
+                    var updateResult =
+                        await _userManager.UpdateAsync(identityUser);
+
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException(
+                            "Identity update nije uspio: " +
+                            string.Join(
+                                " | ",
+                                updateResult.Errors.Select(
+                                    x => x.Description)));
+                    }
+
+                    /*
+                     * ====================================================
+                     * 9. ČUVANJE PROMJENA
+                     * ====================================================
+                     */
+
+                    await _dbContext.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    /*
+                     * ====================================================
+                     * 10. PORUKA ADMINISTRATORU
+                     * ====================================================
+                     */
+
+                    TempData["ImportMessage"] = noviStatus
+                        ? "Sezonski korisnik je uspješno aktiviran."
+                        : "Sezonski korisnik je uspješno deaktiviran.";
+
+                    return RedirectToAction(nameof(Details), new { id });
                 }
-
-                TempData["ImportMessage"] = "Korisnik je deaktiviran.";
-            }
-            else
-            {
-                lokalniUser.AKTIVAN = "Y";
-
-                if (identityUser != null)
+                catch
                 {
-                    identityUser.IsActive = true;
-                    identityUser.LockoutEnd = null;
-
-                    var result = await _userManager.UpdateAsync(identityUser);
-                    if (!result.Succeeded)
-                    {
-                        TempData["ImportMessage"] = "Greška prilikom aktivacije korisnika.";
-                        TempData["ImportErrors"] = string.Join("\n", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                        return RedirectToAction(nameof(Details), new { id });
-                    }
+                    await transaction.RollbackAsync();
+                    throw;
                 }
-
-                TempData["ImportMessage"] = "Korisnik je aktiviran.";
             }
+            catch (Exception ex)
+            {
+                TempData["ImportMessage"] =
+                    "Greška prilikom promjene statusa sezonskog korisnika.";
 
-            await _dbContext.SaveChangesAsync();
+                TempData["ImportErrors"] = ex.Message;
 
-            return RedirectToAction(nameof(Details), new { id });
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            finally
+            {
+                _dbContext.ChangeTracker.Clear();
+            }
         }
 
         [HttpPost]

@@ -41,11 +41,12 @@
     @await Html.PartialAsync("~/Views/Shared/_UserOtherTrainings.cshtml", ViewBag.OtherTrainings as SIA.Sapio_LMS.Models.UserOtherTrainingsVM)
 
     </br>
-
     <div class="card-custom">
         <h5 class="mb-3">Akcije</h5>
 
         <div class="action-buttons">
+
+            <!-- RESET PASSWORD -->
             <form asp-area="Admin"
                   asp-controller="InternalUsersManagement"
                   asp-action="ResetPassword"
@@ -55,13 +56,17 @@
                   data-confirm-text="Resetovati password za korisnika @Model.Ime @Model.Prezime na Sarajevo2026! ?"
                   data-confirm-icon="warning"
                   data-confirm-button="Da, resetuj">
+
                 @Html.AntiForgeryToken()
+
                 <input type="hidden" name="userId" value="@Model.UserId" />
+
                 <button type="submit" class="btn-sapio btn-sapio-danger">
                     <i class="fas fa-key"></i> Reset password
                 </button>
             </form>
 
+            <!-- SINHRONIZACIJA KORISNIKA -->
             <form asp-area="Admin"
                   asp-controller="InternalUsersManagement"
                   asp-action="SyncSingleUser"
@@ -71,7 +76,9 @@
                   data-confirm-text="Da li želiš povući najnovije podatke iz HRM sistema za ovog korisnika?"
                   data-confirm-icon="question"
                   data-confirm-button="Da, sync">
+
                 @Html.AntiForgeryToken()
+
                 <input type="hidden" name="hrmId" value="@Model.HrmId" />
                 <input type="hidden" name="userId" value="@Model.UserId" />
 
@@ -80,28 +87,8 @@
                 </button>
             </form>
 
-            <form asp-area="Admin"
-                  asp-controller="InternalUsersManagement"
-                  asp-action="ToggleActive"
-                  method="post"
-                  class="js-confirm-form d-inline"
-                  data-confirm-title="Promjena statusa?"
-                  data-confirm-text="Da li želite promijeniti status korisnika?"
-                  data-confirm-icon="warning"
-                  data-confirm-button="Potvrdi">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="hrmId" value="@Model.HrmId" />
-                <input type="hidden" name="userId" value="@Model.UserId" />
-
-                <button type="submit"
-                        class="btn-sapio @(isActive ? "btn-sapio-success" : "btn-sapio-secondary")">
-                    <i class="fas @(isActive ? "fa-user-slash" : "fa-user-check")"></i>
-                    @(isActive ? " Deaktiviraj" : " Aktiviraj")
-                </button>
-            </form>
         </div>
     </div>
-
     <div class="card-custom">
         <h5 class="mb-3">Role korisnika</h5>
 

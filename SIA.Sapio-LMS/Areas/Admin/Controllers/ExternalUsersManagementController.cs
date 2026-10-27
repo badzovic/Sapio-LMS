@@ -74,7 +74,10 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 
             ViewBag.UserRoles = userRoles;
             ViewBag.AllRoles = allRoles;
-            ViewBag.IsActive = lokalniUser.AKTIVAN == "Y";
+            ViewBag.IsActive =
+                lokalniUser.AKTIVAN == "Y" &&
+                identityUser?.IsActive == true &&
+                identityUser.IsDeleted == false;
             ViewBag.TipKorisnikaText = string.IsNullOrWhiteSpace(tipKorisnikaText) ? "-" : tipKorisnikaText;
             ViewBag.Companies = kompanije
                 .Select(x => new SelectListItem
@@ -109,7 +112,7 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
 
             return View(model);
         }
-        
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -117,74 +120,184 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         {
             try
             {
+                /*
+                 * ============================================================
+                 * 1. PRONALAZAK LOKALNOG EKSTERNOG KORISNIKA
+                 * ============================================================
+                 */
+
                 var lokalniUser = await _dbContext.KORISNICI
-                    .FirstOrDefaultAsync(x => x.ID == id && x.TIP_KORISNIKA_ID == 2);
+                    .FirstOrDefaultAsync(x =>
+                        x.ID == id &&
+                        x.TIP_KORISNIKA_ID == 2);
 
                 if (lokalniUser == null)
                 {
-                    TempData["ImportMessage"] = "Korisnik nije pronađen u lokalnoj bazi.";
+                    TempData["ImportMessage"] =
+                        "Korisnik nije pronađen u lokalnoj bazi.";
+
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
                 if (lokalniUser.EXTERNI_V3_ID == null)
                 {
-                    TempData["ImportMessage"] = "Korisnik nema EXTERNI_V3_ID.";
+                    TempData["ImportMessage"] =
+                        "Korisnik nema EXTERNI_V3_ID.";
+
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var apiUser = await _externalUsersApiService.GetUserByExternalIdAsync(lokalniUser.EXTERNI_V3_ID.Value);
+                /*
+                 * ============================================================
+                 * 2. PREUZIMANJE PODATAKA IZ V3 API-JA
+                 * ============================================================
+                 */
+
+                var apiUser =
+                    await _externalUsersApiService.GetUserByExternalIdAsync(
+                        lokalniUser.EXTERNI_V3_ID.Value);
 
                 if (apiUser == null)
                 {
-                    TempData["ImportMessage"] = "Korisnik nije pronađen u V3 API-ju.";
+                    TempData["ImportMessage"] =
+                        "Korisnik nije pronađen u V3 API-ju.";
+
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
-                var normalizedCompany = string.IsNullOrWhiteSpace(apiUser.Kompanija)
-                    ? null
-                    : NormalizeCompanyName(apiUser.Kompanija);
+                /*
+                 * ============================================================
+                 * 3. PRONALAZAK KOMPANIJE
+                 * ============================================================
+                 */
 
-                var kompanija = string.IsNullOrWhiteSpace(normalizedCompany)
-                    ? null
-                    : await _dbContext.KOMPANIJE
-                        .FirstOrDefaultAsync(x => x.NAZIV_NORMALIZED == normalizedCompany);
+                var normalizedCompany =
+                    string.IsNullOrWhiteSpace(apiUser.Kompanija)
+                        ? null
+                        : NormalizeCompanyName(apiUser.Kompanija);
 
-                lokalniUser.IME = apiUser.Ime;
-                lokalniUser.PREZIME = apiUser.Prezime;
-                lokalniUser.IME_OCA = apiUser.ImeOca;
-                lokalniUser.MJESTO_RODJENJA = apiUser.MjestoRodjenja;
-                lokalniUser.KOMPANIJA_ID = kompanija?.ID;
-                lokalniUser.KOMPANIJA = null;
+                var kompanija =
+                    string.IsNullOrWhiteSpace(normalizedCompany)
+                        ? null
+                        : await _dbContext.KOMPANIJE
+                            .FirstOrDefaultAsync(x =>
+                                x.NAZIV_NORMALIZED == normalizedCompany);
 
-                if (!string.IsNullOrWhiteSpace(lokalniUser.USER_ID))
+                /*
+                 * ============================================================
+                 * 4. PROVJERA IDENTITY RAČUNA
+                 * ============================================================
+                 *
+                 * Provjeru radimo prije promjena u bazi.
+                 */
+
+                if (string.IsNullOrWhiteSpace(lokalniUser.USER_ID))
                 {
-                    var identityUser = await _userManager.FindByIdAsync(lokalniUser.USER_ID);
+                    TempData["ImportMessage"] =
+                        "Korisnik nema povezan Identity račun.";
 
-                    if (identityUser != null)
-                    {
-                        identityUser.FirstName = apiUser.Ime ?? string.Empty;
-                        identityUser.LastName = apiUser.Prezime ?? string.Empty;
-
-                        var updateResult = await _userManager.UpdateAsync(identityUser);
-
-                        if (!updateResult.Succeeded)
-                        {
-                            TempData["ImportMessage"] = "Lokalni korisnik je syncovan, ali update Identity usera nije uspio.";
-                            TempData["ImportErrors"] = string.Join("\n", updateResult.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                            await _dbContext.SaveChangesAsync();
-                            return RedirectToAction(nameof(Details), new { id });
-                        }
-                    }
+                    return RedirectToAction(nameof(Details), new { id });
                 }
 
-                await _dbContext.SaveChangesAsync();
+                var identityUser =
+                    await _userManager.FindByIdAsync(lokalniUser.USER_ID);
 
-                TempData["ImportMessage"] = "Korisnik je uspješno syncovan iz V3.";
+                if (identityUser == null)
+                {
+                    TempData["ImportMessage"] =
+                        "Povezani Identity korisnik nije pronađen.";
+
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                /*
+                 * ============================================================
+                 * 5. TRANSAKCIJA
+                 * ============================================================
+                 *
+                 * Sve promjene u KORISNICI i AspNetUsers
+                 * moraju biti uspješno sačuvane.
+                 */
+
+                await using var transaction =
+                    await _dbContext.Database.BeginTransactionAsync();
+
+                try
+                {
+                    /*
+                     * ========================================================
+                     * 6. SINHRONIZACIJA KORISNICI
+                     * ========================================================
+                     */
+
+                    lokalniUser.IME = apiUser.Ime;
+                    lokalniUser.PREZIME = apiUser.Prezime;
+                    lokalniUser.IME_OCA = apiUser.ImeOca;
+                    lokalniUser.MJESTO_RODJENJA = apiUser.MjestoRodjenja;
+
+                    lokalniUser.KOMPANIJA_ID = kompanija?.ID;
+                    lokalniUser.KOMPANIJA = null;
+
+                    /*
+                     * ========================================================
+                     * 7. SINHRONIZACIJA ASP.NET IDENTITY
+                     * ========================================================
+                     *
+                     * Sinhronizujemo samo ime i prezime.
+                     * Ne diramo status niti pristup korisnika.
+                     */
+
+                    identityUser.FirstName = apiUser.Ime ?? string.Empty;
+                    identityUser.LastName = apiUser.Prezime ?? string.Empty;
+
+                    var updateResult =
+                        await _userManager.UpdateAsync(identityUser);
+
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException(
+                            "Identity update nije uspio: " +
+                            string.Join(
+                                " | ",
+                                updateResult.Errors.Select(
+                                    x => $"{x.Code}: {x.Description}")));
+                    }
+
+                    /*
+                     * ========================================================
+                     * 8. ČUVANJE PROMJENA
+                     * ========================================================
+                     */
+
+                    await _dbContext.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
+                    TempData["ImportMessage"] =
+                        "Korisnik je uspješno sinhronizovan iz V3 sistema.";
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+
+                    TempData["ImportMessage"] =
+                        "Greška prilikom sinhronizacije korisnika.";
+
+                    TempData["ImportErrors"] = ex.Message;
+                }
+                finally
+                {
+                    _dbContext.ChangeTracker.Clear();
+                }
             }
             catch (Exception ex)
             {
-                TempData["ImportMessage"] = "Greška prilikom sync-a korisnika.";
+                TempData["ImportMessage"] =
+                    "Greška prilikom povezivanja s V3 sistemom.";
+
                 TempData["ImportErrors"] = ex.Message;
+
+                _dbContext.ChangeTracker.Clear();
             }
 
             return RedirectToAction(nameof(Details), new { id });
@@ -295,69 +408,145 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id)
         {
-            var lokalniUser = await _dbContext.KORISNICI
-                .FirstOrDefaultAsync(x => x.ID == id && x.TIP_KORISNIKA_ID == 2);
-
-            if (lokalniUser == null)
+            try
             {
-                TempData["ImportMessage"] = "Korisnik nije pronađen.";
+                var lokalniUser = await _dbContext.KORISNICI
+                    .FirstOrDefaultAsync(x =>
+                        x.ID == id &&
+                        x.TIP_KORISNIKA_ID == 2);
+
+                if (lokalniUser == null)
+                {
+                    TempData["ImportMessage"] = "Eksterni korisnik nije pronađen.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                if (string.IsNullOrWhiteSpace(lokalniUser.USER_ID))
+                {
+                    TempData["ImportMessage"] =
+                        "Korisnik nema povezan Identity račun.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                var identityUser =
+                    await _userManager.FindByIdAsync(lokalniUser.USER_ID);
+
+                if (identityUser == null)
+                {
+                    TempData["ImportMessage"] =
+                        "Povezani Identity korisnik nije pronađen.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                /*
+                 * ========================================================
+                 * ODREĐIVANJE NOVOG STATUSA
+                 * ========================================================
+                 *
+                 * Ako su oba osnovna statusa aktivna i račun
+                 * nije soft-deleteovan, deaktiviramo ga.
+                 *
+                 * U svim ostalim slučajevima administrator
+                 * može izvršiti reaktivaciju.
+                 */
+
+                bool trenutnoAktivan =
+                    lokalniUser.AKTIVAN == "Y" &&
+                    identityUser.IsActive &&
+                    !identityUser.IsDeleted;
+
+                bool noviStatus = !trenutnoAktivan;
+
+                await using var transaction =
+                    await _dbContext.Database.BeginTransactionAsync();
+
+                try
+                {
+                    /*
+                     * ====================================================
+                     * KORISNICI
+                     * ====================================================
+                     */
+
+                    lokalniUser.AKTIVAN = noviStatus ? "Y" : "N";
+
+                    /*
+                     * ====================================================
+                     * ASP.NET IDENTITY
+                     * ====================================================
+                     */
+
+                    identityUser.IsActive = noviStatus;
+                    identityUser.IsDeleted = !noviStatus;
+                    identityUser.LockoutEnabled = true;
+
+                    if (noviStatus)
+                    {
+                        // Uklanjamo trajnu blokadu od deaktivacije.
+                        if (identityUser.LockoutEnd ==
+                            DateTimeOffset.MaxValue)
+                        {
+                            identityUser.LockoutEnd = null;
+                        }
+                    }
+                    else
+                    {
+                        identityUser.LockoutEnd =
+                            DateTimeOffset.MaxValue;
+                    }
+
+                    /*
+                     * ====================================================
+                     * UPDATE IDENTITY
+                     * ====================================================
+                     */
+
+                    var updateResult =
+                        await _userManager.UpdateAsync(identityUser);
+
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException(
+                            "Identity update nije uspio: " +
+                            string.Join(" | ",
+                                updateResult.Errors.Select(
+                                    x => x.Description)));
+                    }
+
+                    /*
+                     * ====================================================
+                     * ČUVANJE PROMJENA
+                     * ====================================================
+                     */
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["ImportMessage"] = noviStatus
+                        ? "Eksterni korisnik je uspješno aktiviran."
+                        : "Eksterni korisnik je uspješno deaktiviran.";
+
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ImportMessage"] =
+                    "Greška prilikom promjene statusa eksternog korisnika.";
+
+                TempData["ImportErrors"] = ex.Message;
+
                 return RedirectToAction(nameof(Details), new { id });
             }
-
-            ApplicationUser? identityUser = null;
-
-            if (!string.IsNullOrWhiteSpace(lokalniUser.USER_ID))
+            finally
             {
-                identityUser = await _userManager.FindByIdAsync(lokalniUser.USER_ID);
+                _dbContext.ChangeTracker.Clear();
             }
-
-            bool isCurrentlyActive = lokalniUser.AKTIVAN == "Y";
-
-            if (isCurrentlyActive)
-            {
-                lokalniUser.AKTIVAN = "N";
-
-                if (identityUser != null)
-                {
-                    identityUser.IsActive = false;
-                    identityUser.LockoutEnabled = true;
-                    identityUser.LockoutEnd = DateTimeOffset.MaxValue;
-
-                    var result = await _userManager.UpdateAsync(identityUser);
-                    if (!result.Succeeded)
-                    {
-                        TempData["ImportMessage"] = "Greška prilikom deaktivacije korisnika.";
-                        TempData["ImportErrors"] = string.Join("\n", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                        return RedirectToAction(nameof(Details), new { id });
-                    }
-                }
-
-                TempData["ImportMessage"] = "Korisnik je deaktiviran.";
-            }
-            else
-            {
-                lokalniUser.AKTIVAN = "Y";
-
-                if (identityUser != null)
-                {
-                    identityUser.IsActive = true;
-                    identityUser.LockoutEnd = null;
-
-                    var result = await _userManager.UpdateAsync(identityUser);
-                    if (!result.Succeeded)
-                    {
-                        TempData["ImportMessage"] = "Greška prilikom aktivacije korisnika.";
-                        TempData["ImportErrors"] = string.Join("\n", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
-                        return RedirectToAction(nameof(Details), new { id });
-                    }
-                }
-
-                TempData["ImportMessage"] = "Korisnik je aktiviran.";
-            }
-
-            await _dbContext.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpPost]
