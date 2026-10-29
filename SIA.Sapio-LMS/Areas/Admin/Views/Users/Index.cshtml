@@ -5,8 +5,8 @@
     ViewData["Title"] = "Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var currentStatus = (Model?.Status ?? "all").ToLower();
-    var currentType = (Model?.TypeFilter ?? "all").ToLower();
+    var currentStatus = (Model?.Status ?? "all").ToLowerInvariant();
+    var currentType = (Model?.TypeFilter ?? "all").ToLowerInvariant();
 
     var backUrl = Url.Action("Index", "Users", new
     {
@@ -31,28 +31,11 @@
         "pending" => "Pending",
         _ => "Svi tipovi"
     };
-
 }
 
 <div class="container-fluid">
 
-    @if (TempData["ImportMessage"] != null)
-    {
-        <div class="alert alert-info">
-            @TempData["ImportMessage"]
-        </div>
-    }
-
-    @if (TempData["ImportErrors"] != null)
-    {
-        <div class="alert alert-danger">
-            <strong>Detalji greške:</strong>
-            <div class="mt-2">
-                @TempData["ImportErrors"]
-            </div>
-        </div>
-    }
-
+    <!-- NASLOV STRANICE -->
     <partial name="~/Views/Shared/PagePartials/_PageHeader.cshtml"
              model='new PageHeaderVM
              {
@@ -60,176 +43,197 @@
                  Subtitle = "Centralni pregled svih korisnika i administrativnih akcija"
              }' />
 
+    <!-- FILTERI I ADMINISTRATIVNE AKCIJE -->
     <div class="card-custom page-toolbar">
 
-    <div class="filter-summary">
-        <span class="filter-summary-label">Aktivni filteri:</span>
-        <span class="filter-pill">@statusText</span>
-        <span class="filter-pill">@typeText</span>
-    </div>
-
-    <div class="page-toolbar-group">
-        <span class="page-toolbar-label">Status korisnika</span>
-        <div class="page-toolbar-row">
-            <a asp-action="Index"
-               asp-route-status="all"
-               asp-route-type="@currentType"
-               class="btn-sapio @(currentStatus == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
-                Svi
-            </a>
-
-            <a asp-action="Index"
-               asp-route-status="active"
-               asp-route-type="@currentType"
-               class="btn-sapio @(currentStatus == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
-                Aktivni
-            </a>
-
-            <a asp-action="Index"
-               asp-route-status="inactive"
-               asp-route-type="@currentType"
-               class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-danger" : "btn-sapio-secondary")">
-                Neaktivni
-            </a>
-
-            <a asp-action="Index"
-               asp-route-status="pending"
-               asp-route-type="@currentType"
-               class="btn-sapio @(currentStatus == "pending" ? "btn-sapio-warning" : "btn-sapio-secondary")">
-                Čekaju odobrenje
-            </a>
+        <div class="filter-summary">
+            <span class="filter-summary-label">Aktivni filteri:</span>
+            <span class="filter-pill">@statusText</span>
+            <span class="filter-pill">@typeText</span>
         </div>
-    </div>
 
-    <div class="page-toolbar-divider"></div>
+        <!-- STATUS KORISNIKA -->
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Status korisnika</span>
 
-    <div class="page-toolbar-group">
-        <span class="page-toolbar-label">Tip korisnika</span>
-        <div class="page-toolbar-row">
-            <a asp-action="Index"
-               asp-route-status="@currentStatus"
-               asp-route-type="all"
-               class="btn-sapio @(currentType == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
-                Svi tipovi
-            </a>
+            <div class="page-toolbar-row">
 
-            <a asp-action="Index"
-               asp-route-status="@currentStatus"
-               asp-route-type="internal"
-               class="btn-sapio @(currentType == "internal" ? "btn-sapio-primary" : "btn-sapio-secondary")">
-                Interni
-            </a>
+                <a asp-action="Index"
+                   asp-route-status="all"
+                   asp-route-type="@currentType"
+                   class="btn-sapio @(currentStatus == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Svi
+                </a>
 
-            <a asp-action="Index"
-               asp-route-status="@currentStatus"
-               asp-route-type="external"
-               class="btn-sapio @(currentType == "external" ? "btn-sapio-primary" : "btn-sapio-secondary")">
-                Eksterni
-            </a>
+                <a asp-action="Index"
+                   asp-route-status="active"
+                   asp-route-type="@currentType"
+                   class="btn-sapio @(currentStatus == "active" ? "btn-sapio-success" : "btn-sapio-secondary")">
+                    Aktivni
+                </a>
 
-            <a asp-action="Index"
-               asp-route-status="@currentStatus"
-               asp-route-type="seasonal"
-               class="btn-sapio @(currentType == "seasonal" ? "btn-sapio-primary" : "btn-sapio-secondary")">
-                Sezonski
-            </a>
+                <a asp-action="Index"
+                   asp-route-status="inactive"
+                   asp-route-type="@currentType"
+                   class="btn-sapio @(currentStatus == "inactive" ? "btn-sapio-danger" : "btn-sapio-secondary")">
+                    Neaktivni
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-status="pending"
+                   asp-route-type="@currentType"
+                   class="btn-sapio @(currentStatus == "pending" ? "btn-sapio-warning" : "btn-sapio-secondary")">
+                    Čekaju odobrenje
+                </a>
+
+            </div>
         </div>
-    </div>
 
-    <div class="page-toolbar-divider"></div>
+        <div class="page-toolbar-divider"></div>
 
-    <div class="page-toolbar-group">
-        <span class="page-toolbar-label">Opšte admin opcije</span>
-        <div class="page-toolbar-row">
-            <a asp-action="Create" class="btn-sapio btn-sapio-primary">
-                <i class="fas fa-plus"></i> Novi korisnik
-            </a>
+        <!-- TIP KORISNIKA -->
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Tip korisnika</span>
 
-            <a asp-area="Admin"
-               asp-controller="RegistrationLinks"
-               asp-action="Index"
-               class="btn-sapio btn-sapio-warning">
-                <i class="fas fa-link"></i> Registration Links
-            </a>
+            <div class="page-toolbar-row">
+
+                <a asp-action="Index"
+                   asp-route-status="@currentStatus"
+                   asp-route-type="all"
+                   class="btn-sapio @(currentType == "all" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Svi tipovi
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-status="@currentStatus"
+                   asp-route-type="internal"
+                   class="btn-sapio @(currentType == "internal" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Interni
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-status="@currentStatus"
+                   asp-route-type="external"
+                   class="btn-sapio @(currentType == "external" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Eksterni
+                </a>
+
+                <a asp-action="Index"
+                   asp-route-status="@currentStatus"
+                   asp-route-type="seasonal"
+                   class="btn-sapio @(currentType == "seasonal" ? "btn-sapio-primary" : "btn-sapio-secondary")">
+                    Sezonski
+                </a>
+
+            </div>
         </div>
-    </div>
 
+        <div class="page-toolbar-divider"></div>
+
+        <!-- OPŠTE ADMIN OPCIJE -->
+        <div class="page-toolbar-group">
+            <span class="page-toolbar-label">Opšte admin opcije</span>
+
+            <div class="page-toolbar-row">
+
+                <a asp-action="Create"
+                   class="btn-sapio btn-sapio-primary">
+                    <i class="fas fa-plus"></i> Novi korisnik
+                </a>
+
+                <a asp-area="Admin"
+                   asp-controller="RegistrationLinks"
+                   asp-action="Index"
+                   class="btn-sapio btn-sapio-warning">
+                    <i class="fas fa-link"></i> Registration Links
+                </a>
+
+            </div>
+        </div>
+
+        <!-- OPCIJE ZA INTERNE KORISNIKE -->
         @if (currentType == "internal")
         {
             <div class="page-toolbar-divider"></div>
 
             <div class="page-toolbar-group">
-                <span class="page-toolbar-label">Opcije za interne korisnike</span>
-                <div class="page-toolbar-row">
-                    @* <a asp-area="Admin"
-                       asp-controller="InternalUsers"
-                       asp-action="Index"
-                       class="btn-sapio btn-sapio-secondary">
-                        <i class="fas fa-users"></i> Interni korisnici
-                    </a> *@
+                <span class="page-toolbar-label">
+                    Opcije za interne korisnike
+                </span>
 
-                    <form asp-area="Admin"
+                <div class="page-toolbar-row">
+
+                    <!-- KOMPLETNA SINHRONIZACIJA: AJAX -->
+                    <form id="completeSyncForm"
+                          asp-area="Admin"
                           asp-controller="InternalUsers"
                           asp-action="SyncInternalUsers"
                           method="post"
-                          class="js-confirm-form m-0"
-                          data-confirm-title="Sync korisnika?"
-                          data-confirm-text="Sinhronizacija podataka internih korisnika - ime, prezime, ime oca, email i access-key ce biti sinhronizirani prema podatcima iz HRM."
-                          data-confirm-icon="warning"
-                          data-confirm-button="Da, sync">
+                          class="m-0">
+
                         @Html.AntiForgeryToken()
 
-                        <button type="submit" class="btn-sapio btn-sapio-warning">
-                            <i class="fas fa-sync-alt"></i> Sync korisnika
+                        <button type="submit"
+                                id="completeSyncButton"
+                                class="btn-sapio btn-sapio-warning">
+                            <i class="fas fa-sync-alt"></i>
+                            Kompletna sinhronizacija
                         </button>
                     </form>
 
-                    <form asp-area="Admin"
+                    <!-- SAMOSTALNA DEAKTIVACIJA -->
+                   @*  <form asp-area="Admin"
                           asp-controller="InternalUsers"
                           asp-action="DeactivateMissingInternalUsers"
                           method="post"
                           class="js-confirm-form m-0"
-                          data-confirm-title="Provjera neaktivnih korisnika?"
-                          data-confirm-text="Provjeriti da li postoje interni korisnici koji više nisu aktivni u HRM-u i deaktivirati ih?"
+                          data-confirm-title="Deaktivacija neaktivnih korisnika?"
+                          data-confirm-text="Provjeriti interne korisnike koji više nisu aktivni u HRM-u i deaktivirati njihove LMS račune?"
                           data-confirm-icon="warning"
                           data-confirm-button="Da, deaktiviraj">
 
                         @Html.AntiForgeryToken()
 
-                        <button type="submit" class="btn-sapio btn-sapio-danger">
-                            <i class="fas fa-user-slash"></i> Deaktiviraj neaktivne
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-danger">
+                            <i class="fas fa-user-slash"></i>
+                            Deaktiviraj neaktivne
                         </button>
                     </form>
 
+                    <!-- SAMOSTALNI IMPORT -->
                     <form asp-area="Admin"
                           asp-controller="InternalUsers"
                           asp-action="ImportAll"
                           method="post"
                           class="js-confirm-form m-0"
                           data-confirm-title="Import internih korisnika?"
-                          data-confirm-text="Pokrenuti import internih korisnika iz HRM-a? Novi korisnici će biti kreirani, a odgovarajući eksterni ili sezonski korisnici mogu biti konvertovani u interne."
+                          data-confirm-text="Importovati nove interne korisnike iz HRM-a? Postojeći eksterni ili sezonski korisnici mogu biti konvertovani u interne."
                           data-confirm-icon="question"
                           data-confirm-button="Da, importuj">
 
                         @Html.AntiForgeryToken()
 
-                        <button type="submit" class="btn-sapio btn-sapio-success">
-                            <i class="fas fa-user-plus"></i> Import internih korisnika
+                        <button type="submit"
+                                class="btn-sapio btn-sapio-success">
+                            <i class="fas fa-user-plus"></i>
+                            Import internih korisnika
                         </button>
-                    </form>
+                    </form> *@
+
                 </div>
             </div>
         }
 
-    @* Kasnije ovdje isto možemo dodati:
-       - Opcije za eksterne korisnike
-       - Opcije za sezonske korisnike *@
+    </div>
 
-</div>
-
+    <!-- TABELA KORISNIKA -->
     <div class="card-custom">
         <div class="table-responsive">
-            <table id="usersTable" class="table table-bordered table-striped w-100">
+
+            <table id="usersTable"
+                   class="table table-bordered table-striped w-100">
+
                 <thead>
                     <tr>
                         <th>Email</th>
@@ -238,31 +242,48 @@
                         <th>Ime oca</th>
                         <th>Tip korisnika</th>
                         <th>Status</th>
-                       @*  <th>Eksterni saradnik</th>
-                        <th>Promjena passworda</th> *@
                         <th>Akcije</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @if (Model?.Users != null && Model.Users.Any())
                     {
                         foreach (var user in Model.Users)
                         {
                             <tr>
-                                <td>@(string.IsNullOrWhiteSpace(user.Email) ? "-" : user.Email)</td>
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(user.Email)
+                                                                ? "-"
+                                                                : user.Email)
+                                                                         </td>
+
                                 <td>@user.FirstName</td>
                                 <td>@user.LastName</td>
-                                <td>@(string.IsNullOrWhiteSpace(user.ImeOca) ? "-" : user.ImeOca)</td>
+
                                 <td>
-                                    @if (user.IsPending)
+                                    @(string.IsNullOrWhiteSpace(user.ImeOca)
+                                                                ? "-"
+                                                                : user.ImeOca)
+                        </td>
+
+                                <!-- TIP KORISNIKA -->
+                                <td>
+                            @if (user.IsPending)
                                     {
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        <span class="badge bg-warning text-dark">
+                                            Pending
+                                        </span>
                                     }
                                     else
                                     {
-                                        @(!string.IsNullOrWhiteSpace(user.TipKorisnikaNaziv) ? user.TipKorisnikaNaziv : "-")
-                                    }
+                                        @(!string.IsNullOrWhiteSpace(user.TipKorisnikaNaziv)
+                                                                    ? user.TipKorisnikaNaziv
+                                                                    : "-")
+                                                        }
                                 </td>
+
+                                <!-- STATUS -->
                                 <td>
                                     @if (user.IsPending)
                                     {
@@ -270,7 +291,8 @@
                                             Čeka odobrenje
                                         </span>
                                     }
-                                    else if (user.IsActiveIdentity && user.AktivanLocal == "Y")
+                                    else if (user.IsActiveIdentity &&
+                                    user.AktivanLocal == "Y")
                                     {
                                         <span class="badge bg-success">
                                             Aktivan
@@ -283,41 +305,57 @@
                                         </span>
                                     }
                                 </td>
-                               @*  <td>@(user.IsExternalCollaborator ? "Da" : "Ne")</td>
-                                <td>@(user.MustChangePassword ? "Da" : "Ne")</td> *@
+
+                                <!-- AKCIJE -->
                                 <td>
                                     <div class="action-buttons">
 
                                         @if (user.IsPending)
                                         {
-                                            <form asp-action="ApproveAsExternal" method="post" class="js-confirm-form d-inline"
+                                            <form asp-action="ApproveAsExternal"
+                                                  method="post"
+                                                  class="js-confirm-form d-inline"
                                                   data-confirm-title="Odobriti korisnika?"
                                                   data-confirm-text="Korisnik će biti aktiviran kao eksterni."
                                                   data-confirm-icon="question"
                                                   data-confirm-button="Da, odobri">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="userId" value="@user.UserId" />
 
-                                                <button type="submit" class="btn-sapio btn-sapio-success btn-sapio-sm">
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="userId"
+                                                       value="@user.UserId" />
+
+                                                <button type="submit"
+                                                        class="btn-sapio btn-sapio-success btn-sapio-sm">
                                                     Eksterni
                                                 </button>
                                             </form>
 
-                                            <form asp-action="ApproveAsSeasonal" method="post" class="js-confirm-form d-inline"
+                                            <form asp-action="ApproveAsSeasonal"
+                                                  method="post"
+                                                  class="js-confirm-form d-inline"
                                                   data-confirm-title="Odobriti korisnika?"
                                                   data-confirm-text="Korisnik će biti aktiviran kao sezonski radnik."
                                                   data-confirm-icon="question"
                                                   data-confirm-button="Da, odobri">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="userId" value="@user.UserId" />
 
-                                                <button type="submit" class="btn-sapio btn-sapio-warning btn-sapio-sm">
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="userId"
+                                                       value="@user.UserId" />
+
+                                                <button type="submit"
+                                                        class="btn-sapio btn-sapio-warning btn-sapio-sm">
                                                     Sezonac
                                                 </button>
                                             </form>
                                         }
 
-                                        @if (!user.IsPending && !string.IsNullOrWhiteSpace(user.DetailsController))
+                                        <!-- DETALJI KORISNIKA -->
+                                        @if (!user.IsPending &&
+                                                                        !string.IsNullOrWhiteSpace(user.DetailsController))
                                         {
                                             if (user.DetailsRouteType == "userId")
                                             {
@@ -327,7 +365,8 @@
                                                    asp-route-userId="@user.UserId"
                                                    asp-route-returnUrl="@backUrl"
                                                    class="btn-sapio btn-sapio-primary btn-sapio-sm">
-                                                    <i class="fas fa-eye"></i> Detalji
+                                                    <i class="fas fa-eye"></i>
+                                                    Detalji
                                                 </a>
                                             }
                                             else if (user.KorisnikId.HasValue)
@@ -338,24 +377,33 @@
                                                    asp-route-id="@user.KorisnikId"
                                                    asp-route-returnUrl="@backUrl"
                                                    class="btn-sapio btn-sapio-primary btn-sapio-sm">
-                                                    <i class="fas fa-eye"></i> Detalji
+                                                    <i class="fas fa-eye"></i>
+                                                    Detalji
                                                 </a>
                                             }
                                         }
+
                                     </div>
                                 </td>
                             </tr>
                         }
                     }
                 </tbody>
+
             </table>
+
         </div>
     </div>
+
 </div>
 
 @section Scripts {
     <script>
         $(document).ready(function () {
+
+            // =====================================================
+            // DATATABLE
+            // =====================================================
             $('#usersTable').DataTable({
                 pageLength: 10,
                 lengthMenu: [10, 25, 50, 100],
@@ -377,6 +425,159 @@
                     }
                 }
             });
+
+            // =====================================================
+            // KOMPLETNA SINHRONIZACIJA - AJAX + SWEETALERT2
+            // =====================================================
+            const syncForm = document.getElementById('completeSyncForm');
+            const syncButton = document.getElementById('completeSyncButton');
+
+            if (!syncForm || !syncButton) {
+                return;
+            }
+
+            syncForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                if (syncButton.disabled) {
+                    return;
+                }
+
+                if (typeof Swal === 'undefined') {
+                    alert('SweetAlert2 nije učitan.');
+                    return;
+                }
+
+                const confirmation = await Swal.fire({
+                    icon: 'warning',
+                    title: 'Kompletna sinhronizacija korisnika?',
+                    text: 'Pokrenuti import, ažuriranje, reaktivaciju i deaktivaciju internih korisnika prema HRM evidenciji?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Da, sinhronizuj',
+                    cancelButtonText: 'Odustani',
+                    reverseButtons: true
+                });
+
+                if (!confirmation.isConfirmed) {
+                    return;
+                }
+
+                syncButton.disabled = true;
+
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sinhronizacija u toku',
+                    text: 'Obrađuju se interni korisnici...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                try {
+                    const response = await fetch(syncForm.action, {
+                        method: 'POST',
+                        body: new FormData(syncForm),
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const contentType =
+                        response.headers.get('content-type') || '';
+
+                    if (!contentType.includes('application/json')) {
+                        throw new Error(
+                            'Server nije vratio očekivani JSON odgovor. Provjeri prijavu i autorizaciju.'
+                        );
+                    }
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            result.message ||
+                            'Došlo je do greške tokom sinhronizacije.'
+                        );
+                    }
+
+                    const imported = Number(result.imported ?? 0);
+                    const converted = Number(result.converted ?? 0);
+                    const updated = Number(result.updated ?? 0);
+                    const deactivated = Number(result.deactivated ?? 0);
+                    const failed = Number(result.failed ?? 0);
+
+                    const errors = Array.isArray(result.errors)
+                        ? result.errors
+                        : [];
+
+                    const hasWarnings =
+                        !result.success ||
+                        failed > 0 ||
+                        errors.length > 0 ||
+                        result.deactivationSkipped === true;
+
+                    // Statički HTML; vrijednosti iz odgovora su
+                    // prethodno pretvorene u brojeve.
+                    const detailsHtml = `
+                        <div style="text-align:left;line-height:2;">
+                            <div><strong>Importovano:</strong> ${imported}</div>
+                            <div><strong>Konvertovano:</strong> ${converted}</div>
+                            <div><strong>Ažurirano:</strong> ${updated}</div>
+                            <div><strong>Deaktivirano:</strong> ${deactivated}</div>
+                            <hr style="margin:8px 0;" />
+                            <div><strong>Greške:</strong> ${failed}</div>
+                            ${result.deactivationSkipped === true
+                                ? '<div><strong>Napomena:</strong> Deaktivacija je preskočena jer API nije vratio korisnike.</div>'
+                                : ''}
+                        </div>
+                    `;
+
+                    const summary = await Swal.fire({
+                        icon: hasWarnings ? 'warning' : 'success',
+                        title: hasWarnings
+                            ? 'Sinhronizacija završena uz upozorenja'
+                            : 'Sinhronizacija završena',
+                        html: detailsHtml,
+                        showCancelButton: errors.length > 0,
+                        confirmButtonText: errors.length > 0
+                            ? 'Prikaži greške'
+                            : 'Uredu',
+                        cancelButtonText: 'Zatvori',
+                        reverseButtons: true
+                    });
+
+                    if (errors.length > 0 && summary.isConfirmed) {
+                        const errorText = errors.join('\n');
+
+                        await Swal.fire({
+                            icon: 'error',
+                            title: 'Detalji grešaka',
+                            text: errorText,
+                            width: 750,
+                            confirmButtonText: 'Zatvori'
+                        });
+                    }
+
+                    // Osvježi podatke nakon završenog zahtjeva,
+                    // uključujući slučaj djelimičnog uspjeha.
+                    window.location.reload();
+
+                } catch (error) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Greška pri sinhronizaciji',
+                        text: error.message ||
+                              'Došlo je do neočekivane greške.',
+                        confirmButtonText: 'Uredu'
+                    });
+
+                } finally {
+                    syncButton.disabled = false;
+                }
+            });
+
         });
     </script>
 }

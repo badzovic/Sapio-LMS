@@ -111,28 +111,43 @@ namespace SIA.Sapio_LMS.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SyncInternalUsers()
         {
-            var result =
-                await _internalUsersSyncService.RunSyncAsync();
-
-            TempData["ImportMessage"] = result.Message;
-
-            if (result.ErrorMessages.Any())
+            try
             {
-                TempData["ImportErrors"] =
-                    string.Join(
-                        Environment.NewLine,
-                        result.ErrorMessages.Take(20));
-            }
+                var importResult = await _internalUsersSyncService.RunImportAsync();
+                var syncResult = await _internalUsersSyncService.RunSyncAsync();
+                var deactivationResult = await _internalUsersSyncService.RunDeactivationAsync();
 
-            return RedirectToAction(
-                "Index",
-                "Users",
-                new
+                var errors = importResult.ErrorMessages
+                    .Concat(syncResult.ErrorMessages)
+                    .Concat(deactivationResult.ErrorMessages)
+                    .Take(20)
+                    .ToList();
+
+                var failed = importResult.Failed
+                           + syncResult.Failed
+                           + deactivationResult.Failed;
+
+                return Json(new
                 {
-                    area = "Admin",
-                    status = "all",
-                    type = "internal"
+                    success = failed == 0 && errors.Count == 0 && !deactivationResult.ApiReturnedNoUsers,
+                    message = "Kompletna sinhronizacija internih korisnika je završena.",
+                    imported = importResult.Imported,
+                    converted = importResult.Converted,
+                    updated = syncResult.Updated,
+                    deactivated = deactivationResult.Deactivated,
+                    failed,
+                    deactivationSkipped = deactivationResult.ApiReturnedNoUsers,
+                    errors
                 });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Došlo je do neočekivane greške tokom sinhronizacije korisnika."
+                });
+            }
         }
 
 
