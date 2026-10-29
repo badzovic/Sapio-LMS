@@ -1,0 +1,10 @@
+# Visual Studio
+.vs/
+**/.vs/
+*.vsidx
+*.suo
+*.user
+
+# Build
+[Bb]in/
+[Oo]bj/
